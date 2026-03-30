@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { runCompany } from "@/agents/index";
-import type { AgentLog } from "@/agents/types";
+import { AGENT_CONFIGS } from "@/agents/config";
+import type { AgentLog, AgentStateUpdate } from "@/agents/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -20,14 +21,19 @@ export async function POST(request: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       const send = (event: object) => {
-        const line = `data: ${JSON.stringify(event)}\n\n`;
-        controller.enqueue(encoder.encode(line));
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
       };
+
+      // エージェント設定を最初に送信（UI のカード初期化に使用）
+      send({ type: "init", agents: AGENT_CONFIGS });
 
       try {
         const result = await runCompany(
           instruction.trim(),
-          (log: AgentLog) => send({ type: "log", role: log.role, message: log.message })
+          (log: AgentLog) =>
+            send({ type: "log", role: log.role, message: log.message }),
+          (update: AgentStateUpdate) =>
+            send({ type: "agent_update", ...update })
         );
         send({ type: "complete", data: result });
       } catch (err) {

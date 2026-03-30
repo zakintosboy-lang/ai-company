@@ -1,4 +1,6 @@
-import type { LogCallback } from "./types";
+import type { LogCallback, StateCallback } from "./types";
+import { AGENT_CONFIGS, WORKER_IDS } from "./config";
+import { Agent } from "./agent";
 import { decomposeTasks, aggregateResults } from "./manager";
 import { executeTask } from "./worker";
 import { reviewWork } from "./reviewer";
@@ -8,85 +10,103 @@ const MAX_REVIEW_CYCLES = 2;
 const MAX_CEO_CYCLES = 2;
 
 /**
- * AI Company のメインオーケストレーター。
+ * AI Company のオーケストレーター。
  *
- * 処理フロー:
- *   CEO → Manager (分解) → [Worker ↔ Reviewer] × N (並列) → Manager (集約) → CEO (最終判断)
- *   CEO が差し戻した場合は Manager から再実行 (最大 MAX_CEO_CYCLES 回)
+ * フロー:
+ *   CEO (指示受領)
+ *   → Manager (タスク分解)
+ *   → Worker × N ↔ Reviewer (並列・最大 MAX_REVIEW_CYCLES 往復)
+ *   → Manager (結果集約)
+ *   → CEO (最終判断: 承認 or 差し戻し → 最大 MAX_CEO_CYCLES 回)
  */
 export async function runCompany(
   instruction: string,
-  onLog?: LogCallback
+  onLog: LogCallback,
+  onState: StateCallback
 ): Promise<string> {
-  onLog?.({ role: "system", message: "=== AI Company 起動 ===" });
-  onLog?.({
-    role: "ceo",
-    message: `指示受領: "${instruction.slice(0, 60)}${instruction.length > 60 ? "..." : ""}"`,
-  });
-  onLog?.({ role: "ceo", message: "Managerにタスク分解を依頼します" });
+  // 実行ごとに新規 Agent インスタンスを生成（会話ログを初期化）
+  const agentMap: Record<string, Agent> = {};
+  for (const config of AGENT_CONFIGS) {
+    agentMap[config.id] = new Agent(config, onLog, onState);
+  }
+
+  const ceo      = agentMap["ceo"];
+  const manager  = agentMap["manager"];
+  const reviewer = agentMap["reviewer"];
+
+  onLog({ role: "system", message: "=== AI Company 起動 ===" });
+  ceo.log(`指示受領: "${instruction.slice(0, 60)}${instruction.length > 60 ? "..." : ""}"`);
+  ceo.log("Managerにタスク分解を依頼します");
+  ceo.setWaiting();
 
   let currentInstruction = instruction;
 
   for (let ceoCycle = 0; ceoCycle < MAX_CEO_CYCLES; ceoCycle++) {
     if (ceoCycle > 0) {
-      onLog?.({
-        role: "manager",
-        message: `CEOのフィードバックを受けて再実行します (${ceoCycle + 1}回目)`,
-      });
+      manager.log(`CEOのフィードバックを受けて再実行します (${ceoCycle + 1}回目)`);
+      // 新サイクルに向けてエージェントをリセット
+      for (const agent of Object.values(agentMap)) agent.reset();
     }
 
-    // Manager: タスク分解
-    const tasks = await decomposeTasks(currentInstruction, onLog);
+    // ── Manager: タスク分解 ──────────────────────────────────
+    const tasks = await decomposeTasks(manager, currentInstruction);
+    manager.setWaiting("Workerの完了待ち...");
 
-    // Manager → Workers: 各タスクを並列で Worker ↔ Reviewer サイクルに投入
-    onLog?.({ role: "manager", message: "Workerにタスクを割り当てます" });
+    // 使われない Worker を待機状態にする
+    const activeWorkerIds = new Set(tasks.map((t) => t.workerId));
+    for (const wid of WORKER_IDS) {
+      if (!activeWorkerIds.has(wid)) {
+        agentMap[wid].setWaiting("タスク待機中");
+        agentMap[wid].log("今回の実行では担当タスクなし");
+      }
+    }
 
+    // ── Worker × Reviewer: 並列実行 ─────────────────────────
     const results = await Promise.all(
       tasks.map(async (task) => {
+        const worker = agentMap[task.workerId];
         let feedback: string | null = null;
 
-        for (let reviewCycle = 0; reviewCycle < MAX_REVIEW_CYCLES; reviewCycle++) {
-          const workerOutput = await executeTask(task, feedback, onLog);
-          const reviewResult = await reviewWork(task, workerOutput, onLog);
+        for (let rev = 0; rev < MAX_REVIEW_CYCLES; rev++) {
+          const workerOutput = await executeTask(worker, task, feedback);
+          worker.setWaiting("Reviewerの審査待ち...");
+
+          const reviewResult = await reviewWork(reviewer, task, workerOutput);
 
           if (reviewResult.approved) {
+            worker.setDone("承認済み");
             return { task, output: workerOutput.output };
           }
-
           feedback = reviewResult.feedback;
         }
 
-        // レビューサイクル上限到達 → 最終実行（レビューなし）
-        onLog?.({
-          role: "worker",
-          message: `最終実行 [${task.id}]: レビューサイクル上限到達`,
-        });
-        const finalOutput = await executeTask(task, feedback, onLog);
+        // レビュー上限到達 → 最終実行（レビューなし）
+        worker.log(`最終実行 [${task.id}]: レビューサイクル上限到達`);
+        const finalOutput = await executeTask(worker, task, feedback);
+        worker.setDone("完了");
         return { task, output: finalOutput.output };
       })
     );
 
-    // Manager: 結果集約
-    const aggregated = await aggregateResults(currentInstruction, results, onLog);
+    reviewer.setDone("全タスクのレビュー完了");
 
-    // CEO: 最終判断
-    const decision = await makeFinalDecision(currentInstruction, aggregated, onLog);
+    // ── Manager: 結果集約 ────────────────────────────────────
+    const aggregated = await aggregateResults(manager, currentInstruction, results);
+    manager.setDone("集約完了");
+
+    // ── CEO: 最終判断 ────────────────────────────────────────
+    const decision = await makeFinalDecision(ceo, currentInstruction, aggregated);
 
     if (decision.approved && decision.finalAnswer) {
-      onLog?.({ role: "system", message: "=== 処理完了 ===" });
+      onLog({ role: "system", message: "=== 処理完了 ===" });
       return decision.finalAnswer;
     }
 
-    // CEO 差し戻し → 次サイクルへ
     if (ceoCycle < MAX_CEO_CYCLES - 1) {
-      onLog?.({
-        role: "ceo",
-        message: `差し戻し: ${decision.feedback}`,
-      });
+      ceo.log(`差し戻し: ${decision.feedback}`);
       currentInstruction = `${instruction}\n\n[CEOの改善要求]: ${decision.feedback}`;
     } else {
-      // 最大サイクル到達 → 集約結果をそのまま返す
-      onLog?.({ role: "system", message: "=== 処理完了 (最大サイクル到達) ===" });
+      onLog({ role: "system", message: "=== 処理完了 (最大サイクル到達) ===" });
       return aggregated;
     }
   }
