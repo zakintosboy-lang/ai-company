@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { runSupervisor } from "@/agents/supervisor";
+import { runCompany } from "@/agents/index";
+import type { AgentLog } from "@/agents/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -18,18 +19,19 @@ export async function POST(request: NextRequest) {
 
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (type: string, data: string) => {
-        const event = `data: ${JSON.stringify({ type, data })}\n\n`;
-        controller.enqueue(encoder.encode(event));
+      const send = (event: object) => {
+        const line = `data: ${JSON.stringify(event)}\n\n`;
+        controller.enqueue(encoder.encode(line));
       };
 
       try {
-        const result = await runSupervisor(instruction.trim(), (msg) =>
-          send("log", msg)
+        const result = await runCompany(
+          instruction.trim(),
+          (log: AgentLog) => send({ type: "log", role: log.role, message: log.message })
         );
-        send("complete", result);
+        send({ type: "complete", data: result });
       } catch (err) {
-        send("error", err instanceof Error ? err.message : String(err));
+        send({ type: "error", data: err instanceof Error ? err.message : String(err) });
       } finally {
         controller.close();
       }

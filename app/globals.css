@@ -19,8 +19,11 @@
   --text-muted: #454868;
   --text-log: #56e8a0;
   --text-log-dim: #2a6e4e;
-  --text-supervisor: #7eb8f7;
+  --text-ceo: #d4a0f7;
+  --text-manager: #7eb8f7;
   --text-worker: #f7c97e;
+  --text-reviewer: #56e8a0;
+  --text-system: #454868;
   --success: #10b981;
   --error: #ef4444;
   --font-mono: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", Menlo, monospace;
@@ -350,17 +353,63 @@ html, body {
   white-space: pre-wrap;
 }
 
-.log-text.supervisor {
-  color: var(--text-supervisor);
+.log-badge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  opacity: 0.85;
 }
 
-.log-text.worker {
-  color: var(--text-worker);
+.log-badge--ceo      { color: var(--text-ceo);      background: rgba(212,160,247,0.12); }
+.log-badge--manager  { color: var(--text-manager);   background: rgba(126,184,247,0.12); }
+.log-badge--worker   { color: var(--text-worker);    background: rgba(247,201,126,0.12); }
+.log-badge--reviewer { color: var(--text-reviewer);  background: rgba(86,232,160,0.12); }
+.log-badge--system   { color: var(--text-system);    background: transparent; }
+
+.log-text--ceo      { color: var(--text-ceo); }
+.log-text--manager  { color: var(--text-manager); }
+.log-text--worker   { color: var(--text-worker); }
+.log-text--reviewer { color: var(--text-reviewer); }
+.log-text--system   { color: var(--text-system); }
+
+/* Role legend */
+.role-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.log-text.system {
-  color: var(--text-muted);
+.role-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
+.role-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.role-dot--ceo      { background: var(--text-ceo); }
+.role-dot--manager  { background: var(--text-manager); }
+.role-dot--worker   { background: var(--text-worker); }
+.role-dot--reviewer { background: var(--text-reviewer); }
+
+.role-name {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.role-name--ceo      { color: var(--text-ceo); }
+.role-name--manager  { color: var(--text-manager); }
+.role-name--worker   { color: var(--text-worker); }
+.role-name--reviewer { color: var(--text-reviewer); }
 
 /* ── Output Panel ── */
 .output-panel {
