@@ -118,6 +118,7 @@ export async function runCompany(
     questionType: "情報整理",
     title: "処理エラー",
     summary: "処理を完了できませんでした。",
+    keyPoints: ["処理が完了しませんでした", "もう一度お試しください", "問題が続く場合はサポートへ"],
     sections: [{ title: "エラー", type: "text", content: "エラー: 処理を完了できませんでした" }],
   };
 }

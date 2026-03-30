@@ -515,72 +515,143 @@ html, body {
   color: var(--text-muted); text-align: center; padding: 60px 0; font-size: 13px;
 }
 
+/* ══════════════════════════════════
+   OutputRenderer — 資料スタイル
+   ══════════════════════════════════ */
+
 /* ── Root ── */
 .or-root {
-  max-width: 760px;
+  max-width: 740px;
   margin: 0 auto;
+  display: flex; flex-direction: column; gap: 12px;
   font-size: 14px;
 }
 
-/* ── Header ── */
+/* ── 1. ドキュメントヘッダー ── */
 .or-header {
   background: var(--bg-surface);
   border: 1.5px solid var(--border);
   border-top-width: 4px;
-  border-radius: 12px 12px 0 0;
+  border-radius: 12px;
   padding: 22px 26px 20px;
+  box-shadow: 0 1px 6px rgba(15,20,60,.05);
 }
 
+.or-header-meta { margin-bottom: 10px; }
+
 .or-type-badge {
-  display: inline-flex;
-  align-items: center;
+  display: inline-flex; align-items: center;
   font-size: 10px; font-weight: 800;
   letter-spacing: .1em; text-transform: uppercase;
-  padding: 3px 10px; border-radius: 4px;
+  padding: 3px 10px; border-radius: 20px;
   border: 1px solid transparent;
-  margin-bottom: 10px;
 }
 
 .or-title {
-  font-size: 21px; font-weight: 900;
+  font-size: 22px; font-weight: 900;
   color: var(--text-primary);
-  line-height: 1.3; margin-bottom: 14px;
+  line-height: 1.3; margin-bottom: 12px;
+  letter-spacing: -.01em;
 }
 
-.or-summary {
+.or-summary-text {
   font-size: 13.5px; color: var(--text-secondary);
-  line-height: 1.75;
-  padding: 12px 16px;
-  background: var(--bg-elevated);
-  border-left: 3px solid;
-  border-radius: 0 6px 6px 0;
+  line-height: 1.8; margin: 0;
 }
 
-/* ── Body ── */
-.or-body {
+/* ── 2. 重要ポイント ── */
+.or-keypoints {
   background: var(--bg-surface);
-  border: 1.5px solid var(--border);
-  border-top: none;
-  border-radius: 0 0 12px 12px;
-  overflow: hidden;
+  border: 1.5px solid;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 6px rgba(15,20,60,.04);
 }
 
-.or-section {
-  padding: 18px 26px;
-  border-bottom: 1px solid var(--border);
-}
-.or-section:last-child { border-bottom: none; }
-
-/* ── Section Title ── */
-.or-section-title {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 11px; font-weight: 800;
-  letter-spacing: .1em; text-transform: uppercase;
+.or-keypoints-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase;
   margin-bottom: 12px;
 }
-.or-section-bar {
-  width: 3px; height: 13px; border-radius: 2px; flex-shrink: 0;
+
+.or-keypoints-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
+
+.or-kp-card {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-top-width: 3px;
+  border-radius: 8px;
+}
+
+.or-kp-num {
+  width: 22px; height: 22px; border-radius: 50%;
+  color: #fff; font-size: 11px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.or-kp-text {
+  font-size: 12px; font-weight: 700;
+  color: var(--text-primary); line-height: 1.45;
+}
+
+/* ── 3. セクション一覧 ── */
+.or-sections {
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+/* ── セクションカード（通常） ── */
+.or-section-card {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(15,20,60,.04);
+}
+
+.or-section-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 20px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+}
+
+.or-section-icon { font-size: 16px; line-height: 1; flex-shrink: 0; }
+
+.or-section-title {
+  font-size: 12px; font-weight: 800;
+  letter-spacing: .06em; text-transform: uppercase;
+  margin: 0;
+}
+
+.or-section-body { padding: 16px 20px; }
+
+/* ── ハイライトカード ── */
+.or-hl-card {
+  border: 1.5px solid;
+  border-left-width: 4px;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 4px rgba(15,20,60,.04);
+}
+
+.or-hl-header {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 800;
+  letter-spacing: .04em;
+  margin-bottom: 8px;
+}
+
+.or-hl-icon { font-size: 15px; line-height: 1; flex-shrink: 0; }
+.or-hl-title { }
+.or-hl-body { font-size: 14px; line-height: 1.8; }
 
 /* ── Text ── */
 .or-text p {
@@ -591,65 +662,44 @@ html, body {
 .or-spacer { display: block; height: 6px; }
 
 /* ── List ── */
-.or-list {
-  list-style: none; padding: 0; margin: 0;
-  display: flex; flex-direction: column; gap: 5px;
-}
+.or-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
 .or-list-item {
   display: flex; align-items: flex-start; gap: 8px;
   font-size: 14px; color: var(--text-primary); line-height: 1.7;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: 6px; padding: 8px 12px;
+  border-radius: 6px; padding: 9px 13px;
 }
 .or-bullet { flex-shrink: 0; font-size: 11px; margin-top: 3px; font-weight: 700; }
 
 /* ── Steps ── */
 .or-steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
-.or-step  { display: flex; align-items: flex-start; gap: 12px; }
+.or-step  { display: flex; align-items: flex-start; gap: 13px; }
 .or-step-num {
-  flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
-  color: #fff; font-size: 11px; font-weight: 800;
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+  color: #fff; font-size: 11px; font-weight: 900;
   display: flex; align-items: center; justify-content: center;
-  margin-top: 1px; box-shadow: 0 2px 6px rgba(0,0,0,.12);
+  margin-top: 0; box-shadow: 0 2px 6px rgba(0,0,0,.12);
 }
+.or-step-content { flex: 1; }
 .or-step-text { font-size: 14px; color: var(--text-primary); line-height: 1.7; }
 
 /* ── Table ── */
 .or-table-wrap { overflow-x: auto; }
-.or-table {
-  width: 100%; border-collapse: collapse;
-  font-size: 13px;
-}
+.or-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .or-table th {
   padding: 9px 14px; text-align: left;
-  font-weight: 700; font-size: 12px; letter-spacing: .03em;
+  font-weight: 700; font-size: 12px;
   border-bottom: 2px solid var(--border);
-  white-space: nowrap;
+  letter-spacing: .02em;
 }
 .or-table td {
-  padding: 9px 14px;
-  color: var(--text-primary);
-  border-bottom: 1px solid var(--border);
-  line-height: 1.55;
+  padding: 9px 14px; color: var(--text-primary);
+  border-bottom: 1px solid var(--border); line-height: 1.55;
 }
-.or-table-odd td { background: var(--bg-elevated); }
+.or-row-alt td { background: var(--bg-elevated); }
 .or-table tr:last-child td { border-bottom: none; }
 .or-td-first { font-weight: 600; color: var(--text-secondary); }
-
-/* ── Highlight Box ── */
-.or-highlight {
-  border: 1.5px solid; border-radius: 10px;
-  padding: 14px 18px;
-}
-.or-highlight-header {
-  display: flex; align-items: center; gap: 7px;
-  font-size: 12px; font-weight: 800;
-  margin-bottom: 8px; letter-spacing: .03em;
-}
-.or-highlight-icon { font-style: normal; font-size: 14px; }
-.or-highlight-label { }
-.or-highlight-body { font-size: 14px; line-height: 1.75; }
 
 /* ── Responsive ── */
 @media (max-width: 1060px) {

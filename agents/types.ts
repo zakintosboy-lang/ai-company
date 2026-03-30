@@ -60,9 +60,10 @@ export type LogCallback = (log: AgentLog) => void;
 export type StateCallback = (update: AgentStateUpdate) => void;
 
 // ── 構造化出力 ─────────────────────────────────────────────────
-export type QuestionType    = "企画" | "情報整理" | "比較" | "提案" | "ガイド";
-export type SectionType     = "text" | "list" | "steps" | "table" | "highlight";
+export type QuestionType     = "企画" | "情報整理" | "比較" | "提案" | "ガイド";
+export type SectionType      = "text" | "list" | "steps" | "table" | "highlight";
 export type HighlightVariant = "info" | "warning" | "success" | "important";
+export type SectionIcon      = "📌" | "⚠" | "💡" | "✅" | "📊" | "🔍" | "🚀" | "🎯" | "📋" | "⚙️";
 
 export interface TableData {
   headers: string[];
@@ -72,16 +73,34 @@ export interface TableData {
 export interface OutputSection {
   title: string;
   type: SectionType;
+  icon?: SectionIcon;
   content?: string;      // text / highlight
   items?: string[];      // list / steps
   tableData?: TableData; // table
   highlight?: HighlightVariant;
 }
 
+/** 将来の Canva 連携に向けた構造化メタデータ */
+export interface CanvaSlide {
+  slideIndex: number;
+  layout: "cover" | "summary" | "list" | "table" | "steps" | "highlight";
+  heading: string;
+  body: string | string[] | TableData;
+  accentColor?: string;
+}
+
+export interface CanvaData {
+  documentTitle: string;
+  documentType: QuestionType;
+  slides: CanvaSlide[];
+}
+
 export interface StructuredOutput {
   questionType: QuestionType;
   title: string;
   summary: string;
+  keyPoints: string[];   // 重要ポイント 3 つ
   sections: OutputSection[];
+  canvaData?: CanvaData; // Canva 連携用（将来拡張）
   rawText?: string;
 }

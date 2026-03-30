@@ -55,9 +55,10 @@ function downloadFile(content: string, filename: string, mime: string) {
 // ── 構造化出力 → プレーンテキスト変換 ─────────────────────────
 function structuredToText(data: StructuredOutput, instruction: string, logCount: number): string {
   const ts = new Date().toLocaleString("ja-JP");
+  const sep = "=".repeat(50);
   const lines: string[] = [
     "AI Company 成果物レポート",
-    "=".repeat(44),
+    sep,
     `質問タイプ : ${data.questionType}`,
     `タイトル   : ${data.title}`,
     `実行日時   : ${ts}`,
@@ -69,18 +70,22 @@ function structuredToText(data: StructuredOutput, instruction: string, logCount:
     "【サマリー】",
     data.summary,
     "",
-    "=".repeat(44),
+    "【重要ポイント】",
+    ...(data.keyPoints ?? []).map((kp, i) => `  ${i+1}. ${kp}`),
+    "",
+    sep,
     "",
   ];
   for (const s of data.sections) {
-    lines.push(`【${s.title}】`);
+    const icon = s.icon ? `${s.icon} ` : "";
+    lines.push(`${icon}【${s.title}】`);
     if (s.type === "text" || s.type === "highlight") lines.push(s.content ?? "");
     else if (s.type === "list")  s.items?.forEach(i => lines.push(`  • ${i}`));
-    else if (s.type === "steps") s.items?.forEach((i, n) => lines.push(`  ${n+1}. ${i}`));
+    else if (s.type === "steps") s.items?.forEach((i, n) => lines.push(`  Step ${n+1}: ${i}`));
     else if (s.type === "table" && s.tableData) {
-      lines.push(s.tableData.headers.join(" | "));
-      lines.push("-".repeat(40));
-      s.tableData.rows.forEach(r => lines.push(r.join(" | ")));
+      lines.push(s.tableData.headers.join(" │ "));
+      lines.push("─".repeat(50));
+      s.tableData.rows.forEach(r => lines.push(r.join(" │ ")));
     }
     lines.push("");
   }
@@ -93,21 +98,26 @@ function structuredToMd(data: StructuredOutput, instruction: string, logCount: n
   const lines: string[] = [
     `# ${data.title}`,
     "",
-    `> **質問タイプ:** ${data.questionType}　**実行日時:** ${ts}　**ログ:** ${logCount}件`,
+    `> **タイプ:** ${data.questionType}　|　**作成:** ${ts}　|　**ログ:** ${logCount}件`,
     "",
-    "## 指示内容",
+    "## 📋 指示内容",
     "",
-    instruction,
+    `> ${instruction}`,
     "",
-    "## サマリー",
+    "## 📌 サマリー",
     "",
     data.summary,
+    "",
+    "## ✅ 重要ポイント",
+    "",
+    ...(data.keyPoints ?? []).map((kp, i) => `${i+1}. **${kp}**`),
     "",
     "---",
     "",
   ];
   for (const s of data.sections) {
-    lines.push(`## ${s.title}`, "");
+    const icon = s.icon ? `${s.icon} ` : "";
+    lines.push(`## ${icon}${s.title}`, "");
     if (s.type === "text" || s.type === "highlight") {
       lines.push(s.content ?? "");
     } else if (s.type === "list") {
@@ -115,7 +125,7 @@ function structuredToMd(data: StructuredOutput, instruction: string, logCount: n
     } else if (s.type === "steps") {
       s.items?.forEach((i, n) => lines.push(`${n+1}. ${i}`));
     } else if (s.type === "table" && s.tableData) {
-      const sep = s.tableData.headers.map(() => "---").join(" | ");
+      const sep = s.tableData.headers.map(() => ":---").join(" | ");
       lines.push(`| ${s.tableData.headers.join(" | ")} |`);
       lines.push(`| ${sep} |`);
       s.tableData.rows.forEach(r => lines.push(`| ${r.join(" | ")} |`));
@@ -125,7 +135,7 @@ function structuredToMd(data: StructuredOutput, instruction: string, logCount: n
   return lines.join("\n");
 }
 
-// ── PDF HTML 生成 ─────────────────────────────────────────────
+// ── PDF HTML 生成（2 ページ構成） ─────────────────────────────
 function buildPdfHtml(
   data: StructuredOutput,
   instruction: string,
@@ -137,19 +147,28 @@ function buildPdfHtml(
   const TYPE_COLOR: Record<string, string> = {
     "企画":"#2563eb","情報整理":"#0369a1","比較":"#7c3aed","提案":"#059669","ガイド":"#d97706",
   };
-  const HL_STYLE: Record<HighlightVariant, { bg:string; border:string; color:string }> = {
-    info:      { bg:"#eff6ff", border:"#bfdbfe", color:"#1d4ed8" },
-    warning:   { bg:"#fffbeb", border:"#fde68a", color:"#92400e" },
-    success:   { bg:"#f0fdf4", border:"#bbf7d0", color:"#065f46" },
-    important: { bg:"#faf5ff", border:"#ddd6fe", color:"#5b21b6" },
+  const HL_STYLE: Record<HighlightVariant, { bg:string; border:string; leftBar:string; color:string; icon:string }> = {
+    info:      { bg:"#eff6ff", border:"#bfdbfe", leftBar:"#2563eb", color:"#1d4ed8", icon:"💡" },
+    warning:   { bg:"#fff7ed", border:"#fed7aa", leftBar:"#ea580c", color:"#9a3412", icon:"⚠" },
+    success:   { bg:"#f0fdf4", border:"#bbf7d0", leftBar:"#16a34a", color:"#15803d", icon:"✅" },
+    important: { bg:"#faf5ff", border:"#ddd6fe", leftBar:"#7c3aed", color:"#6d28d9", icon:"📌" },
   };
 
-  const accentColor = TYPE_COLOR[data.questionType] ?? "#4f46e5";
+  const ac = TYPE_COLOR[data.questionType] ?? "#4f46e5"; // accentColor
 
   const renderSection = (s: OutputSection): string => {
-    const titleHtml = s.type !== "highlight"
-      ? `<h2 class="sec-title" style="border-left-color:${accentColor}">${escapeHtml(s.title)}</h2>`
-      : "";
+    const icon = s.icon ? `<span class="sec-icon">${s.icon}</span>` : "";
+
+    if (s.type === "highlight") {
+      const h = HL_STYLE[s.highlight ?? "info"];
+      return `
+        <div class="hl-box" style="background:${h.bg};border-color:${h.border};border-left-color:${h.leftBar}">
+          <div class="hl-hdr" style="color:${h.color}">${s.icon ?? h.icon} ${escapeHtml(s.title)}</div>
+          <p class="hl-body" style="color:${h.color}">${escapeHtml(s.content ?? "")}</p>
+        </div>`;
+    }
+
+    const titleHtml = `<h2 class="sec-title">${icon}${escapeHtml(s.title)}</h2>`;
 
     switch (s.type) {
       case "text":
@@ -166,26 +185,22 @@ function buildPdfHtml(
         return `${titleHtml}<ol class="step-list">${
           (s.items ?? []).map((item, n) => `
             <li class="step-item">
-              <span class="step-circle" style="background:${accentColor}">${n+1}</span>
+              <span class="step-num" style="background:${ac}">${n+1}</span>
               <span>${escapeHtml(item)}</span>
             </li>`).join("")
         }</ol>`;
 
       case "table": {
         const { headers=[], rows=[] } = s.tableData ?? {};
-        return `${titleHtml}<table class="data-table">
-          <thead><tr>${headers.map(h => `<th style="background:${accentColor}22;color:${accentColor}">${escapeHtml(h)}</th>`).join("")}</tr></thead>
-          <tbody>${rows.map((r,i) => `<tr class="${i%2===1?"odd":""}">${r.map((c,j) => `<td class="${j===0?"first":""}">${escapeHtml(c)}</td>`).join("")}</tr>`).join("")}</tbody>
-        </table>`;
+        return `${titleHtml}
+          <table class="data-table">
+            <thead><tr>${headers.map(h => `<th style="background:${ac}18;color:${ac}">${escapeHtml(h)}</th>`).join("")}</tr></thead>
+            <tbody>${rows.map((r,i) => `
+              <tr class="${i%2===1?"alt":""}">${r.map((c,j)=>`<td class="${j===0?"first":""}">${escapeHtml(c)}</td>`).join("")}</tr>`).join("")}
+            </tbody>
+          </table>`;
       }
-
-      case "highlight": {
-        const hcfg = HL_STYLE[s.highlight ?? "info"];
-        return `<div class="hl-box" style="background:${hcfg.bg};border-color:${hcfg.border}">
-          <div class="hl-title" style="color:${hcfg.color}">${escapeHtml(s.title)}</div>
-          <p class="hl-body" style="color:${hcfg.color}">${escapeHtml(s.content ?? "")}</p>
-        </div>`;
-      }
+      default: return "";
     }
   };
 
@@ -193,79 +208,252 @@ function buildPdfHtml(
     .map(a => `<tr><td>${escapeHtml(a.config.name)}</td><td>${ROLE_LABEL[a.config.role]}</td><td>${escapeHtml(a.config.model.displayName)}</td></tr>`)
     .join("");
 
+  const kpCards = (data.keyPoints ?? []).map((kp, i) => `
+    <div class="kp-card">
+      <span class="kp-num" style="background:${ac}">${i+1}</span>
+      <span class="kp-text">${escapeHtml(kp)}</span>
+    </div>`).join("");
+
   return `<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <title>${escapeHtml(data.title)}</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Hiragino Kaku Gothic Pro","Yu Gothic",Meiryo,sans-serif;color:#111827;line-height:1.85;padding:0}
-  .page{max-width:760px;margin:0 auto;padding:36px 40px}
-  /* Cover */
-  .cover{border-top:4px solid ${accentColor};background:#f8faff;border-radius:10px;padding:24px 28px;margin-bottom:28px}
-  .logo-row{display:flex;align-items:center;gap:8px;margin-bottom:14px}
-  .logo-badge{background:${accentColor};color:#fff;width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px}
-  .logo-text{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:${accentColor}}
-  .type-badge{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:2px 10px;border-radius:4px;background:${accentColor}18;color:${accentColor};border:1px solid ${accentColor}44;margin-bottom:8px}
-  h1{font-size:22px;font-weight:900;color:#111827;line-height:1.3;margin-bottom:14px}
-  .summary-box{background:#fff;border:1px solid ${accentColor}44;border-left:3px solid ${accentColor};border-radius:6px;padding:12px 16px;font-size:13px;color:#374151;line-height:1.75}
-  /* Meta */
-  .meta-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px}
-  .meta-table td{padding:4px 8px;vertical-align:top}
-  .meta-table td:first-child{font-weight:700;color:${accentColor};width:90px;white-space:nowrap}
-  /* Agents */
-  .agent-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:28px}
-  .agent-table th{background:${accentColor}18;color:${accentColor};padding:7px 10px;text-align:left;font-weight:700;border:1px solid #e5e7eb}
-  .agent-table td{padding:6px 10px;border:1px solid #e5e7eb;color:#4b5563}
-  /* Sections */
-  .sec-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#111827;border-left:3px solid;padding-left:10px;margin:24px 0 10px}
-  .text-body p{font-size:14px;color:#1f2937;margin-bottom:8px}
-  .bullet-list{padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px}
-  .bullet-list li{font-size:14px;color:#1f2937;padding:8px 12px 8px 34px;background:#f9fafb;border-radius:5px;position:relative;border:1px solid #f3f4f6}
-  .bullet-list li::before{content:"▸";position:absolute;left:13px;color:${accentColor};font-size:11px}
-  .step-list{list-style:none;display:flex;flex-direction:column;gap:10px;padding:0}
-  .step-item{display:flex;align-items:flex-start;gap:12px;font-size:14px;color:#1f2937}
-  .step-circle{flex-shrink:0;width:22px;height:22px;border-radius:50%;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:2px}
-  .data-table{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0}
-  .data-table th{padding:9px 12px;text-align:left;font-weight:700;border:1px solid #e5e7eb}
-  .data-table td{padding:8px 12px;border:1px solid #e5e7eb;color:#1f2937}
-  .data-table tr.odd td{background:#f9fafb}
-  .data-table td.first{font-weight:600;color:#374151}
-  .hl-box{border:1.5px solid;border-radius:8px;padding:14px 16px;margin:4px 0}
-  .hl-title{font-size:12px;font-weight:800;margin-bottom:8px;letter-spacing:.03em}
-  .hl-body{font-size:14px;line-height:1.75}
-  .footer{margin-top:40px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}
-  @page{margin:15mm 20mm}
+/* ── Reset & Base ── */
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{
+  font-family:"Hiragino Kaku Gothic ProN","Yu Gothic Medium","Meiryo",sans-serif;
+  color:#111827;line-height:1.9;background:#fff;
+}
+
+/* ── Page layout ── */
+.page{max-width:720px;margin:0 auto;padding:48px 52px}
+
+/* ════════════════════════
+   PAGE 1 — カバー
+════════════════════════ */
+.cover-page{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  border-top:6px solid ${ac};
+  page-break-after:always;
+}
+
+.cover-top{
+  background:linear-gradient(135deg,${ac}0d 0%,#ffffff 100%);
+  padding:48px 52px 36px;
+  flex:1;
+}
+
+.logo-row{display:flex;align-items:center;gap:10px;margin-bottom:32px}
+.logo-badge{
+  background:${ac};color:#fff;
+  width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:14px;
+}
+.logo-text{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:${ac}}
+
+.type-badge{
+  display:inline-block;
+  font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 12px;border-radius:20px;
+  background:${ac}18;color:${ac};border:1px solid ${ac}44;
+  margin-bottom:18px;
+}
+
+.cover-title{
+  font-size:32px;font-weight:900;
+  color:#0f172a;line-height:1.25;
+  margin-bottom:24px;
+  letter-spacing:-.02em;
+}
+
+.cover-summary{
+  font-size:15px;color:#374151;line-height:1.85;
+  padding:18px 22px;
+  background:#fff;
+  border:1px solid ${ac}33;
+  border-left:4px solid ${ac};
+  border-radius:0 8px 8px 0;
+  margin-bottom:36px;
+}
+
+/* キーポイントカード群 */
+.kp-section-label{
+  font-size:11px;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;color:${ac};
+  margin-bottom:14px;
+}
+.kp-grid{display:flex;flex-direction:column;gap:10px}
+.kp-card{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:14px 18px;
+  background:#f8faff;
+  border:1px solid ${ac}22;
+  border-radius:8px;
+}
+.kp-num{
+  flex-shrink:0;
+  width:26px;height:26px;border-radius:50%;
+  color:#fff;font-size:12px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+}
+.kp-text{font-size:14px;font-weight:600;color:#1e293b;line-height:1.5}
+
+/* カバーフッター */
+.cover-footer{
+  padding:18px 52px;
+  border-top:1px solid #e5e7eb;
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11px;color:#9ca3af;
+}
+
+/* ════════════════════════
+   PAGE 2〜 — 詳細
+════════════════════════ */
+.detail-page{padding:48px 52px}
+
+/* メタ情報 */
+.meta-box{
+  background:#f8faff;border:1px solid #e5e7eb;
+  border-radius:8px;padding:16px 20px;
+  margin-bottom:28px;
+  display:grid;grid-template-columns:auto 1fr;gap:4px 16px;
+  font-size:12px;
+}
+.meta-key{font-weight:700;color:${ac};white-space:nowrap}
+.meta-val{color:#374151}
+
+/* エージェントテーブル */
+.agent-section-label{
+  font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:${ac};margin-bottom:10px;
+}
+.agent-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:36px}
+.agent-table th{background:${ac}10;color:${ac};padding:8px 12px;text-align:left;font-weight:700;border:1px solid #e5e7eb}
+.agent-table td{padding:7px 12px;border:1px solid #e5e7eb;color:#4b5563}
+
+/* セクション区切り */
+.sections-wrap{display:flex;flex-direction:column;gap:24px}
+.section-block{
+  border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;
+}
+
+/* セクションタイトル */
+.sec-title{
+  display:flex;align-items:center;gap:10px;
+  font-size:14px;font-weight:800;
+  color:#0f172a;
+  padding:13px 18px;
+  background:#f8faff;
+  border-bottom:1px solid #e5e7eb;
+}
+.sec-icon{font-size:16px;line-height:1}
+.sec-content{padding:16px 20px}
+
+/* Text */
+.text-body p{font-size:14px;color:#1f2937;line-height:1.85;margin-bottom:10px}
+.text-body p:last-child{margin-bottom:0}
+
+/* List */
+.bullet-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:6px}
+.bullet-list li{
+  font-size:14px;color:#1f2937;
+  padding:10px 14px 10px 36px;
+  background:#f9fafb;border:1px solid #f3f4f6;border-radius:6px;
+  position:relative;line-height:1.65;
+}
+.bullet-list li::before{
+  content:"▸";position:absolute;left:14px;
+  color:${ac};font-size:12px;top:11px;
+}
+
+/* Steps */
+.step-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:12px}
+.step-item{display:flex;align-items:flex-start;gap:14px;font-size:14px;color:#1f2937;line-height:1.7}
+.step-num{
+  flex-shrink:0;width:26px;height:26px;border-radius:50%;
+  color:#fff;font-size:12px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  margin-top:1px;
+}
+
+/* Table */
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{padding:10px 14px;text-align:left;font-weight:700;font-size:12px;border:1px solid #e5e7eb}
+.data-table td{padding:9px 14px;border:1px solid #e5e7eb;color:#1f2937;line-height:1.55}
+.data-table tr.alt td{background:#f9fafb}
+.data-table td.first{font-weight:600;color:#374151}
+
+/* Highlight */
+.hl-box{
+  border:1.5px solid;border-left-width:4px;
+  border-radius:8px;padding:16px 20px;
+}
+.hl-hdr{font-size:13px;font-weight:800;margin-bottom:8px;letter-spacing:.02em}
+.hl-body{font-size:14px;line-height:1.8}
+
+/* Page footer */
+.page-footer{
+  margin-top:48px;padding-top:14px;
+  border-top:1px solid #e5e7eb;
+  font-size:11px;color:#9ca3af;text-align:center;
+}
+
+/* Print */
+@page{margin:0}
+@media print{
+  .cover-page{page-break-after:always}
+  .section-block{break-inside:avoid}
+}
 </style>
 </head>
 <body>
-<div class="page">
-  <div class="cover">
+
+<!-- ════ PAGE 1: カバー ════ -->
+<div class="cover-page">
+  <div class="cover-top">
     <div class="logo-row">
       <div class="logo-badge">AI</div>
       <div class="logo-text">AI Company</div>
     </div>
     <div class="type-badge">${escapeHtml(data.questionType)}</div>
-    <h1>${escapeHtml(data.title)}</h1>
-    <div class="summary-box">${escapeHtml(data.summary)}</div>
+    <h1 class="cover-title">${escapeHtml(data.title)}</h1>
+    <div class="cover-summary">${escapeHtml(data.summary)}</div>
+    <div class="kp-section-label">📌 重要ポイント</div>
+    <div class="kp-grid">${kpCards}</div>
+  </div>
+  <div class="cover-footer">
+    <span>AI Company — 成果物レポート</span>
+    <span>${ts}</span>
+  </div>
+</div>
+
+<!-- ════ PAGE 2〜: 詳細 ════ -->
+<div class="detail-page">
+
+  <div class="meta-box">
+    <span class="meta-key">実行日時</span><span class="meta-val">${ts}</span>
+    <span class="meta-key">ログ件数</span><span class="meta-val">${logCount}件</span>
+    <span class="meta-key">指示内容</span><span class="meta-val">${escapeHtml(instruction)}</span>
   </div>
 
-  <table class="meta-table">
-    <tr><td>実行日時</td><td>${ts}</td></tr>
-    <tr><td>ログ件数</td><td>${logCount}件</td></tr>
-    <tr><td>指示内容</td><td>${escapeHtml(instruction)}</td></tr>
-  </table>
-
+  <div class="agent-section-label">エージェント構成</div>
   <table class="agent-table">
     <thead><tr><th>名前</th><th>役割</th><th>モデル</th></tr></thead>
     <tbody>${agentRows}</tbody>
   </table>
 
-  ${data.sections.map(renderSection).join("\n")}
+  <div class="sections-wrap">
+    ${data.sections.map(s => `<div class="section-block">${renderSection(s)}</div>`).join("\n")}
+  </div>
 
-  <div class="footer">Generated by AI Company — ${ts}</div>
+  <div class="page-footer">Generated by AI Company — ${ts}</div>
 </div>
+
 </body>
 </html>`;
 }
