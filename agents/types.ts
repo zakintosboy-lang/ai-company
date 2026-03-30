@@ -58,3 +58,30 @@ export interface CEODecision {
 
 export type LogCallback = (log: AgentLog) => void;
 export type StateCallback = (update: AgentStateUpdate) => void;
+
+// ── 構造化出力 ─────────────────────────────────────────────────
+export type QuestionType    = "企画" | "情報整理" | "比較" | "提案" | "ガイド";
+export type SectionType     = "text" | "list" | "steps" | "table" | "highlight";
+export type HighlightVariant = "info" | "warning" | "success" | "important";
+
+export interface TableData {
+  headers: string[];
+  rows: string[][];
+}
+
+export interface OutputSection {
+  title: string;
+  type: SectionType;
+  content?: string;      // text / highlight
+  items?: string[];      // list / steps
+  tableData?: TableData; // table
+  highlight?: HighlightVariant;
+}
+
+export interface StructuredOutput {
+  questionType: QuestionType;
+  title: string;
+  summary: string;
+  sections: OutputSection[];
+  rawText?: string;
+}

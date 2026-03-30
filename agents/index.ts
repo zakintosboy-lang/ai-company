@@ -1,10 +1,11 @@
-import type { LogCallback, StateCallback } from "./types";
+import type { LogCallback, StateCallback, StructuredOutput } from "./types";
 import { AGENT_CONFIGS, WORKER_IDS } from "./config";
 import { Agent } from "./agent";
 import { decomposeTasks, aggregateResults } from "./manager";
 import { executeTask } from "./worker";
 import { reviewWork } from "./reviewer";
 import { makeFinalDecision } from "./ceo";
+import { formatOutput } from "./formatter";
 
 const MAX_REVIEW_CYCLES = 2;
 const MAX_CEO_CYCLES = 2;
@@ -18,12 +19,13 @@ const MAX_CEO_CYCLES = 2;
  *   → Worker × N ↔ Reviewer (並列・最大 MAX_REVIEW_CYCLES 往復)
  *   → Manager (結果集約)
  *   → CEO (最終判断: 承認 or 差し戻し → 最大 MAX_CEO_CYCLES 回)
+ *   → Formatter (構造化 JSON に変換)
  */
 export async function runCompany(
   instruction: string,
   onLog: LogCallback,
   onState: StateCallback
-): Promise<string> {
+): Promise<StructuredOutput> {
   // 実行ごとに新規 Agent インスタンスを生成（会話ログを初期化）
   const agentMap: Record<string, Agent> = {};
   for (const config of AGENT_CONFIGS) {
@@ -44,7 +46,6 @@ export async function runCompany(
   for (let ceoCycle = 0; ceoCycle < MAX_CEO_CYCLES; ceoCycle++) {
     if (ceoCycle > 0) {
       manager.log(`CEOのフィードバックを受けて再実行します (${ceoCycle + 1}回目)`);
-      // 新サイクルに向けてエージェントをリセット
       for (const agent of Object.values(agentMap)) agent.reset();
     }
 
@@ -80,7 +81,6 @@ export async function runCompany(
           feedback = reviewResult.feedback;
         }
 
-        // レビュー上限到達 → 最終実行（レビューなし）
         worker.log(`最終実行 [${task.id}]: レビューサイクル上限到達`);
         const finalOutput = await executeTask(worker, task, feedback);
         worker.setDone("完了");
@@ -98,18 +98,26 @@ export async function runCompany(
     const decision = await makeFinalDecision(ceo, currentInstruction, aggregated);
 
     if (decision.approved && decision.finalAnswer) {
+      // ── Formatter: 構造化 ────────────────────────────────
+      const structured = await formatOutput(instruction, decision.finalAnswer, onLog);
       onLog({ role: "system", message: "=== 処理完了 ===" });
-      return decision.finalAnswer;
+      return structured;
     }
 
     if (ceoCycle < MAX_CEO_CYCLES - 1) {
       ceo.log(`差し戻し: ${decision.feedback}`);
       currentInstruction = `${instruction}\n\n[CEOの改善要求]: ${decision.feedback}`;
     } else {
+      const structured = await formatOutput(instruction, aggregated, onLog);
       onLog({ role: "system", message: "=== 処理完了 (最大サイクル到達) ===" });
-      return aggregated;
+      return structured;
     }
   }
 
-  return "エラー: 処理を完了できませんでした";
+  return {
+    questionType: "情報整理",
+    title: "処理エラー",
+    summary: "処理を完了できませんでした。",
+    sections: [{ title: "エラー", type: "text", content: "エラー: 処理を完了できませんでした" }],
+  };
 }
