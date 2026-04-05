@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { usePersistedInstruction } from "./hooks/usePersistedInstruction";
 import type {
   StructuredOutput,
   OutputSection,
@@ -460,7 +461,7 @@ body{
 
 // ── Page Component ────────────────────────────────────────────
 export default function Home() {
-  const [instruction, setInstruction] = useState("");
+  const { instruction, setInstruction, clearInstruction, hydrated } = usePersistedInstruction();
   const [agents, setAgents]   = useState<Record<string, AgentCard>>({});
   const [logs, setLogs]       = useState<LogEntry[]>([]);
   const [output, setOutput]   = useState<StructuredOutput | null>(null);
@@ -623,13 +624,20 @@ export default function Home() {
         {/* Left Panel */}
         <aside className="panel-left">
           <div>
-            <div className="panel-section-label">指示内容</div>
+            <div className="instruction-label-row">
+              <div className="panel-section-label">指示内容</div>
+              {instruction && !isRunning && (
+                <button className="clear-instruction-btn" onClick={clearInstruction} title="入力内容をクリア">
+                  クリア
+                </button>
+              )}
+            </div>
             <textarea
               className="instruction-textarea"
               placeholder="AIチームへの指示を入力してください..."
               value={instruction}
               onChange={(e) => setInstruction(e.target.value)}
-              disabled={isRunning}
+              disabled={isRunning || !hydrated}
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleRun(); }}
             />
           </div>
