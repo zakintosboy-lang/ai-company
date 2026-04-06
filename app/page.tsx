@@ -8,6 +8,7 @@ import type {
   HighlightVariant,
 } from "@/agents/types";
 import OutputRenderer from "./components/OutputRenderer";
+import AnimatedAgentCard from "./components/AnimatedAgentCard";
 
 // ── Agent UI 用型 ──────────────────────────────────────────────
 type AgentRole     = "ceo" | "manager" | "worker" | "reviewer" | "system";
@@ -30,9 +31,7 @@ interface SavedResult {
 
 // ── 定数 ───────────────────────────────────────────────────────
 const ROLE_LABEL:   Record<AgentRole, string>     = { ceo:"CEO", manager:"Manager", worker:"Worker", reviewer:"Reviewer", system:"System" };
-const STATUS_LABEL: Record<AgentStatus, string>   = { idle:"待機", thinking:"思考中", reviewing:"審査中", done:"完了", waiting:"保留" };
 const PROVIDER_LABEL: Record<ModelProvider,string>= { claude:"Claude", openai:"OpenAI", gemini:"Gemini" };
-const AGENT_EMOJI: Record<string,string>          = { "ceo":"🏢","manager":"📋","worker-1":"⚙️","worker-2":"🔧","worker-3":"💡","reviewer":"🔍" };
 const AGENT_ORDER = ["ceo","manager","worker-1","worker-2","worker-3","reviewer"];
 const STORAGE_KEY = "ai-company-results";
 
@@ -745,41 +744,16 @@ export default function Home() {
           <div className="agent-grid">
             {agentCards.length === 0
               ? AGENT_ORDER.map((id) => (
-                  <div key={id} className="agent-card agent-card--placeholder">
-                    <div className="agent-placeholder-inner"><span className="placeholder-emoji">⋯</span></div>
-                  </div>
+                  <AnimatedAgentCard
+                    key={id}
+                    card={{ config: { id, role: "system", name: id, model: { provider: "claude", modelId: "", displayName: "" }, criteria: [] }, status: "idle" }}
+                    isPlaceholder
+                  />
                 ))
-              : agentCards.map((card) => {
-                  const isActive = card.status === "thinking" || card.status === "reviewing";
-                  return (
-                    <div key={card.config.id} className={`agent-card role--${card.config.role} status--${card.status}${isActive ? " is-active" : ""}`}>
-                      <div className="agent-card-header">
-                        <div className="agent-avatar-name">
-                          <span className={`agent-avatar avatar--${card.config.role}`}>{AGENT_EMOJI[card.config.id] ?? "🤖"}</span>
-                          <div>
-                            <div className="agent-card-name">{card.config.name}</div>
-                            <div className="agent-model-row">
-                              <span className={`provider-chip provider--${card.config.model.provider}`}>{PROVIDER_LABEL[card.config.model.provider]}</span>
-                              <span className="agent-model-name">{card.config.model.displayName}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <span className={`status-chip chip--${card.status}`}>
-                          {isActive && <span className="chip-pulse" />}
-                          {STATUS_LABEL[card.status]}
-                        </span>
-                      </div>
-                      <div className="speech-bubble">
-                        {isActive
-                          ? <div className="typing-dots"><span/><span/><span/></div>
-                          : card.lastMessage
-                            ? <span className="bubble-text">{card.lastMessage}</span>
-                            : <span className="bubble-placeholder">指示待ち...</span>
-                        }
-                      </div>
-                    </div>
-                  );
-                })}
+              : agentCards.map((card) => (
+                  <AnimatedAgentCard key={card.config.id} card={card} />
+                ))
+            }
           </div>
 
           {/* Tabs */}
