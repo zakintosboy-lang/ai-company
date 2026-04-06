@@ -251,6 +251,7 @@ html, body {
 .btn-txt:hover:not(:disabled)   { border-color: var(--accent-dim); color: var(--accent); }
 .btn-md:hover:not(:disabled)    { border-color: #7c3aed; color: #7c3aed; box-shadow: 0 2px 8px rgba(124,58,237,.12); }
 .btn-pdf:hover:not(:disabled)   { border-color: #ef4444; color: #dc2626; box-shadow: 0 2px 8px rgba(239,68,68,.12); }
+.btn-retro:hover:not(:disabled) { border-color: #facc15; color: #facc15; box-shadow: 0 2px 8px rgba(250,204,21,.18); }
 
 /* ── Right Panel (techy grid bg) ── */
 .panel-right {
