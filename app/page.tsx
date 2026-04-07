@@ -8,8 +8,7 @@ import type {
   HighlightVariant,
 } from "@/agents/types";
 import OutputRenderer from "./components/OutputRenderer";
-import AnimatedAgentCard from "./components/AnimatedAgentCard";
-import ConversationView from "./components/ConversationView";
+import MeetingRoom from "./components/MeetingRoom";
 
 // ── Agent UI 用型 ──────────────────────────────────────────────
 type AgentRole     = "ceo" | "manager" | "worker" | "reviewer" | "system";
@@ -661,7 +660,6 @@ export default function Home() {
     }
   };
 
-  const agentCards    = AGENT_ORDER.map((id) => agents[id]).filter(Boolean);
   const activeWorkers = AGENT_ORDER.filter(id => id.startsWith("worker-"))
     .filter(id => agents[id]?.status === "thinking" || agents[id]?.status === "reviewing").length;
   const canExport = !!output && !isRunning;
@@ -741,44 +739,30 @@ export default function Home() {
 
         {/* Right Panel */}
         <div className="panel-right">
-          {/* Agent Cards */}
-          <div className="agent-grid">
-            {agentCards.length === 0
-              ? AGENT_ORDER.map((id) => (
-                  <AnimatedAgentCard
-                    key={id}
-                    card={{ config: { id, role: "system", name: id, model: { provider: "claude", modelId: "", displayName: "" }, criteria: [] }, status: "idle" }}
-                    isPlaceholder
-                  />
-                ))
-              : agentCards.map((card) => (
-                  <AnimatedAgentCard key={card.config.id} card={card} />
-                ))
-            }
-          </div>
-
           {/* Tabs */}
           <div className="panel-tabs">
             <button className={`panel-tab ${activeTab==="logs"?"active":""}`} onClick={() => setActiveTab("logs")}>
-              会話 {logs.length > 0 && `(${logs.length})`}
+              会議室 {logs.length > 0 && `(${logs.length})`}
             </button>
             <button className={`panel-tab ${activeTab==="output"?"active":""}`} onClick={() => setActiveTab("output")}>
               成果物 {output && "✓"}
             </button>
           </div>
 
-          {/* Conversation */}
+          {/* Meeting Room */}
           {activeTab === "logs" && (
             <div style={{ flex: 1, overflow: "hidden" }}>
-              <ConversationView
+              <MeetingRoom
                 logs={logs}
                 agents={Object.values(agents).map(c => ({
                   id: c.config.id,
                   role: c.config.role,
                   name: c.config.name,
                   status: c.status,
+                  lastMessage: c.lastMessage,
                 }))}
                 isRunning={isRunning}
+                output={!!output}
               />
             </div>
           )}
