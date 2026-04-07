@@ -43,9 +43,9 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     role: "worker",
     name: "Worker 1",
     model: {
-      provider: "claude",
-      modelId: "claude-sonnet-4-6",
-      displayName: "Claude Sonnet 4.6",
+      provider: "gemini",
+      modelId: "gemini-2.0-flash",
+      displayName: "Gemini 2.0 Flash",
     },
     criteria: [
       "回答が具体的かつ正確であること",
@@ -58,9 +58,9 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     role: "worker",
     name: "Worker 2",
     model: {
-      provider: "claude",
-      modelId: "claude-sonnet-4-6",
-      displayName: "Claude Sonnet 4.6",
+      provider: "gemini",
+      modelId: "gemini-2.0-flash",
+      displayName: "Gemini 2.0 Flash",
     },
     criteria: [
       "回答が具体的かつ正確であること",
@@ -73,9 +73,9 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     role: "worker",
     name: "Worker 3",
     model: {
-      provider: "claude",
-      modelId: "claude-sonnet-4-6",
-      displayName: "Claude Sonnet 4.6",
+      provider: "gemini",
+      modelId: "gemini-2.0-flash",
+      displayName: "Gemini 2.0 Flash",
     },
     criteria: [
       "回答が具体的かつ正確であること",
@@ -104,9 +104,9 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     role: "researcher",
     name: "Researcher",
     model: {
-      provider: "claude",
-      modelId: "claude-sonnet-4-6",
-      displayName: "Claude Sonnet 4.6",
+      provider: "openai",
+      modelId: "gpt-4o",
+      displayName: "GPT-4o",
     },
     criteria: [
       "最新情報・トレンドを網羅していること",
@@ -119,9 +119,9 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     role: "designer",
     name: "Designer",
     model: {
-      provider: "claude",
-      modelId: "claude-haiku-4-5-20251001",
-      displayName: "Claude Haiku 4.5",
+      provider: "gemini",
+      modelId: "gemini-2.0-flash",
+      displayName: "Gemini 2.0 Flash",
     },
     criteria: [
       "Canvaで再現可能な具体的なデザイン仕様であること",
