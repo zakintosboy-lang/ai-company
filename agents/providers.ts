@@ -37,7 +37,7 @@ class OpenAIProvider implements LLMProvider {
   async complete(system: string, messages: ConversationEntry[], maxTokens: number): Promise<string> {
     const response = await this.client.chat.completions.create({
       model: this.modelId,
-      max_tokens: maxTokens,
+      max_completion_tokens: maxTokens,
       messages: [
         { role: "system", content: system },
         ...messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
