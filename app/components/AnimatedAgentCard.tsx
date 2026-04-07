@@ -215,7 +215,7 @@ export default function AnimatedAgentCard({ card, isPlaceholder }: Props) {
       </div>
 
       {/* キャラクターエリア */}
-      <div style={{ position: "relative", height: 96 }}>
+      <div style={{ position: "relative", height: 120 }}>
         <AgentCharacter
           role={characterRole as any}
           status={status}
