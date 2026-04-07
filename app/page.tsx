@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePersistedInstruction } from "./hooks/usePersistedInstruction";
 import type {
   StructuredOutput,
@@ -469,6 +469,18 @@ export default function Home() {
   const [runCount, setRunCount]   = useState<number>(0);
   const [toast, setToast]         = useState<string | null>(null);
   const logBottomRef = useRef<HTMLDivElement>(null);
+
+  // 起動時に最後の保存結果を自動復元
+  useEffect(() => {
+    try {
+      const saved: SavedResult[] = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+      if (saved.length > 0) {
+        setOutput(saved[0].output);
+        setRunCount(saved[0].logCount);
+        setActiveTab("output");
+      }
+    } catch { /* ignore */ }
+  }, []);
 
   const showToast = (msg: string) => {
     setToast(msg);

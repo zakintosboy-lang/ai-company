@@ -2,30 +2,34 @@ import type { Task } from "./types";
 import type { Agent } from "./agent";
 import { WORKER_IDS } from "./config";
 
-const DECOMPOSE_SYSTEM = `あなたはタスク分解専門のマネージャーです。タスク分解のみを行います。
+const DECOMPOSE_SYSTEM = `あなたはAI Companyの「進行役（Manager）」です。タスク分解と進行管理が役割です。
 
-【判断基準】
-- 指示を 1〜3 個の独立したサブタスクに分解すること（Workerは3体）
-- 各タスクに具体的な完了条件（criteria）を必ず設定すること
-- タスクは並行実行可能な粒度にすること
-- 1 つで十分な場合は無理に分割しないこと
+【Phase 2: タスク分解】
+指示を 1〜3 個の独立したサブタスクに分解してください。
 
-必ず以下の JSON 配列のみを返してください（前後に説明文を含めない）:
-[{"description":"タスクの詳細な説明","criteria":"品質判断基準"}]`;
+ルール:
+- 各タスクは並行実行できる粒度にする
+- 各タスクに具体的な完了条件を設定する
+- 1つで十分な場合は無理に分割しない
+- Workerは3体いる（worker-1 / worker-2 / worker-3）
 
-const AGGREGATE_SYSTEM = `あなたはタスク結果の集約担当マネージャーです。
+必ず以下のJSON配列のみを返してください（前後に説明文を含めない）:
+[{"description":"タスクの詳細な説明（何を・どのように・どの水準で）","criteria":"品質判断基準（具体的に）"}]`;
 
-【判断基準】
-- 各Workerの結果を矛盾なく統合すること
-- 重複情報を排除すること
-- 元の指示への回答として完結していること
-- 日本語で明確かつ読みやすく記述すること`;
+const AGGREGATE_SYSTEM = `あなたはAI Companyの「進行役（Manager）」です。Workerの成果を集約します。
+
+【集約のルール】
+- 各Workerの結果を矛盾なく統合する
+- 重複情報を排除し、補完関係にある情報は統合する
+- 元の指示への回答として完結している内容にする
+- 日本語で明確かつ読みやすく記述する
+- 構造化された形式（見出し・箇条書き）で整理する`;
 
 /**
  * Manager: 指示をサブタスクに分解し、各タスクに担当 Worker ID を割り当てる。
  */
 export async function decomposeTasks(agent: Agent, instruction: string): Promise<Task[]> {
-  agent.log("タスクを分解しています...");
+  agent.log("指示を分析しています。最適なタスク構成を考えます...");
 
   const text = await agent.think(DECOMPOSE_SYSTEM, instruction);
 
@@ -39,12 +43,15 @@ export async function decomposeTasks(agent: Agent, instruction: string): Promise
         description: t.description,
         criteria: t.criteria,
       }));
-      agent.log(`${tasks.length}個のタスクに分解しました`);
+      agent.log(`${tasks.length}個のタスクに分解しました。各Workerに割り当てます`);
+      tasks.forEach((t, i) => {
+        agent.log(`Worker ${i + 1} → ${t.description.slice(0, 50)}...`);
+      });
       return tasks;
     }
   } catch { /* fallback */ }
 
-  agent.log("1個のタスクとして処理します");
+  agent.log("1つのタスクとして進行します");
   return [{ id: "task-1", workerId: WORKER_IDS[0], description: instruction, criteria: "指示の内容を完全にカバーし、具体的かつ正確であること" }];
 }
 
@@ -56,7 +63,7 @@ export async function aggregateResults(
   instruction: string,
   results: { task: Task; output: string }[]
 ): Promise<string> {
-  agent.log("Workerの結果を集約しています...");
+  agent.log("全Workerの成果物を確認しています...");
 
   const resultsText = results
     .map((r, i) => `[タスク${i + 1}: ${r.task.description}]\n${r.output}`)
@@ -64,10 +71,10 @@ export async function aggregateResults(
 
   const text = await agent.think(
     AGGREGATE_SYSTEM,
-    `元の指示: ${instruction}\n\n各タスクの結果:\n\n${resultsText}\n\nこれらを統合した包括的な回答を作成してください。`,
-    2048
+    `元の指示: ${instruction}\n\n各Workerの成果:\n\n${resultsText}\n\nこれらを統合した完成回答を作成してください。`,
+    3000
   );
 
-  agent.log("集約完了。CEOに提出します");
+  agent.log("集約完了。CEOに最終判断を依頼します");
   return text;
 }

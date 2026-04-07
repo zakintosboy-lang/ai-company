@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import type { TargetAndTransition } from "framer-motion";
 
-type AgentRole   = "ceo" | "manager" | "worker" | "reviewer" | "system";
+type AgentRole   = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "designer" | "system";
 type AgentStatus = "idle" | "thinking" | "reviewing" | "done" | "waiting";
 
 interface Props {
@@ -46,6 +46,18 @@ const P = {
   rH2: "#064e3b",
   rA: "#6ee7b7",
   rC: "#047857", // クリップボード
+
+  // Researcher（シアン）
+  reH: "#0e7490",
+  reH2: "#155e75",
+  reA: "#67e8f9",
+  reB: "#0891b2", // 本
+
+  // Designer（ピンク）
+  dH: "#9d174d",
+  dH2: "#831843",
+  dA: "#f9a8d4",
+  dP: "#ec4899", // パレット
 
   // System
   sys: "#475569",
@@ -136,6 +148,46 @@ const REVIEWER_PIXELS: PixelGrid = [
   [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
 ];
 
+// Researcher: シアンコート + 本
+const RESEARCHER_PIXELS: PixelGrid = [
+  [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  [null,null,null,P.bk,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.bk,null,null,null,null],
+  [null,null,P.bk,P.reA,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.reA,P.bk,null,null,null],
+  [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
+  [null,null,P.bk,P.sk,P.ey,P.sk,P.sk,P.sk,P.sk,P.ey,P.sk,P.sk,P.bk,null,null,null],
+  [null,null,P.bk,P.sk,P.sk,P.sk,P.reA,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
+  [null,null,P.bk,P.sk,P.sk,P.sk2,P.sk,P.bk,P.sk2,P.sk,P.sk,P.sk,P.bk,null,null,null],
+  [null,null,null,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,null,null,null,null],
+  [null,P.bk,P.reA,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reA,P.bk,null,null],
+  [null,P.reH,P.reH,P.reH,P.reB,P.reA,P.reB,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,null,null],
+  [null,P.reH,P.reA,P.reH,P.reB,P.reB,P.reB,P.reH,P.reH,P.reH,P.reH,P.reH,P.reA,P.reH,null,null],
+  [null,P.reH2,P.reH,P.reH,P.reB,P.reA,P.reB,null,null,null,null,P.reH,P.reH,P.reH2,null,null],
+  [null,null,P.reH2,P.reH,null,null,null,null,null,null,null,P.reH,P.reH2,null,null,null],
+  [null,null,P.reH,P.reH2,null,null,null,null,null,null,null,P.reH2,P.reH,null,null,null],
+  [null,null,P.reH,P.reH,null,null,null,null,null,null,null,null,P.reH,null,null,null],
+  [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+];
+
+// Designer: ピンクコート + パレット
+const DESIGNER_PIXELS: PixelGrid = [
+  [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  [null,null,null,P.bk,P.dH,P.dA,P.dH,P.dH,P.dH,P.dA,P.dH,P.bk,null,null,null,null],
+  [null,null,P.bk,P.dA,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.dA,P.bk,null,null,null],
+  [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
+  [null,null,P.bk,P.sk,P.ey,P.sk,P.sk,P.sk,P.sk,P.ey,P.sk,P.sk,P.bk,null,null,null],
+  [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.dA,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
+  [null,null,P.bk,P.sk,P.sk,P.sk2,P.sk,P.bk,P.sk2,P.sk,P.dP,P.sk,P.bk,null,null,null],
+  [null,null,null,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,null,null,null,null],
+  [null,P.bk,P.dA,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dA,P.bk,null,null],
+  [null,P.dH,P.dH,P.dH,P.dP,P.dA,P.dP,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,null,null],
+  [null,P.dH,P.dA,P.dH,P.dP,P.dP,P.dA,P.dH,P.dH,P.dH,P.dH,P.dH,P.dA,P.dH,null,null],
+  [null,P.dH2,P.dH,P.dH,null,P.dA,null,null,null,null,null,P.dH,P.dH,P.dH2,null,null],
+  [null,null,P.dH2,P.dH,null,null,null,null,null,null,null,P.dH,P.dH2,null,null,null],
+  [null,null,P.dH,P.dH2,null,null,null,null,null,null,null,P.dH2,P.dH,null,null,null],
+  [null,null,P.dH,P.dH,null,null,null,null,null,null,null,null,P.dH,null,null,null],
+  [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+];
+
 // ─── ピクセルグリッド描画 ────────────────────────────────────────
 
 function PixelGrid({ pixels, cellSize }: { pixels: PixelGrid; cellSize: number }) {
@@ -186,10 +238,12 @@ const WAITING_ANIM: TargetAndTransition = {
 
 export default function PixelCharacter({ role, status, size = 3 }: Props) {
   const pixelMap: Partial<Record<AgentRole, PixelGrid>> = {
-    ceo:      CEO_PIXELS,
-    manager:  MANAGER_PIXELS,
-    worker:   WORKER_PIXELS,
-    reviewer: REVIEWER_PIXELS,
+    ceo:        CEO_PIXELS,
+    manager:    MANAGER_PIXELS,
+    worker:     WORKER_PIXELS,
+    reviewer:   REVIEWER_PIXELS,
+    researcher: RESEARCHER_PIXELS,
+    designer:   DESIGNER_PIXELS,
   };
 
   const pixels = pixelMap[role] ?? CEO_PIXELS;

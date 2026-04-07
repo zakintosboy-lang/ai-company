@@ -1,4 +1,66 @@
-import type { StructuredOutput, OutputSection, HighlightVariant } from "@/agents/types";
+import type { StructuredOutput, OutputSection, HighlightVariant, DesignSpec } from "@/agents/types";
+
+// ── Phase 6 デザイン指示パネル ────────────────────────────────
+function DesignSpecPanel({ spec, accentColor }: { spec: DesignSpec; accentColor: string }) {
+  return (
+    <div className="or-section-card" style={{ marginTop: 8 }}>
+      <div className="or-section-header">
+        <span className="or-section-icon">🎨</span>
+        <h2 className="or-section-title" style={{ color: accentColor }}>Phase 6 — Canva デザイン指示</h2>
+      </div>
+      <div className="or-section-body">
+        <p style={{ fontSize: 13, color: "rgba(28,24,20,0.6)", marginBottom: 12 }}>{spec.concept}</p>
+
+        {/* カラーパレット */}
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: accentColor, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>カラーパレット</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {Object.entries(spec.colors).map(([key, hex]) => (
+              <div key={key} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 20, height: 20, borderRadius: 4, background: hex, border: "1px solid rgba(0,0,0,0.1)" }} />
+                <span style={{ fontSize: 11, color: "rgba(28,24,20,0.55)" }}>{key}: {hex}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* フォント */}
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: accentColor, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>フォント</div>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            {Object.entries(spec.fonts).map(([key, font]) => (
+              <span key={key} style={{ fontSize: 12, color: "rgba(28,24,20,0.65)" }}>
+                <span style={{ fontWeight: 600 }}>{key}:</span> {font}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* レイアウト */}
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: accentColor, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>ページ構成</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {spec.layout.map((page) => (
+              <div key={page.page} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "6px 10px", background: accentColor + "08", borderRadius: 6 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: accentColor, minWidth: 24 }}>P{page.page}</span>
+                <div>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(28,24,20,0.75)" }}>{page.name}</span>
+                  <div style={{ fontSize: 11, color: "rgba(28,24,20,0.45)", marginTop: 2 }}>{page.elements.join(" · ")}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Canva 手順 */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: accentColor, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Canva 作成手順</div>
+          <div style={{ fontSize: 12, color: "rgba(28,24,20,0.65)", lineHeight: 1.8, whiteSpace: "pre-line" }}>{spec.canvaInstructions}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── 質問タイプ設定 ─────────────────────────────────────────────
 const TYPE_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
@@ -59,6 +121,9 @@ export default function OutputRenderer({ data }: { data: StructuredOutput }) {
           <SectionCard key={i} section={section} accentColor={cfg.color} />
         ))}
       </div>
+
+      {/* ── 4. Phase 6 デザイン指示 ── */}
+      {data.designSpec && <DesignSpecPanel spec={data.designSpec} accentColor={cfg.color} />}
 
     </article>
   );

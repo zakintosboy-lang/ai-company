@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import PixelCharacter from "./PixelCharacter";
 
-type AgentRole   = "ceo" | "manager" | "worker" | "reviewer" | "system";
+type AgentRole   = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "designer" | "system";
 type AgentStatus = "idle" | "thinking" | "reviewing" | "done" | "waiting";
 
 interface LogEntry  { time: string; role: AgentRole; message: string; }
@@ -50,6 +50,20 @@ const ROLE_CONFIG: Record<AgentRole, {
     glow: "rgba(52,211,153,0.35)",
     bubbleBg: "rgba(6,46,32,0.85)",
     bubbleBorder: "rgba(52,211,153,0.5)",
+  },
+  researcher: {
+    jaLabel: "リサーチ担当",
+    color: "#22d3ee",
+    glow: "rgba(34,211,238,0.35)",
+    bubbleBg: "rgba(8,60,80,0.85)",
+    bubbleBorder: "rgba(34,211,238,0.5)",
+  },
+  designer: {
+    jaLabel: "デザイン担当",
+    color: "#f472b6",
+    glow: "rgba(244,114,182,0.35)",
+    bubbleBg: "rgba(80,10,50,0.85)",
+    bubbleBorder: "rgba(244,114,182,0.5)",
   },
   system: {
     jaLabel: "システム",
@@ -296,18 +310,20 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
 
 // ─── メイン会議室 ────────────────────────────────────────────────
 
-export default function MeetingRoom({ logs, agents, isRunning, output: hasOutput }: Props) {
-  // 各エージェントの最新メッセージ
+export default function MeetingRoom({ logs, agents, isRunning }: Props) {
+  // 各エージェントの最新メッセージ（idごとに追跡）
   const agentMessages: Partial<Record<string, string>> = {};
   for (const log of logs) {
     if (log.role !== "system") agentMessages[log.role] = log.message;
   }
 
   const getAgent = (id: string) => agents.find(a => a.id === id);
-  const ceo      = getAgent("ceo");
-  const manager  = getAgent("manager");
-  const workers  = ["worker-1", "worker-2", "worker-3"].map(id => getAgent(id)).filter(Boolean) as AgentInfo[];
-  const reviewer = getAgent("reviewer");
+  const ceo        = getAgent("ceo");
+  const manager    = getAgent("manager");
+  const workers    = ["worker-1", "worker-2", "worker-3"].map(id => getAgent(id)).filter(Boolean) as AgentInfo[];
+  const reviewer   = getAgent("reviewer");
+  const researcher = getAgent("researcher");
+  const designer   = getAgent("designer");
 
   // プレースホルダー
   const ph = (id: string, role: AgentRole): AgentInfo => ({
@@ -384,12 +400,17 @@ export default function MeetingRoom({ logs, agents, isRunning, output: hasOutput
           />
         </div>
 
-        {/* Row 2: Manager + Reviewer（左右） */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingInline: 20 }}>
+        {/* Row 2: Manager + Researcher + Reviewer（3列） */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingInline: 12 }}>
           <CharacterUnit
             agent={manager ?? ph("manager", "manager")}
             showBubble
             latestMessage={agentMessages["manager"]}
+          />
+          <CharacterUnit
+            agent={researcher ?? ph("researcher", "researcher")}
+            showBubble
+            latestMessage={agentMessages["researcher"]}
           />
           <CharacterUnit
             agent={reviewer ?? ph("reviewer", "reviewer")}
@@ -398,8 +419,8 @@ export default function MeetingRoom({ logs, agents, isRunning, output: hasOutput
           />
         </div>
 
-        {/* Row 3: Workers（中央下・横並び） */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 28 }}>
+        {/* Row 3: Workers + Designer（横並び） */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 20 }}>
           {(workers.length > 0 ? workers : [ph("worker-1", "worker"), ph("worker-2", "worker"), ph("worker-3", "worker")])
             .map((agent, i) => (
               <CharacterUnit
@@ -409,6 +430,11 @@ export default function MeetingRoom({ logs, agents, isRunning, output: hasOutput
                 latestMessage={i === 0 ? agentMessages["worker"] : undefined}
               />
             ))}
+          <CharacterUnit
+            agent={designer ?? ph("designer", "designer")}
+            showBubble
+            latestMessage={agentMessages["designer"]}
+          />
         </div>
       </div>
 

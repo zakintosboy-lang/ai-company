@@ -99,6 +99,36 @@ export const AGENT_CONFIGS: AgentConfig[] = [
       "指定された評価基準（criteria）を満たしていること",
     ],
   },
+  {
+    id: "researcher",
+    role: "researcher",
+    name: "Researcher",
+    model: {
+      provider: "claude",
+      modelId: "claude-sonnet-4-6",
+      displayName: "Claude Sonnet 4.6",
+    },
+    criteria: [
+      "最新情報・トレンドを網羅していること",
+      "複数の視点・比較を含むこと",
+      "情報の根拠・信頼性を明示すること",
+    ],
+  },
+  {
+    id: "designer",
+    role: "designer",
+    name: "Designer",
+    model: {
+      provider: "claude",
+      modelId: "claude-haiku-4-5-20251001",
+      displayName: "Claude Haiku 4.5",
+    },
+    criteria: [
+      "Canvaで再現可能な具体的なデザイン仕様であること",
+      "カラー・フォント・レイアウトが明確であること",
+      "PDF化を前提とした設計であること",
+    ],
+  },
 ];
 
 export const WORKER_IDS = ["worker-1", "worker-2", "worker-3"] as const;

@@ -1,4 +1,4 @@
-export type AgentRole = "ceo" | "manager" | "worker" | "reviewer" | "system";
+export type AgentRole = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "designer" | "system";
 export type AgentStatus = "idle" | "thinking" | "reviewing" | "done" | "waiting";
 export type ModelProvider = "claude" | "openai" | "gemini";
 
@@ -95,6 +95,14 @@ export interface CanvaData {
   slides: CanvaSlide[];
 }
 
+export interface DesignSpec {
+  concept: string;
+  colors: { primary: string; secondary: string; accent: string; background: string; text: string };
+  fonts: { heading: string; body: string; accent: string };
+  layout: { page: number; name: string; elements: string[] }[];
+  canvaInstructions: string;
+}
+
 export interface StructuredOutput {
   questionType: QuestionType;
   title: string;
@@ -102,5 +110,6 @@ export interface StructuredOutput {
   keyPoints: string[];   // 重要ポイント 3 つ
   sections: OutputSection[];
   canvaData?: CanvaData; // Canva 連携用（将来拡張）
+  designSpec?: DesignSpec; // Phase 6 デザイン指示
   rawText?: string;
 }
