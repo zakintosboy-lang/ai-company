@@ -9,6 +9,7 @@ import type {
 } from "@/agents/types";
 import OutputRenderer from "./components/OutputRenderer";
 import AnimatedAgentCard from "./components/AnimatedAgentCard";
+import ConversationView from "./components/ConversationView";
 
 // ── Agent UI 用型 ──────────────────────────────────────────────
 type AgentRole     = "ceo" | "manager" | "worker" | "reviewer" | "system";
@@ -759,27 +760,26 @@ export default function Home() {
           {/* Tabs */}
           <div className="panel-tabs">
             <button className={`panel-tab ${activeTab==="logs"?"active":""}`} onClick={() => setActiveTab("logs")}>
-              実行ログ {logs.length > 0 && `(${logs.length})`}
+              会話 {logs.length > 0 && `(${logs.length})`}
             </button>
             <button className={`panel-tab ${activeTab==="output"?"active":""}`} onClick={() => setActiveTab("output")}>
-              最終成果物 {output && "✓"}
+              成果物 {output && "✓"}
             </button>
           </div>
 
-          {/* Log */}
+          {/* Conversation */}
           {activeTab === "logs" && (
-            <div className="log-console">
-              {logs.length === 0
-                ? <div className="log-empty">実行ボタンを押すとログが表示されます</div>
-                : logs.map((e, i) => (
-                    <div key={i} className="log-line">
-                      <span className="log-time">{e.time}</span>
-                      <span className={`log-badge log-badge--${e.role}`}>{ROLE_LABEL[e.role]}</span>
-                      <span className={`log-text log-text--${e.role}`}>{e.message}</span>
-                    </div>
-                  ))
-              }
-              <div ref={logBottomRef} />
+            <div style={{ flex: 1, overflow: "hidden" }}>
+              <ConversationView
+                logs={logs}
+                agents={Object.values(agents).map(c => ({
+                  id: c.config.id,
+                  role: c.config.role,
+                  name: c.config.name,
+                  status: c.status,
+                }))}
+                isRunning={isRunning}
+              />
             </div>
           )}
 
