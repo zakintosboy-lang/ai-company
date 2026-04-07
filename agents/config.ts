@@ -12,8 +12,8 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     name: "CEO",
     model: {
       provider: "claude",
-      modelId: "claude-opus-4-6",
-      displayName: "Claude Opus 4.6",
+      modelId: "claude-opus-4-5",
+      displayName: "Claude Opus 4.5",
     },
     criteria: [
       "ユーザーの指示を完全に満たしているか",
@@ -28,8 +28,8 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     name: "Manager",
     model: {
       provider: "claude",
-      modelId: "claude-sonnet-4-6",
-      displayName: "Claude Sonnet 4.6",
+      modelId: "claude-sonnet-4-5",
+      displayName: "Claude Sonnet 4.5",
     },
     criteria: [
       "指示を適切な数のサブタスクに分解できているか",
@@ -44,8 +44,8 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     name: "Worker 1",
     model: {
       provider: "gemini",
-      modelId: "gemini-2.0-flash",
-      displayName: "Gemini 2.0 Flash",
+      modelId: "gemini-2.5-flash",
+      displayName: "Gemini 2.5 Flash",
     },
     criteria: [
       "回答が具体的かつ正確であること",
@@ -59,8 +59,8 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     name: "Worker 2",
     model: {
       provider: "gemini",
-      modelId: "gemini-2.0-flash",
-      displayName: "Gemini 2.0 Flash",
+      modelId: "gemini-2.5-flash",
+      displayName: "Gemini 2.5 Flash",
     },
     criteria: [
       "回答が具体的かつ正確であること",
@@ -74,8 +74,8 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     name: "Worker 3",
     model: {
       provider: "gemini",
-      modelId: "gemini-2.0-flash",
-      displayName: "Gemini 2.0 Flash",
+      modelId: "gemini-2.5-flash",
+      displayName: "Gemini 2.5 Flash",
     },
     criteria: [
       "回答が具体的かつ正確であること",
@@ -89,8 +89,8 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     name: "Reviewer",
     model: {
       provider: "claude",
-      modelId: "claude-sonnet-4-6",
-      displayName: "Claude Sonnet 4.6",
+      modelId: "claude-sonnet-4-5",
+      displayName: "Claude Sonnet 4.5",
     },
     criteria: [
       "回答が明確で具体的であること",
@@ -105,8 +105,8 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     name: "Researcher",
     model: {
       provider: "openai",
-      modelId: "gpt-4o",
-      displayName: "GPT-4o",
+      modelId: "gpt-5.4",
+      displayName: "GPT-5.4",
     },
     criteria: [
       "最新情報・トレンドを網羅していること",
@@ -120,8 +120,8 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     name: "Designer",
     model: {
       provider: "gemini",
-      modelId: "gemini-2.0-flash",
-      displayName: "Gemini 2.0 Flash",
+      modelId: "gemini-2.5-flash",
+      displayName: "Gemini 2.5 Flash",
     },
     criteria: [
       "Canvaで再現可能な具体的なデザイン仕様であること",
