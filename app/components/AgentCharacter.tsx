@@ -8,436 +8,563 @@ interface Props {
   status: AgentStatus;
 }
 
-// ─── アニメーション variant 定義 ──────────────────────────────────
-
 import type { Transition } from "framer-motion";
 
 type AnimState = { scaleY?: number[]; y?: number[]; rotate?: number[]; transition?: Transition };
 
 const breathe: Record<AgentStatus, AnimState> = {
-  idle:      { scaleY: [1, 1.03, 1], y: [0, -1, 0],   transition: { duration: 3.5, repeat: Infinity, ease: "easeInOut" as const } },
-  thinking:  { y: [0, -4, 0],                           transition: { duration: 0.6, repeat: Infinity, ease: "easeInOut" as const } },
-  done:      { y: [0, -10, 0],                          transition: { duration: 0.4, ease: "backOut" as const, times: [0, 0.4, 1] } },
-  waiting:   { scaleY: [1, 1.015, 1],                   transition: { duration: 4,   repeat: Infinity, ease: "easeInOut" as const } },
-  reviewing: { rotate: [-1, 1, -1],                     transition: { duration: 0.8, repeat: Infinity, ease: "easeInOut" as const } },
+  idle:      { scaleY: [1, 1.025, 1], y: [0, -1, 0],  transition: { duration: 3.5, repeat: Infinity, ease: "easeInOut" as const } },
+  thinking:  { y: [0, -5, 0],                           transition: { duration: 0.7, repeat: Infinity, ease: "easeInOut" as const } },
+  done:      { y: [0, -12, 0],                          transition: { duration: 0.4, ease: "backOut" as const } },
+  waiting:   { scaleY: [1, 1.01, 1],                    transition: { duration: 4,   repeat: Infinity, ease: "easeInOut" as const } },
+  reviewing: { rotate: [-1, 1, -1],                     transition: { duration: 1,   repeat: Infinity, ease: "easeInOut" as const } },
 };
 
-// ─── CEO キャラクター ──────────────────────────────────────────────
+// ─── 共通パーツ ────────────────────────────────────────────────────
+
+/** グリッチ風背景ジオメトリ */
+function GlitchBg({ color1, color2 }: { color1: string; color2: string }) {
+  return (
+    <g opacity="0.18">
+      <rect x="2"  y="70" width="14" height="14" rx="1" fill={color1} transform="rotate(15 9 77)" />
+      <rect x="62" y="75" width="10" height="10" rx="1" fill={color2} transform="rotate(-10 67 80)" />
+      <rect x="55" y="10" width="8"  height="8"  rx="1" fill={color1} transform="rotate(20 59 14)" />
+      <rect x="4"  y="14" width="6"  height="6"  rx="1" fill={color2} transform="rotate(-15 7 17)" />
+      <rect x="30" y="88" width="20" height="4"  rx="1" fill={color1} opacity="0.5" />
+      <rect x="10" y="50" width="4"  height="18" rx="1" fill={color2} opacity="0.4" />
+      <rect x="64" y="42" width="4"  height="14" rx="1" fill={color1} opacity="0.4" />
+    </g>
+  );
+}
+
+/** アニメ大目（グロー付き） */
+function AnimeEye({
+  cx, cy, pupilColor, glowColor, lidAngle = 0,
+}: {
+  cx: number; cy: number; pupilColor: string; glowColor: string; lidAngle?: number;
+}) {
+  return (
+    <g>
+      {/* グロー */}
+      <ellipse cx={cx} cy={cy} rx="5.5" ry="5" fill={glowColor} opacity="0.25" />
+      {/* 白目 */}
+      <ellipse cx={cx} cy={cy} rx="4.5" ry="4.2" fill="white" />
+      {/* 瞳 */}
+      <ellipse cx={cx} cy={cy} rx="3"   ry="3.2" fill={pupilColor} />
+      {/* ハイライト */}
+      <circle  cx={cx + 1.2} cy={cy - 1.2} r="1"   fill="white" opacity="0.9" />
+      <circle  cx={cx - 1}   cy={cy + 1}   r="0.5" fill="white" opacity="0.5" />
+      {/* 上まぶた */}
+      <path
+        d={`M ${cx - 4.5} ${cy - 1} Q ${cx} ${cy - 6 + lidAngle} ${cx + 4.5} ${cy - 1}`}
+        fill="#1a0a2e" stroke="none"
+      />
+      {/* アイライン */}
+      <path
+        d={`M ${cx - 4.5} ${cy - 1} Q ${cx} ${cy - 5.5 + lidAngle} ${cx + 4.5} ${cy - 1}`}
+        stroke={pupilColor} strokeWidth="0.8" fill="none" opacity="0.7"
+      />
+    </g>
+  );
+}
+
+/** 完了チェックバッジ */
+function DoneBadge({ x, y, color }: { x: number; y: number; color: string }) {
+  return (
+    <motion.g
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 500, damping: 18 }}
+      style={{ transformOrigin: `${x}px ${y}px` }}
+    >
+      <circle cx={x} cy={y} r="9" fill={color} />
+      <circle cx={x} cy={y} r="9" fill="none" stroke="white" strokeWidth="0.8" opacity="0.4" />
+      <path d={`M${x-4} ${y} L${x-1} ${y+3} L${x+5} ${y-4}`}
+        stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </motion.g>
+  );
+}
+
+// ─── CEO ─────────────────────────────────────────────────────────
+// 銀髪ロング・紫グロー目・黒テックスーツ・ホログラムパネル
 
 function CeoCharacter({ status }: { status: AgentStatus }) {
   const isActive = status === "thinking";
   const isDone   = status === "done";
 
   return (
-    <svg viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* グロー背景 */}
-      <circle cx="40" cy="55" r="30" fill="url(#ceoGlow)" opacity="0.25" />
-      <defs>
-        <radialGradient id="ceoGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#a855f7" />
-          <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
-        </radialGradient>
-      </defs>
+    <svg viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: "visible" }}>
+      <GlitchBg color1="#a855f7" color2="#ec4899" />
 
-      {/* スーツ本体 */}
-      <rect x="18" y="58" width="44" height="34" rx="8" fill="url(#ceoSuit)" />
+      {/* 後ろ髪 */}
+      <path d="M22 38 Q18 60 20 85 Q28 90 30 85 Q28 65 32 50 Z" fill="url(#ceoHairBack)" />
+      <path d="M58 38 Q62 60 60 85 Q52 90 50 85 Q52 65 48 50 Z" fill="url(#ceoHairBack)" />
       <defs>
-        <linearGradient id="ceoSuit" x1="18" y1="58" x2="62" y2="92" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#4c1d95" />
-          <stop offset="1" stopColor="#6d28d9" />
+        <linearGradient id="ceoHairBack" x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#c4b5fd" />
+          <stop offset="1" stopColor="#7c3aed" />
         </linearGradient>
       </defs>
 
-      {/* ネクタイ */}
-      <path d="M38 62 L40 58 L42 62 L41 72 L40 74 L39 72 Z" fill="#c4b5fd" />
+      {/* 首 */}
+      <rect x="35" y="52" width="10" height="10" rx="2" fill="#fde8c8" />
 
-      {/* ラペル */}
-      <path d="M18 62 Q28 60 35 65" stroke="#7c3aed" strokeWidth="1.5" fill="none" />
-      <path d="M62 62 Q52 60 45 65" stroke="#7c3aed" strokeWidth="1.5" fill="none" />
+      {/* テックスーツ（胸） */}
+      <path d="M16 62 Q20 56 40 54 Q60 56 64 62 L66 92 Q40 96 14 92 Z" fill="url(#ceoSuit)" />
+      <defs>
+        <linearGradient id="ceoSuit" x1="16" y1="54" x2="66" y2="92" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#0f0624" />
+          <stop offset="1" stopColor="#1e0a40" />
+        </linearGradient>
+      </defs>
+
+      {/* スーツライン装飾 */}
+      <path d="M40 56 L40 80" stroke="#a855f7" strokeWidth="0.8" opacity="0.6" />
+      <path d="M30 62 L36 68 M50 62 L44 68" stroke="#c4b5fd" strokeWidth="0.6" opacity="0.5" />
+      <rect x="33" y="72" width="14" height="8" rx="2" fill="#2d1460" stroke="#a855f7" strokeWidth="0.6" />
+      <motion.rect x="35" y="74" width="10" height="4" rx="1" fill="#a855f7" opacity="0.4"
+        animate={isActive ? { opacity: [0.2, 0.8, 0.2] } : {}}
+        transition={{ duration: 0.8, repeat: Infinity }}
+      />
 
       {/* 頭 */}
-      <circle cx="40" cy="38" r="16" fill="url(#ceoSkin)" />
+      <circle cx="40" cy="36" r="17" fill="url(#ceoSkin)" />
       <defs>
-        <linearGradient id="ceoSkin" x1="28" y1="24" x2="54" y2="52" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#fde68a" />
-          <stop offset="1" stopColor="#f59e0b" />
+        <linearGradient id="ceoSkin" x1="26" y1="22" x2="54" y2="52" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#ffe4c4" />
+          <stop offset="1" stopColor="#f5c49a" />
         </linearGradient>
       </defs>
 
-      {/* 髪 */}
-      <path d="M26 34 Q26 20 40 20 Q54 20 54 34 Q50 26 40 26 Q30 26 26 34 Z" fill="#1c1917" />
-      <path d="M54 34 Q56 28 54 24 Q58 26 58 34 Z" fill="#1c1917" />
+      {/* 前髪 */}
+      <path d="M23 32 Q24 18 40 18 Q56 18 57 32 Q52 22 40 22 Q28 22 23 32 Z" fill="url(#ceoHair)" />
+      <path d="M23 32 Q20 28 22 36" fill="#d8b4fe" />
+      <path d="M57 32 Q60 28 58 36" fill="#d8b4fe" />
+      <path d="M28 22 Q30 14 36 20" fill="#c4b5fd" opacity="0.8" />
+      <path d="M52 22 Q50 14 44 20" fill="#e9d5ff" opacity="0.7" />
+      {/* ピンクメッシュ */}
+      <path d="M38 18 Q42 14 46 20 Q43 18 40 20 Q39 19 38 18 Z" fill="#f472b6" opacity="0.7" />
+      <defs>
+        <linearGradient id="ceoHair" x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#e9d5ff" />
+          <stop offset="1" stopColor="#a855f7" />
+        </linearGradient>
+      </defs>
 
-      {/* 目（クールな半目） */}
-      <ellipse cx="34" cy="38" rx="3" ry="2" fill="#1c1917" />
-      <ellipse cx="46" cy="38" rx="3" ry="2" fill="#1c1917" />
-      <line x1="31" y1="35.5" x2="37" y2="35.5" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="43" y1="35.5" x2="49" y2="35.5" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round" />
+      {/* ヘッドフォン */}
+      <path d="M22 34 Q20 24 40 22 Q60 24 58 34" stroke="#7c3aed" strokeWidth="3" fill="none" />
+      <rect x="18" y="32" width="7" height="10" rx="3" fill="#4c1d95" stroke="#a855f7" strokeWidth="0.8" />
+      <rect x="55" y="32" width="7" height="10" rx="3" fill="#4c1d95" stroke="#a855f7" strokeWidth="0.8" />
+      <motion.rect x="19" y="34" width="5" height="6" rx="2" fill="#a855f7" opacity="0.6"
+        animate={isActive ? { opacity: [0.3, 1, 0.3] } : {}}
+        transition={{ duration: 0.6, repeat: Infinity }}
+      />
 
-      {/* 口 */}
-      <path d="M37 43 Q40 45 43 43" stroke="#c2410c" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+      {/* 目 */}
+      <AnimeEye cx={33} cy={37} pupilColor="#7c3aed" glowColor="#a855f7" />
+      <AnimeEye cx={47} cy={37} pupilColor="#7c3aed" glowColor="#a855f7" />
 
-      {/* UIパネル（左手） */}
+      {/* 鼻 */}
+      <path d="M39 42 Q40 44 41 42" stroke="#d4a06a" strokeWidth="0.7" fill="none" />
+
+      {/* 口（クール） */}
+      <path d="M36 46 Q40 47.5 44 46" stroke="#e07070" strokeWidth="1" fill="none" strokeLinecap="round" />
+
+      {/* ほっぺ */}
+      <circle cx="29" cy="43" r="3.5" fill="#f9a8d4" opacity="0.35" />
+      <circle cx="51" cy="43" r="3.5" fill="#f9a8d4" opacity="0.35" />
+
+      {/* ホログラムパネル（右） */}
       <motion.g
-        animate={isActive ? { opacity: [0.6, 1, 0.6], x: [-1, 1, -1] } : { opacity: 0.7 }}
+        animate={isActive ? { x: [0, 1, 0], opacity: [0.7, 1, 0.7] } : { opacity: 0.6 }}
         transition={isActive ? { duration: 1.2, repeat: Infinity } : {}}
       >
-        <rect x="4" y="60" width="16" height="20" rx="3" fill="#1e1b4b" stroke="#a855f7" strokeWidth="1" />
-        <line x1="7" y1="65" x2="17" y2="65" stroke="#a855f7" strokeWidth="0.8" opacity="0.8" />
-        <line x1="7" y1="68" x2="14" y2="68" stroke="#7c3aed" strokeWidth="0.8" opacity="0.6" />
-        <line x1="7" y1="71" x2="16" y2="71" stroke="#a855f7" strokeWidth="0.8" opacity="0.8" />
-        <line x1="7" y1="74" x2="13" y2="74" stroke="#7c3aed" strokeWidth="0.8" opacity="0.6" />
+        <rect x="60" y="56" width="18" height="22" rx="3" fill="#0f0624" stroke="#a855f7" strokeWidth="1" opacity="0.9" />
+        {[0,1,2,3].map(i => (
+          <motion.rect key={i} x="62" y={60 + i * 4} width={8 + (i % 2) * 4} height="2" rx="1" fill="#a855f7" opacity="0.7"
+            animate={isActive ? { width: [8 + (i%2)*4, 12 + (i%2)*2, 8 + (i%2)*4] } : {}}
+            transition={{ duration: 0.6 + i * 0.2, repeat: Infinity }}
+          />
+        ))}
       </motion.g>
 
-      {/* 右腕 */}
-      <path d="M62 65 Q70 62 72 68 Q70 74 62 78" stroke="#6d28d9" strokeWidth="6" strokeLinecap="round" fill="none" />
-
-      {/* 完了チェック */}
-      {isDone && (
-        <motion.g
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 400, damping: 15 }}
-        >
-          <circle cx="64" cy="20" r="10" fill="#a855f7" />
-          <path d="M58 20 L62 24 L70 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </motion.g>
-      )}
-
-      {/* 思考中：光エフェクト */}
+      {/* アクティブグロー */}
       {isActive && (
-        <motion.circle
-          cx="40" cy="38"
-          r="18"
-          stroke="#a855f7"
-          strokeWidth="1.5"
-          fill="none"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: [0, 0.6, 0], scale: [0.9, 1.15, 0.9] }}
-          transition={{ duration: 1.8, repeat: Infinity }}
+        <motion.circle cx="40" cy="36" r="19"
+          stroke="#a855f7" strokeWidth="1.5" fill="none"
+          animate={{ opacity: [0, 0.5, 0], scale: [0.95, 1.1, 0.95] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          style={{ transformOrigin: "40px 36px" }}
         />
       )}
+
+      {isDone && <DoneBadge x={66} y={18} color="#7c3aed" />}
     </svg>
   );
 }
 
-// ─── Manager キャラクター ─────────────────────────────────────────
+// ─── Manager ──────────────────────────────────────────────────────
+// 青髪ショート・水色目・メガネ・データタブレット
 
 function ManagerCharacter({ status }: { status: AgentStatus }) {
   const isActive = status === "thinking" || status === "reviewing";
   const isDone   = status === "done";
 
   return (
-    <svg viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="40" cy="55" r="28" fill="url(#mgGlow)" opacity="0.2" />
-      <defs>
-        <radialGradient id="mgGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0" />
-        </radialGradient>
-      </defs>
+    <svg viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: "visible" }}>
+      <GlitchBg color1="#38bdf8" color2="#818cf8" />
 
-      {/* 白衣 */}
-      <rect x="16" y="56" width="48" height="36" rx="10" fill="url(#mgCoat)" />
+      {/* 後ろ髪 */}
+      <path d="M24 36 Q22 48 24 58 Q28 60 30 58 Q28 48 30 40 Z" fill="#0ea5e9" />
+      <path d="M56 36 Q58 48 56 58 Q52 60 50 58 Q52 48 50 40 Z" fill="#0ea5e9" />
+
+      {/* 首 */}
+      <rect x="35" y="52" width="10" height="10" rx="2" fill="#ffe4c4" />
+
+      {/* テックコート */}
+      <path d="M16 62 Q20 55 40 54 Q60 55 64 62 L66 92 Q40 97 14 92 Z" fill="url(#mgCoat)" />
       <defs>
-        <linearGradient id="mgCoat" x1="16" y1="56" x2="64" y2="92" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#0c4a6e" />
-          <stop offset="1" stopColor="#0369a1" />
+        <linearGradient id="mgCoat" x1="16" y1="54" x2="64" y2="92" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#082f49" />
+          <stop offset="1" stopColor="#0c4a6e" />
         </linearGradient>
       </defs>
-
-      {/* 胸ポケット */}
-      <rect x="42" y="62" width="12" height="8" rx="2" fill="#075985" stroke="#38bdf8" strokeWidth="0.8" />
-      <line x1="44" y1="65" x2="52" y2="65" stroke="#38bdf8" strokeWidth="0.6" />
-      <line x1="44" y1="67" x2="50" y2="67" stroke="#38bdf8" strokeWidth="0.6" />
+      <path d="M40 56 L40 92" stroke="#38bdf8" strokeWidth="0.6" opacity="0.4" />
+      <path d="M16 70 Q40 66 64 70" stroke="#38bdf8" strokeWidth="0.5" opacity="0.3" />
+      <rect x="26" y="74" width="10" height="12" rx="2" fill="#0c2a4a" stroke="#38bdf8" strokeWidth="0.6" />
+      <rect x="44" y="74" width="10" height="12" rx="2" fill="#0c2a4a" stroke="#38bdf8" strokeWidth="0.6" />
+      {[0,1,2].map(i => (
+        <motion.line key={i}
+          x1="28" y1={77 + i * 3} x2="34" y2={77 + i * 3}
+          stroke="#38bdf8" strokeWidth="0.7" opacity="0.7"
+          animate={isActive ? { opacity: [0.3, 1, 0.3] } : {}}
+          transition={{ duration: 0.5 + i * 0.2, repeat: Infinity }}
+        />
+      ))}
 
       {/* 頭 */}
-      <circle cx="40" cy="36" r="16" fill="url(#mgSkin)" />
+      <circle cx="40" cy="36" r="17" fill="url(#mgSkin)" />
       <defs>
-        <linearGradient id="mgSkin" x1="28" y1="22" x2="54" y2="50" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#fde68a" />
-          <stop offset="1" stopColor="#f59e0b" />
+        <linearGradient id="mgSkin" x1="26" y1="22" x2="54" y2="52" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#ffe8cc" />
+          <stop offset="1" stopColor="#f5c49a" />
         </linearGradient>
       </defs>
 
-      {/* 髪 */}
-      <path d="M26 32 Q28 20 40 20 Q52 20 54 32" fill="#1c1917" />
-      <path d="M24 34 Q24 20 28 20" stroke="#1c1917" strokeWidth="3" />
-      <path d="M56 34 Q56 20 52 20" stroke="#1c1917" strokeWidth="3" />
+      {/* 髪（ショートブルー） */}
+      <path d="M23 32 Q25 16 40 16 Q55 16 57 32 Q52 20 40 20 Q28 20 23 32 Z" fill="url(#mgHair)" />
+      <path d="M23 32 Q20 28 23 37" fill="#0284c7" />
+      <path d="M57 32 Q60 28 57 37" fill="#0284c7" />
+      <path d="M28 18 Q30 12 36 18 Q32 16 28 18 Z" fill="#38bdf8" opacity="0.9" />
+      <path d="M44 18 Q46 12 52 18 Q48 16 44 18 Z" fill="#7dd3fc" opacity="0.7" />
+      <defs>
+        <linearGradient id="mgHair" x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#7dd3fc" />
+          <stop offset="1" stopColor="#0284c7" />
+        </linearGradient>
+      </defs>
 
       {/* メガネ */}
-      <circle cx="34" cy="36" r="5" stroke="#bae6fd" strokeWidth="1.5" fill="none" />
-      <circle cx="46" cy="36" r="5" stroke="#bae6fd" strokeWidth="1.5" fill="none" />
-      <line x1="39" y1="36" x2="41" y2="36" stroke="#bae6fd" strokeWidth="1.2" />
-      <line x1="24" y1="34" x2="29" y2="35" stroke="#bae6fd" strokeWidth="1.2" />
-      <line x1="56" y1="34" x2="51" y2="35" stroke="#bae6fd" strokeWidth="1.2" />
+      <circle cx="33" cy="37" r="5.5" stroke="#bae6fd" strokeWidth="1.2" fill="none" opacity="0.8" />
+      <circle cx="47" cy="37" r="5.5" stroke="#bae6fd" strokeWidth="1.2" fill="none" opacity="0.8" />
+      <line x1="38.5" y1="37" x2="41.5" y2="37" stroke="#bae6fd" strokeWidth="1" />
+      <line x1="22" y1="35" x2="27.5" y2="36" stroke="#bae6fd" strokeWidth="1" />
+      <line x1="58" y1="35" x2="52.5" y2="36" stroke="#bae6fd" strokeWidth="1" />
 
       {/* 目 */}
-      <circle cx="34" cy="36" r="2.5" fill="#1c1917" />
-      <circle cx="46" cy="36" r="2.5" fill="#1c1917" />
-      <circle cx="34.8" cy="35.2" r="0.7" fill="white" />
-      <circle cx="46.8" cy="35.2" r="0.7" fill="white" />
+      <AnimeEye cx={33} cy={37} pupilColor="#0369a1" glowColor="#38bdf8" lidAngle={1} />
+      <AnimeEye cx={47} cy={37} pupilColor="#0369a1" glowColor="#38bdf8" lidAngle={1} />
 
-      {/* 口（分析的な表情） */}
-      <path d="M37 42 L40 43 L43 42" stroke="#c2410c" strokeWidth="1" fill="none" strokeLinecap="round" />
+      {/* 鼻・口 */}
+      <path d="M39 42 Q40 44 41 42" stroke="#d4a06a" strokeWidth="0.7" fill="none" />
+      <path d="M37 46 L40 47 L43 46" stroke="#e07070" strokeWidth="0.9" fill="none" strokeLinecap="round" />
+
+      {/* ほっぺ */}
+      <circle cx="28" cy="43" r="3" fill="#93c5fd" opacity="0.3" />
+      <circle cx="52" cy="43" r="3" fill="#93c5fd" opacity="0.3" />
 
       {/* タブレット */}
       <motion.g
         animate={isActive ? { rotate: [-2, 2, -2] } : {}}
-        transition={isActive ? { duration: 1, repeat: Infinity, ease: "easeInOut" } : {}}
-        style={{ transformOrigin: "44px 72px" }}
+        transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+        style={{ transformOrigin: "16px 72px" }}
       >
-        <rect x="34" y="64" width="26" height="18" rx="3" fill="#0c4a6e" stroke="#38bdf8" strokeWidth="1.2" />
-        {isActive && (
+        <rect x="4" y="60" width="22" height="28" rx="3" fill="#041e35" stroke="#38bdf8" strokeWidth="1.2" />
+        {isActive ? (
           <>
-            <motion.line x1="37" y1="68" x2="57" y2="68" stroke="#38bdf8" strokeWidth="0.8"
-              animate={{ opacity: [0.4, 1, 0.4] }}
-              transition={{ duration: 0.8, repeat: Infinity, delay: 0 }}
-            />
-            <motion.line x1="37" y1="71" x2="52" y2="71" stroke="#7dd3fc" strokeWidth="0.8"
-              animate={{ opacity: [0.4, 1, 0.4] }}
-              transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}
-            />
-            <motion.line x1="37" y1="74" x2="55" y2="74" stroke="#38bdf8" strokeWidth="0.8"
-              animate={{ opacity: [0.4, 1, 0.4] }}
-              transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
-            />
+            {[0,1,2,3,4].map(i => (
+              <motion.rect key={i} x="7" y={64 + i * 4} rx="1"
+                height="2" fill="#38bdf8" opacity="0.7"
+                animate={{ width: [6 + (i%3)*3, 14 - (i%2)*3, 6 + (i%3)*3] }}
+                transition={{ duration: 0.4 + i * 0.15, repeat: Infinity }}
+              />
+            ))}
           </>
-        )}
-        {!isActive && (
+        ) : (
           <>
-            <rect x="37" y="68" width="10" height="5" rx="1" fill="#075985" />
-            <rect x="49" y="68" width="8" height="5" rx="1" fill="#075985" />
-            <line x1="37" y1="75" x2="57" y2="75" stroke="#0284c7" strokeWidth="0.8" />
+            <rect x="7" y="64" width="16" height="2" rx="1" fill="#0369a1" />
+            <rect x="7" y="68" width="12" height="2" rx="1" fill="#0369a1" opacity="0.7" />
+            <rect x="7" y="72" width="14" height="2" rx="1" fill="#0369a1" opacity="0.5" />
+            <rect x="7" y="76" width="10" height="2" rx="1" fill="#0369a1" opacity="0.4" />
           </>
         )}
       </motion.g>
 
-      {/* 左腕 */}
-      <path d="M16 65 Q10 70 12 78" stroke="#0369a1" strokeWidth="6" strokeLinecap="round" fill="none" />
-
-      {isDone && (
-        <motion.g
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 400, damping: 15 }}
-        >
-          <circle cx="64" cy="20" r="10" fill="#0ea5e9" />
-          <path d="M58 20 L62 24 L70 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </motion.g>
+      {isActive && (
+        <motion.circle cx="40" cy="36" r="19"
+          stroke="#38bdf8" strokeWidth="1.2" fill="none"
+          animate={{ opacity: [0, 0.4, 0], scale: [0.95, 1.08, 0.95] }}
+          transition={{ duration: 2.2, repeat: Infinity }}
+          style={{ transformOrigin: "40px 36px" }}
+        />
       )}
+
+      {isDone && <DoneBadge x={66} y={18} color="#0ea5e9" />}
     </svg>
   );
 }
 
-// ─── Worker キャラクター ──────────────────────────────────────────
+// ─── Worker ───────────────────────────────────────────────────────
+// オレンジ髪・活発・ツールグローブ・ヘッドギア
 
 function WorkerCharacter({ status, variant = 0 }: { status: AgentStatus; variant?: number }) {
   const isActive = status === "thinking";
   const isDone   = status === "done";
 
-  const toolColors = ["#fb923c", "#f97316", "#ea580c"];
-  const col = toolColors[variant % 3];
+  const palettes = [
+    { hair1: "#fb923c", hair2: "#ea580c", eye: "#c2410c", glow: "#fb923c", suit1: "#431407", suit2: "#9a3412" },
+    { hair1: "#fbbf24", hair2: "#d97706", eye: "#b45309", glow: "#fbbf24", suit1: "#422006", suit2: "#92400e" },
+    { hair1: "#f472b6", hair2: "#db2777", eye: "#9d174d", glow: "#f472b6", suit1: "#3b0764", suit2: "#86198f" },
+  ];
+  const p = palettes[variant % 3];
 
   return (
-    <svg viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="40" cy="55" r="28" fill="url(#wkGlow)" opacity="0.2" />
-      <defs>
-        <radialGradient id={`wkGlow${variant}`} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor={col} />
-          <stop offset="100%" stopColor={col} stopOpacity="0" />
-        </radialGradient>
-      </defs>
+    <svg viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: "visible" }}>
+      <GlitchBg color1={p.hair1} color2={p.glow} />
 
-      {/* 作業着 */}
-      <rect x="16" y="58" width="48" height="34" rx="8" fill="url(#wkSuit)" />
+      {/* 後ろ髪（ツインテ or ポニー） */}
+      {variant === 0 && (
+        <>
+          <path d="M22 36 Q14 50 16 72 Q20 76 22 72 Q20 54 26 42 Z" fill={p.hair2} />
+          <path d="M58 36 Q66 50 64 72 Q60 76 58 72 Q60 54 54 42 Z" fill={p.hair2} />
+        </>
+      )}
+      {variant === 1 && (
+        <path d="M40 44 Q55 48 60 65 Q56 70 52 65 Q50 52 40 50 Z" fill={p.hair2} />
+      )}
+      {variant === 2 && (
+        <>
+          <path d="M24 36 Q20 54 22 70" stroke={p.hair2} strokeWidth="6" strokeLinecap="round" />
+          <path d="M56 36 Q60 54 58 70" stroke={p.hair2} strokeWidth="6" strokeLinecap="round" />
+        </>
+      )}
+
+      {/* 首 */}
+      <rect x="35" y="52" width="10" height="10" rx="2" fill="#ffe4c4" />
+
+      {/* テックパーカー */}
+      <path d="M14 63 Q18 55 40 54 Q62 55 66 63 L68 92 Q40 97 12 92 Z" fill={`url(#wkSuit${variant})`} />
       <defs>
-        <linearGradient id={`wkSuit${variant}`} x1="16" y1="58" x2="64" y2="92" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#431407" />
-          <stop offset="1" stopColor={col} stopOpacity="0.8" />
+        <linearGradient id={`wkSuit${variant}`} x1="14" y1="54" x2="66" y2="92" gradientUnits="userSpaceOnUse">
+          <stop stopColor={p.suit1} />
+          <stop offset="1" stopColor={p.suit2} />
         </linearGradient>
       </defs>
-
-      {/* ストラップ */}
-      <path d="M32 58 L32 54 Q34 52 40 52 Q46 52 48 54 L48 58" stroke={col} strokeWidth="2" fill="none" />
-
-      {/* ヘルメット */}
-      <path d="M24 36 Q24 20 40 20 Q56 20 56 36 Q56 30 40 30 Q24 30 24 36 Z" fill={col} />
-      <rect x="22" y="34" width="36" height="5" rx="2" fill={col} opacity="0.9" />
-      <rect x="26" y="35" width="6" height="3" rx="1" fill="rgba(255,255,255,0.4)" />
+      {/* フード輪郭 */}
+      <path d="M20 62 Q30 58 40 57 Q50 58 60 62" stroke={p.hair1} strokeWidth="0.8" fill="none" opacity="0.5" />
+      {/* ポケット */}
+      <rect x="22" y="76" width="14" height="10" rx="3" fill={p.suit1} stroke={p.hair1} strokeWidth="0.7" opacity="0.8" />
+      <rect x="44" y="76" width="14" height="10" rx="3" fill={p.suit1} stroke={p.hair1} strokeWidth="0.7" opacity="0.8" />
 
       {/* 頭 */}
-      <ellipse cx="40" cy="40" rx="14" ry="13" fill="url(#wkSkin)" />
+      <circle cx="40" cy="36" r="17" fill="url(#wkSkin)" />
       <defs>
-        <linearGradient id="wkSkin" x1="28" y1="28" x2="54" y2="52" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#fde68a" />
-          <stop offset="1" stopColor="#f59e0b" />
+        <linearGradient id="wkSkin" x1="26" y1="22" x2="54" y2="52" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#ffe8cc" />
+          <stop offset="1" stopColor="#f5c49a" />
         </linearGradient>
       </defs>
 
-      {/* 目（元気な丸目） */}
-      <circle cx="34" cy="40" r="3" fill="#1c1917" />
-      <circle cx="46" cy="40" r="3" fill="#1c1917" />
-      <circle cx="35" cy="39" r="1" fill="white" />
-      <circle cx="47" cy="39" r="1" fill="white" />
+      {/* ヘッドギア（カチューシャ型） */}
+      <rect x="22" y="22" width="36" height="5" rx="2.5" fill="#1c1917" />
+      <rect x="28" y="20" width="24" height="4" rx="2" fill={p.hair1} opacity="0.8" />
+      <circle cx="26" cy="22" r="3" fill={p.suit2} stroke={p.hair1} strokeWidth="0.8" />
+      <circle cx="54" cy="22" r="3" fill={p.suit2} stroke={p.hair1} strokeWidth="0.8" />
+      <motion.circle cx="26" cy="22" r="1.5" fill={p.hair1}
+        animate={isActive ? { opacity: [0.4, 1, 0.4] } : {}} transition={{ duration: 0.5, repeat: Infinity }} />
+      <motion.circle cx="54" cy="22" r="1.5" fill={p.hair1}
+        animate={isActive ? { opacity: [0.4, 1, 0.4] } : { opacity: 0.6 }} transition={{ duration: 0.5, repeat: Infinity, delay: 0.25 }} />
 
-      {/* 口（笑顔） */}
-      <path d="M35 46 Q40 50 45 46" stroke="#c2410c" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      {/* 前髪 */}
+      <path d="M23 28 Q26 16 40 16 Q54 16 57 28 Q52 20 40 20 Q28 20 23 28 Z" fill={`url(#wkHair${variant})`} />
+      <path d="M23 28 Q20 26 22 35" fill={p.hair2} />
+      <path d="M57 28 Q60 26 58 35" fill={p.hair2} />
+      <defs>
+        <linearGradient id={`wkHair${variant}`} x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor={p.hair1} />
+          <stop offset="1" stopColor={p.hair2} />
+        </linearGradient>
+      </defs>
 
-      {/* ほっぺ */}
-      <circle cx="30" cy="44" r="3" fill="#fca5a5" opacity="0.5" />
-      <circle cx="50" cy="44" r="3" fill="#fca5a5" opacity="0.5" />
+      {/* 目 */}
+      <AnimeEye cx={33} cy={37} pupilColor={p.eye} glowColor={p.glow} />
+      <AnimeEye cx={47} cy={37} pupilColor={p.eye} glowColor={p.glow} />
 
-      {/* レンチ（右手） */}
+      {/* 鼻・口（笑顔） */}
+      <path d="M39 42 Q40 44 41 42" stroke="#d4a06a" strokeWidth="0.7" fill="none" />
+      <path d="M35 46 Q40 51 45 46" stroke="#e07070" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+
+      {/* ほっぺ（元気） */}
+      <circle cx="27" cy="44" r="4" fill={p.glow} opacity="0.25" />
+      <circle cx="53" cy="44" r="4" fill={p.glow} opacity="0.25" />
+
+      {/* ツールグローブ（右腕） */}
       <motion.g
-        animate={isActive ? { rotate: [-15, 15, -15] } : {}}
-        transition={isActive ? { duration: 0.5, repeat: Infinity } : {}}
-        style={{ transformOrigin: "65px 70px" }}
+        animate={isActive ? { rotate: [-20, 20, -20] } : {}}
+        transition={{ duration: 0.4, repeat: Infinity }}
+        style={{ transformOrigin: "63px 66px" }}
       >
-        <rect x="60" y="62" width="5" height="18" rx="2" fill="#78716c" />
-        <ellipse cx="62.5" cy="62" rx="5" ry="3" fill="#a8a29e" />
-        <ellipse cx="62.5" cy="80" rx="3.5" ry="2" fill="#a8a29e" />
+        <path d="M60 62 Q68 60 70 66 Q68 74 62 76" stroke={p.suit2} strokeWidth="6" strokeLinecap="round" fill="none" />
+        <circle cx="70" cy="66" r="4" fill={p.hair1} opacity="0.8" />
+        {isActive && (
+          <motion.circle cx="70" cy="66" r="7" fill={p.glow} opacity="0.3"
+            animate={{ r: [4, 9, 4], opacity: [0.3, 0, 0.3] }}
+            transition={{ duration: 0.4, repeat: Infinity }}
+          />
+        )}
       </motion.g>
 
-      {/* 作業中の光 */}
       {isActive && (
-        <motion.g
-          animate={{ opacity: [0, 0.8, 0] }}
-          transition={{ duration: 0.4, repeat: Infinity }}
-        >
-          <circle cx="63" cy="64" r="4" fill={col} opacity="0.5" />
-        </motion.g>
+        <motion.circle cx="40" cy="36" r="19"
+          stroke={p.glow} strokeWidth="1.2" fill="none"
+          animate={{ opacity: [0, 0.5, 0], scale: [0.94, 1.1, 0.94] }}
+          transition={{ duration: 1.8, repeat: Infinity }}
+          style={{ transformOrigin: "40px 36px" }}
+        />
       )}
 
-      {isDone && (
-        <motion.g
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 400, damping: 12 }}
-        >
-          <circle cx="64" cy="18" r="10" fill={col} />
-          <path d="M58 18 L62 22 L70 14" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </motion.g>
-      )}
+      {isDone && <DoneBadge x={10} y={18} color={p.hair2} />}
     </svg>
   );
 }
 
-// ─── Reviewer キャラクター ────────────────────────────────────────
+// ─── Reviewer ─────────────────────────────────────────────────────
+// ミントグリーン髪・緑目・穏やか・ホロチェックリスト
 
 function ReviewerCharacter({ status }: { status: AgentStatus }) {
   const isActive = status === "reviewing" || status === "thinking";
   const isDone   = status === "done";
 
   return (
-    <svg viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="40" cy="55" r="28" fill="url(#rvGlow)" opacity="0.2" />
+    <svg viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: "visible" }}>
+      <GlitchBg color1="#22c55e" color2="#a3e635" />
+
+      {/* 後ろ髪（セミロング） */}
+      <path d="M22 38 Q18 56 20 78 Q26 82 28 78 Q26 60 30 46 Z" fill="#16a34a" />
+      <path d="M58 38 Q62 56 60 78 Q54 82 52 78 Q54 60 50 46 Z" fill="#16a34a" />
+
+      {/* 首 */}
+      <rect x="35" y="52" width="10" height="10" rx="2" fill="#ffe4c4" />
+
+      {/* テックジャケット */}
+      <path d="M16 62 Q20 55 40 54 Q60 55 64 62 L66 92 Q40 97 14 92 Z" fill="url(#rvJacket)" />
       <defs>
-        <radialGradient id="rvGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#22c55e" />
-          <stop offset="100%" stopColor="#16a34a" stopOpacity="0" />
-        </radialGradient>
+        <linearGradient id="rvJacket" x1="16" y1="54" x2="64" y2="92" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#052e16" />
+          <stop offset="1" stopColor="#166534" />
+        </linearGradient>
+      </defs>
+      <path d="M40 56 L40 92" stroke="#22c55e" strokeWidth="0.6" opacity="0.4" />
+      {/* エンブレム */}
+      <circle cx="31" cy="68" r="6" fill="#14532d" stroke="#22c55e" strokeWidth="1" />
+      <path d="M27.5 68 L30 70.5 L34.5 65.5" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* 頭 */}
+      <circle cx="40" cy="36" r="17" fill="url(#rvSkin)" />
+      <defs>
+        <linearGradient id="rvSkin" x1="26" y1="22" x2="54" y2="52" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#ffe8cc" />
+          <stop offset="1" stopColor="#f5c49a" />
+        </linearGradient>
       </defs>
 
-      {/* ジャケット */}
-      <rect x="16" y="57" width="48" height="35" rx="10" fill="url(#rvJacket)" />
+      {/* 髪（ミントグリーン） */}
+      <path d="M23 32 Q25 16 40 16 Q55 16 57 32 Q52 20 40 20 Q28 20 23 32 Z" fill="url(#rvHair)" />
+      <path d="M23 32 Q20 27 22 37" fill="#15803d" />
+      <path d="M57 32 Q60 27 58 37" fill="#15803d" />
+      <path d="M30 18 Q34 12 38 18 Q34 16 30 18 Z" fill="#86efac" opacity="0.8" />
+      <path d="M42 18 Q46 12 50 18 Q46 16 42 18 Z" fill="#bbf7d0" opacity="0.6" />
+      {/* 白メッシュ */}
+      <path d="M38 16 Q40 12 42 16" stroke="white" strokeWidth="1.5" fill="none" opacity="0.5" />
       <defs>
-        <linearGradient id="rvJacket" x1="16" y1="57" x2="64" y2="92" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#14532d" />
+        <linearGradient id="rvHair" x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#86efac" />
           <stop offset="1" stopColor="#16a34a" />
         </linearGradient>
       </defs>
 
-      {/* エンブレム */}
-      <circle cx="30" cy="67" r="5" fill="#15803d" stroke="#22c55e" strokeWidth="1" />
-      <path d="M27 67 L29 69 L33 65" stroke="#22c55e" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      {/* 目（穏やか・細め） */}
+      <AnimeEye cx={33} cy={38} pupilColor="#15803d" glowColor="#22c55e" lidAngle={2} />
+      <AnimeEye cx={47} cy={38} pupilColor="#15803d" glowColor="#22c55e" lidAngle={2} />
 
-      {/* 頭 */}
-      <circle cx="40" cy="36" r="15" fill="url(#rvSkin)" />
-      <defs>
-        <linearGradient id="rvSkin" x1="28" y1="22" x2="54" y2="50" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#fde68a" />
-          <stop offset="1" stopColor="#f59e0b" />
-        </linearGradient>
-      </defs>
+      {/* 鼻・口（優しい笑顔） */}
+      <path d="M39 43 Q40 45 41 43" stroke="#d4a06a" strokeWidth="0.7" fill="none" />
+      <path d="M36 47 Q40 51 44 47" stroke="#e07070" strokeWidth="1.2" fill="none" strokeLinecap="round" />
 
-      {/* 髪 */}
-      <path d="M28 30 Q30 20 40 20 Q50 20 52 30" fill="#44403c" />
-      <path d="M52 30 Q54 24 52 22 Q56 22 56 30 Z" fill="#44403c" />
+      {/* ほっぺ */}
+      <circle cx="28" cy="44" r="3.5" fill="#86efac" opacity="0.3" />
+      <circle cx="52" cy="44" r="3.5" fill="#86efac" opacity="0.3" />
 
-      {/* 目（穏やかな細目） */}
-      <path d="M32 37 Q34 34 36 37" stroke="#1c1917" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-      <path d="M44 37 Q46 34 48 37" stroke="#1c1917" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-
-      {/* 口（優しい笑顔） */}
-      <path d="M36 43 Q40 47 44 43" stroke="#c2410c" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-
-      {/* クリップボード */}
+      {/* ホログラムチェックリスト */}
       <motion.g
-        animate={isActive ? { y: [-1, 1, -1] } : {}}
-        transition={isActive ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" } : {}}
+        animate={isActive ? { y: [-1, 1, -1], opacity: [0.8, 1, 0.8] } : {}}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
       >
-        <rect x="44" y="63" width="20" height="24" rx="2" fill="#052e16" stroke="#22c55e" strokeWidth="1" />
-        <rect x="46" y="60" width="16" height="5" rx="2" fill="#15803d" />
-        <rect x="52" y="59" width="4" height="3" rx="1" fill="#22c55e" />
-
-        {/* チェックリスト */}
-        {[0, 1, 2].map((i) => (
+        <rect x="54" y="58" width="22" height="28" rx="3" fill="#022c22" stroke="#22c55e" strokeWidth="1" opacity="0.95" />
+        <rect x="56" y="54" width="18" height="6" rx="2" fill="#14532d" stroke="#22c55e" strokeWidth="0.8" />
+        <rect x="61" y="53" width="4" height="4" rx="1" fill="#22c55e" />
+        {[0, 1, 2, 3].map((i) => (
           <g key={i}>
             <motion.rect
-              x="46" y={69 + i * 5} width="3" height="3" rx="0.5"
-              fill={isActive && i === 0 ? "#22c55e" : isDone ? "#22c55e" : "#1a2e1a"}
+              x="57" y={64 + i * 5} width="3" height="3" rx="0.5"
+              fill={isDone || (isActive && i < 2) ? "#22c55e" : "#14532d"}
               stroke="#22c55e" strokeWidth="0.5"
-              animate={isActive && i === 0 ? { opacity: [1, 0.4, 1] } : {}}
-              transition={{ duration: 0.8, repeat: Infinity }}
+              animate={isActive && i === 1 ? { opacity: [0.5, 1, 0.5] } : {}}
+              transition={{ duration: 0.6, repeat: Infinity }}
             />
-            {(isDone || (isActive && i < 1)) && (
-              <path
-                d={`M${47} ${70.5 + i * 5} L${48} ${71.5 + i * 5} L${50} ${69.5 + i * 5}`}
-                stroke="white" strokeWidth="0.8" strokeLinecap="round"
-              />
+            {(isDone || (isActive && i < 2)) && (
+              <path d={`M${58} ${65.5 + i*5} L${59.5} ${67 + i*5} L${62} ${63.5 + i*5}`}
+                stroke="white" strokeWidth="0.8" strokeLinecap="round" />
             )}
-            <line x1="51" y1={70.5 + i * 5} x2="62" y2={70.5 + i * 5}
+            <line x1="62" y1={65.5 + i * 5} x2="73" y2={65.5 + i * 5}
               stroke="#166534" strokeWidth="0.8" />
           </g>
         ))}
       </motion.g>
 
-      {/* 審査中のスキャン光 */}
+      {/* スキャンライン */}
       {isActive && (
-        <motion.line
-          x1="16" y1="55" x2="64" y2="55"
-          stroke="#22c55e"
-          strokeWidth="1.5"
-          opacity="0.5"
-          animate={{ y: [-8, 8, -8] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        <motion.rect x="16" y="50" width="48" height="1.5" rx="0.5"
+          fill="#22c55e" opacity="0.4"
+          animate={{ y: [50, 58, 50] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
         />
       )}
 
-      {isDone && (
-        <motion.g
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 400, damping: 15 }}
-        >
-          <circle cx="14" cy="20" r="10" fill="#22c55e" />
-          <path d="M8 20 L12 24 L20 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </motion.g>
-      )}
+      {isDone && <DoneBadge x={12} y={18} color="#16a34a" />}
     </svg>
   );
 }
 
-// ─── メインエクスポート ──────────────────────────────────────────
+// ─── メインエクスポート ────────────────────────────────────────────
 
-export default function AgentCharacter({ role, status }: Props) {
-  const variantMap: Record<string, number> = {
-    "worker-1": 0, "worker-2": 1, "worker-3": 2,
-  };
+const WORKER_VARIANT: Record<string, number> = {
+  "worker-1": 0, "worker-2": 1, "worker-3": 2,
+};
 
-  // roleがworkerのとき variant でキャラを少し変える
+export default function AgentCharacter({ role, status, agentId }: Props & { agentId?: string }) {
   const animVariant = breathe[status] ?? breathe.idle;
+  const workerVariant = agentId ? (WORKER_VARIANT[agentId] ?? 0) : 0;
 
   return (
     <motion.div
@@ -446,12 +573,12 @@ export default function AgentCharacter({ role, status }: Props) {
     >
       {role === "ceo"      && <CeoCharacter status={status} />}
       {role === "manager"  && <ManagerCharacter status={status} />}
-      {role === "worker"   && <WorkerCharacter status={status} variant={variantMap[role] ?? 0} />}
+      {role === "worker"   && <WorkerCharacter status={status} variant={workerVariant} />}
       {role === "reviewer" && <ReviewerCharacter status={status} />}
       {role === "system"   && (
         <svg viewBox="0 0 80 100" fill="none">
-          <circle cx="40" cy="50" r="20" fill="#334155" />
-          <text x="40" y="56" textAnchor="middle" fill="#94a3b8" fontSize="20">⚙</text>
+          <circle cx="40" cy="50" r="22" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />
+          <text x="40" y="56" textAnchor="middle" fill="#475569" fontSize="22">⚙</text>
         </svg>
       )}
     </motion.div>

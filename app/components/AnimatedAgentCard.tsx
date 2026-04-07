@@ -58,9 +58,7 @@ const PROVIDER_LABEL: Record<string, string> = {
   claude: "Claude", openai: "OpenAI", gemini: "Gemini",
 };
 
-const WORKER_VARIANT_MAP: Record<string, number> = {
-  "worker-1": 0, "worker-2": 1, "worker-3": 2,
-};
+
 
 // ─── ステータスバッジ ─────────────────────────────────────────────
 
@@ -128,9 +126,6 @@ export default function AnimatedAgentCard({ card, isPlaceholder }: Props) {
   const theme = ROLE_THEME[role] ?? ROLE_THEME.system;
   const isActive = status === "thinking" || status === "reviewing";
   const isDone   = status === "done";
-  const workerVariant = WORKER_VARIANT_MAP[config.id] ?? 0;
-
-  // worker のキャラは id で variant を変える
   const characterRole = role === "worker" ? `worker` : role;
 
   if (isPlaceholder) {
@@ -224,6 +219,7 @@ export default function AnimatedAgentCard({ card, isPlaceholder }: Props) {
         <AgentCharacter
           role={characterRole as any}
           status={status}
+          agentId={config.id}
         />
       </div>
 
