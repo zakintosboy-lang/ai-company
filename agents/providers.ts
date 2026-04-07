@@ -1,4 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { ModelConfig, ConversationEntry } from "./types";
 
 /**
@@ -28,33 +30,44 @@ class ClaudeProvider implements LLMProvider {
   }
 }
 
-/**
- * OpenAI プロバイダー（将来実装）
- * OPENAI_API_KEY をセットし、openai パッケージを追加して実装する。
- */
 class OpenAIProvider implements LLMProvider {
+  private client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   constructor(private modelId: string) {}
 
-  async complete(_system: string, _messages: ConversationEntry[], _maxTokens: number): Promise<string> {
-    throw new Error(
-      `OpenAI provider (${this.modelId}) は未実装です。` +
-      "OPENAI_API_KEY を設定し、openai パッケージを追加してください。"
-    );
+  async complete(system: string, messages: ConversationEntry[], maxTokens: number): Promise<string> {
+    const response = await this.client.chat.completions.create({
+      model: this.modelId,
+      max_tokens: maxTokens,
+      messages: [
+        { role: "system", content: system },
+        ...messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+      ],
+    });
+    return response.choices[0]?.message?.content ?? "";
   }
 }
 
-/**
- * Gemini プロバイダー（将来実装）
- * GEMINI_API_KEY をセットし、@google/generative-ai パッケージを追加して実装する。
- */
 class GeminiProvider implements LLMProvider {
+  private client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
   constructor(private modelId: string) {}
 
-  async complete(_system: string, _messages: ConversationEntry[], _maxTokens: number): Promise<string> {
-    throw new Error(
-      `Gemini provider (${this.modelId}) は未実装です。` +
-      "GEMINI_API_KEY を設定し、@google/generative-ai パッケージを追加してください。"
-    );
+  async complete(system: string, messages: ConversationEntry[], maxTokens: number): Promise<string> {
+    const model = this.client.getGenerativeModel({
+      model: this.modelId,
+      systemInstruction: system,
+      generationConfig: { maxOutputTokens: maxTokens },
+    });
+
+    // Gemini は user/model 交互が必要で、最初は必ず user
+    const history = messages.slice(0, -1).map(m => ({
+      role: m.role === "user" ? "user" : "model",
+      parts: [{ text: m.content }],
+    }));
+    const lastMessage = messages[messages.length - 1]?.content ?? "";
+
+    const chat = model.startChat({ history });
+    const result = await chat.sendMessage(lastMessage);
+    return result.response.text();
   }
 }
 
