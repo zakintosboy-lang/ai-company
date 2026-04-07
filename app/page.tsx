@@ -34,6 +34,7 @@ const ROLE_LABEL:   Record<AgentRole, string>     = { ceo:"CEO", manager:"Manage
 const PROVIDER_LABEL: Record<ModelProvider,string>= { claude:"Claude", openai:"OpenAI", gemini:"Gemini" };
 const AGENT_ORDER = ["ceo","manager","worker-1","worker-2","worker-3","reviewer"];
 const STORAGE_KEY = "ai-company-results";
+const RUN_COUNT_KEY = "ai-company-run-count";
 
 type Tab = "logs" | "output";
 
@@ -469,14 +470,17 @@ export default function Home() {
   const [runCount, setRunCount]   = useState<number>(0);
   const [toast, setToast]         = useState<string | null>(null);
   const logBottomRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // 起動時に最後の保存結果を自動復元
   useEffect(() => {
     try {
+      const savedRunCount = Number(localStorage.getItem(RUN_COUNT_KEY) ?? "0");
+      if (Number.isFinite(savedRunCount) && savedRunCount > 0) setRunCount(savedRunCount);
+
       const saved: SavedResult[] = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
       if (saved.length > 0) {
         setOutput(saved[0].output);
-        setRunCount(saved[0].logCount);
         setActiveTab("output");
       }
     } catch { /* ignore */ }
@@ -610,8 +614,15 @@ export default function Home() {
   };
 
   // ── Run ───────────────────────────────────────────────────
+  const handleCancelRun = () => {
+    abortControllerRef.current?.abort();
+  };
+
   const handleRun = async () => {
     if (!instruction.trim() || isRunning) return;
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setIsRunning(true);
     setLogs([]); setOutput(null); setAgents({}); setActiveTab("logs");
     addLog("system", "実行開始...");
@@ -621,53 +632,76 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ instruction: instruction.trim() }),
+        signal: controller.signal,
       });
+      if (!response.ok) {
+        const detail = await response.text().catch(() => "");
+        throw new Error(detail || `HTTP ${response.status}`);
+      }
       if (!response.body) throw new Error("No response body");
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      const processSseEvent = (part: string) => {
+        const line = part.trim();
+        if (!line.startsWith("data: ")) return;
+        try {
+          const parsed = JSON.parse(line.slice(6));
+          if (parsed.type === "init") {
+            const cfgs = parsed.agents as AgentConfig[];
+            const init: Record<string, AgentCard> = {};
+            for (const cfg of cfgs) init[cfg.id] = { config: cfg, status: "idle" };
+            setAgents(init);
+          } else if (parsed.type === "agent_update") {
+            setAgents((prev) => {
+              const card = prev[parsed.agentId];
+              if (!card) return prev;
+              return { ...prev, [parsed.agentId]: { ...card, status: parsed.status ?? card.status, lastMessage: parsed.lastMessage ?? card.lastMessage } };
+            });
+          } else if (parsed.type === "log") {
+            addLog((parsed.role ?? "system") as AgentRole, parsed.message ?? "");
+          } else if (parsed.type === "complete") {
+            const structured = parsed.data as StructuredOutput;
+            setOutput(structured);
+            setRunCount((c) => {
+              const next = c + 1;
+              try {
+                localStorage.setItem(RUN_COUNT_KEY, String(next));
+              } catch { /* ignore */ }
+              return next;
+            });
+            setActiveTab("output");
+            addLog("system", "処理完了");
+          } else if (parsed.type === "error") {
+            addLog("system", `エラー: ${parsed.data}`);
+          }
+        } catch { /* ignore */ }
+      };
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
-        const parts = buffer.split("\n\n");
-        buffer = parts.pop() ?? "";
-
-        for (const part of parts) {
-          const line = part.trim();
-          if (!line.startsWith("data: ")) continue;
-          try {
-            const parsed = JSON.parse(line.slice(6));
-            if (parsed.type === "init") {
-              const cfgs = parsed.agents as AgentConfig[];
-              const init: Record<string, AgentCard> = {};
-              for (const cfg of cfgs) init[cfg.id] = { config: cfg, status: "idle" };
-              setAgents(init);
-            } else if (parsed.type === "agent_update") {
-              setAgents((prev) => {
-                const card = prev[parsed.agentId];
-                if (!card) return prev;
-                return { ...prev, [parsed.agentId]: { ...card, status: parsed.status ?? card.status, lastMessage: parsed.lastMessage ?? card.lastMessage } };
-              });
-            } else if (parsed.type === "log") {
-              addLog((parsed.role ?? "system") as AgentRole, parsed.message ?? "");
-            } else if (parsed.type === "complete") {
-              const structured = parsed.data as StructuredOutput;
-              setOutput(structured);
-              setRunCount((c) => c + 1);
-              setActiveTab("output");
-              addLog("system", "処理完了");
-            } else if (parsed.type === "error") {
-              addLog("system", `エラー: ${parsed.data}`);
-            }
-          } catch { /* ignore */ }
+        let splitIndex = buffer.indexOf("\n\n");
+        while (splitIndex !== -1) {
+          const part = buffer.slice(0, splitIndex);
+          buffer = buffer.slice(splitIndex + 2);
+          processSseEvent(part);
+          splitIndex = buffer.indexOf("\n\n");
         }
       }
+
+      buffer += decoder.decode();
+      if (buffer.trim()) processSseEvent(buffer);
     } catch (err) {
-      addLog("system", `エラー: ${String(err)}`);
+      if (err instanceof DOMException && err.name === "AbortError") {
+        addLog("system", "処理をキャンセルしました");
+      } else {
+        addLog("system", `エラー: ${String(err)}`);
+      }
     } finally {
+      abortControllerRef.current = null;
       setIsRunning(false);
     }
   };
@@ -715,9 +749,13 @@ export default function Home() {
             />
           </div>
 
-          <button className="run-button" onClick={handleRun} disabled={isRunning || !instruction.trim()}>
+          <button
+            className="run-button"
+            onClick={isRunning ? handleCancelRun : handleRun}
+            disabled={!isRunning && !instruction.trim()}
+          >
             {isRunning
-              ? <><div className="spinner" />処理中...</>
+              ? <>停止</>
               : <><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 2L12 7L3 12V2Z" fill="currentColor"/></svg>実行 (⌘ Enter)</>
             }
           </button>
