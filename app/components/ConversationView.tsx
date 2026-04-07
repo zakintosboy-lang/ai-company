@@ -20,10 +20,10 @@ interface Props {
 const ROLE_CONFIG = {
   ceo: {
     name: "CEO",
-    color: "#a855f7",
-    glow: "rgba(168,85,247,0.2)",
-    bg: "linear-gradient(135deg, rgba(88,28,135,0.6), rgba(109,40,217,0.4))",
-    border: "rgba(168,85,247,0.35)",
+    color: "#7c58c8",
+    glow: "rgba(124,88,200,0.12)",
+    bg: "linear-gradient(135deg, rgba(124,88,200,0.09), rgba(124,88,200,0.05))",
+    border: "rgba(124,88,200,0.20)",
     story: "戦略指揮官",
     icon: (
       <svg viewBox="0 0 28 28" fill="none" style={{ width: "100%", height: "100%" }}>
@@ -188,10 +188,9 @@ function TypingIndicator({ color }: { color: string }) {
 
 // ─── メッセージバブル ────────────────────────────────────────────
 
-function MessageBubble({ entry, agentName, isLast }: {
+function MessageBubble({ entry, agentName }: {
   entry: LogEntry;
   agentName: string;
-  isLast: boolean;
 }) {
   const cfg = ROLE_CONFIG[entry.role] ?? ROLE_CONFIG.system;
   const isSystem = entry.role === "system";
@@ -394,7 +393,6 @@ export default function ConversationView({ logs, agents, isRunning }: Props) {
                   key={i}
                   entry={entry}
                   agentName={roleToName[entry.role] ?? ROLE_CONFIG[entry.role]?.name ?? entry.role}
-                  isLast={i === logs.length - 1}
                 />
               ))}
 
