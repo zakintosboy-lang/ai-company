@@ -1,66 +1,7 @@
+"use client";
+
+import { useState } from "react";
 import type { StructuredOutput, OutputSection, HighlightVariant, DesignSpec } from "@/agents/types";
-
-// ── Phase 6 デザイン指示パネル ────────────────────────────────
-function DesignSpecPanel({ spec, accentColor }: { spec: DesignSpec; accentColor: string }) {
-  return (
-    <div className="or-section-card" style={{ marginTop: 8 }}>
-      <div className="or-section-header">
-        <span className="or-section-icon">🎨</span>
-        <h2 className="or-section-title" style={{ color: accentColor }}>Phase 6 — Canva デザイン指示</h2>
-      </div>
-      <div className="or-section-body">
-        <p style={{ fontSize: 13, color: "rgba(28,24,20,0.6)", marginBottom: 12 }}>{spec.concept}</p>
-
-        {/* カラーパレット */}
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: accentColor, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>カラーパレット</div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {Object.entries(spec.colors).map(([key, hex]) => (
-              <div key={key} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: 20, height: 20, borderRadius: 4, background: hex, border: "1px solid rgba(0,0,0,0.1)" }} />
-                <span style={{ fontSize: 11, color: "rgba(28,24,20,0.55)" }}>{key}: {hex}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* フォント */}
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: accentColor, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>フォント</div>
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            {Object.entries(spec.fonts).map(([key, font]) => (
-              <span key={key} style={{ fontSize: 12, color: "rgba(28,24,20,0.65)" }}>
-                <span style={{ fontWeight: 600 }}>{key}:</span> {font}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* レイアウト */}
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: accentColor, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>ページ構成</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {spec.layout.map((page) => (
-              <div key={page.page} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "6px 10px", background: accentColor + "08", borderRadius: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: accentColor, minWidth: 24 }}>P{page.page}</span>
-                <div>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(28,24,20,0.75)" }}>{page.name}</span>
-                  <div style={{ fontSize: 11, color: "rgba(28,24,20,0.45)", marginTop: 2 }}>{page.elements.join(" · ")}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Canva 手順 */}
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: accentColor, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Canva 作成手順</div>
-          <div style={{ fontSize: 12, color: "rgba(28,24,20,0.65)", lineHeight: 1.8, whiteSpace: "pre-line" }}>{spec.canvaInstructions}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── 質問タイプ設定 ─────────────────────────────────────────────
 const TYPE_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
@@ -71,147 +12,261 @@ const TYPE_CONFIG: Record<string, { color: string; bg: string; border: string; l
   "ガイド":  { color: "#d97706", bg: "#fffbeb", border: "#fde68a", label: "ガイド" },
 };
 
-// ── ハイライト設定 ────────────────────────────────────────────
-const HL: Record<HighlightVariant, {
-  bg: string; border: string; leftBar: string;
-  labelColor: string; textColor: string; icon: string;
-}> = {
+const HL: Record<HighlightVariant, { bg: string; border: string; leftBar: string; labelColor: string; textColor: string; icon: string }> = {
   info:      { bg:"#eff6ff", border:"#bfdbfe", leftBar:"#2563eb", labelColor:"#1d4ed8", textColor:"#1e40af", icon:"💡" },
   warning:   { bg:"#fff7ed", border:"#fed7aa", leftBar:"#ea580c", labelColor:"#9a3412", textColor:"#7c2d12", icon:"⚠" },
   success:   { bg:"#f0fdf4", border:"#bbf7d0", leftBar:"#16a34a", labelColor:"#15803d", textColor:"#14532d", icon:"✅" },
   important: { bg:"#faf5ff", border:"#ddd6fe", leftBar:"#7c3aed", labelColor:"#6d28d9", textColor:"#4c1d95", icon:"📌" },
 };
 
-// ── OutputRenderer ────────────────────────────────────────────
-export default function OutputRenderer({ data }: { data: StructuredOutput }) {
-  const cfg = TYPE_CONFIG[data.questionType] ?? TYPE_CONFIG["情報整理"];
-
-  return (
-    <article className="or-root">
-
-      {/* ── 1. ドキュメントヘッダー ── */}
-      <header className="or-header" style={{ borderTopColor: cfg.color }}>
-        <div className="or-header-meta">
-          <span className="or-type-badge" style={{ color: cfg.color, background: cfg.bg, borderColor: cfg.border }}>
-            {cfg.label}
-          </span>
-        </div>
-        <h1 className="or-title">{data.title}</h1>
-        <p className="or-summary-text">{data.summary}</p>
-      </header>
-
-      {/* ── 2. 重要ポイント 3 つ ── */}
-      <div className="or-keypoints" style={{ borderColor: cfg.border }}>
-        <div className="or-keypoints-label" style={{ color: cfg.color }}>
-          <span>📌</span> 重要ポイント
-        </div>
-        <div className="or-keypoints-grid">
-          {(data.keyPoints ?? []).map((pt, i) => (
-            <div key={i} className="or-kp-card" style={{ borderTopColor: cfg.color }}>
-              <span className="or-kp-num" style={{ background: cfg.color }}>{i + 1}</span>
-              <span className="or-kp-text">{pt}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── 3. セクション一覧 ── */}
-      <div className="or-sections">
-        {data.sections.map((section, i) => (
-          <SectionCard key={i} section={section} accentColor={cfg.color} />
-        ))}
-      </div>
-
-      {/* ── 4. Phase 6 デザイン指示 ── */}
-      {data.designSpec && <DesignSpecPanel spec={data.designSpec} accentColor={cfg.color} />}
-
-    </article>
-  );
+// ── スライドデータ生成 ────────────────────────────────────────
+function buildSlides(data: StructuredOutput) {
+  const slides = [
+    { type: "cover" as const, data },
+    { type: "keypoints" as const, data },
+    ...data.sections.map((s, i) => ({ type: "section" as const, index: i, section: s, data })),
+    ...(data.designSpec ? [{ type: "design" as const, spec: data.designSpec, data }] : []),
+  ];
+  return slides;
 }
 
-// ── セクションカード ──────────────────────────────────────────
-function SectionCard({ section, accentColor }: { section: OutputSection; accentColor: string }) {
-  if (section.type === "highlight") {
-    const hcfg = HL[section.highlight ?? "info"];
-    return (
-      <div className="or-hl-card" style={{ background: hcfg.bg, borderColor: hcfg.border, borderLeftColor: hcfg.leftBar }}>
-        <div className="or-hl-header" style={{ color: hcfg.labelColor }}>
-          <span className="or-hl-icon">{section.icon ?? hcfg.icon}</span>
-          <span className="or-hl-title">{section.title}</span>
-        </div>
-        <p className="or-hl-body" style={{ color: hcfg.textColor }}>{section.content}</p>
-      </div>
-    );
-  }
-
+// ── カバースライド ────────────────────────────────────────────
+function CoverSlide({ data, color, bg, border, label }: {
+  data: StructuredOutput; color: string; bg: string; border: string; label: string;
+}) {
   return (
-    <div className="or-section-card">
-      <div className="or-section-header">
-        <span className="or-section-icon">{section.icon ?? "📋"}</span>
-        <h2 className="or-section-title" style={{ color: accentColor }}>{section.title}</h2>
+    <div style={{
+      height: "100%", display: "flex", flexDirection: "column", justifyContent: "center",
+      padding: "48px 56px",
+      background: `linear-gradient(135deg, ${color}08 0%, white 100%)`,
+      borderTop: `4px solid ${color}`,
+    }}>
+      <div style={{
+        display: "inline-flex", alignItems: "center", gap: 6,
+        fontSize: 11, fontWeight: 800, letterSpacing: "0.1em",
+        color, background: bg, border: `1px solid ${border}`,
+        borderRadius: 20, padding: "4px 12px", marginBottom: 24, alignSelf: "flex-start",
+      }}>
+        {label}
       </div>
-      <div className="or-section-body">
-        <SectionBody section={section} accentColor={accentColor} />
+      <h1 style={{
+        fontSize: 32, fontWeight: 900, color: "#0f172a", lineHeight: 1.2,
+        letterSpacing: "-0.02em", marginBottom: 20,
+      }}>
+        {data.title}
+      </h1>
+      <p style={{
+        fontSize: 15, color: "#374151", lineHeight: 1.85,
+        padding: "16px 20px",
+        borderLeft: `4px solid ${color}`,
+        background: "white",
+        borderRadius: "0 8px 8px 0",
+        maxWidth: 560,
+      }}>
+        {data.summary}
+      </p>
+      <div style={{ marginTop: 32, display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
+        <span style={{ fontSize: 11, color: "rgba(0,0,0,0.3)", letterSpacing: "0.06em" }}>
+          AI Company — {data.questionType}
+        </span>
       </div>
     </div>
   );
 }
 
-// ── セクション本体レンダラー ──────────────────────────────────
-function SectionBody({ section, accentColor }: { section: OutputSection; accentColor: string }) {
+// ── キーポイントスライド ──────────────────────────────────────
+function KeyPointsSlide({ data, color, bg, border }: {
+  data: StructuredOutput; color: string; bg: string; border: string;
+}) {
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", padding: "40px 48px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28 }}>
+        <span style={{ fontSize: 20 }}>📌</span>
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", margin: 0 }}>重要ポイント</h2>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1, justifyContent: "center" }}>
+        {(data.keyPoints ?? []).map((pt, i) => (
+          <div key={i} style={{
+            display: "flex", alignItems: "flex-start", gap: 16,
+            padding: "18px 20px",
+            background: i === 0 ? bg : "white",
+            border: `1px solid ${i === 0 ? border : "#e5e7eb"}`,
+            borderLeft: `4px solid ${color}`,
+            borderRadius: "0 10px 10px 0",
+          }}>
+            <span style={{
+              width: 28, height: 28, borderRadius: "50%", background: color,
+              color: "white", fontSize: 13, fontWeight: 900,
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+            }}>{i + 1}</span>
+            <span style={{ fontSize: 15, color: "#1f2937", lineHeight: 1.6, fontWeight: i === 0 ? 600 : 400 }}>{pt}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── セクションスライド ────────────────────────────────────────
+function SectionSlide({ section, index, total, color }: {
+  section: OutputSection; index: number; total: number; color: string;
+}) {
+  if (section.type === "highlight") {
+    const hcfg = HL[section.highlight ?? "info"];
+    return (
+      <div style={{ height: "100%", display: "flex", flexDirection: "column", padding: "40px 48px" }}>
+        <div style={{ fontSize: 10, color: "rgba(0,0,0,0.3)", marginBottom: 20, letterSpacing: "0.08em" }}>
+          SECTION {index + 1} / {total}
+        </div>
+        <div style={{
+          flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <div style={{
+            background: hcfg.bg, border: `1px solid ${hcfg.border}`,
+            borderLeft: `6px solid ${hcfg.leftBar}`,
+            borderRadius: "0 12px 12px 0",
+            padding: "28px 32px", maxWidth: 560,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: 20 }}>{section.icon ?? hcfg.icon}</span>
+              <span style={{ fontSize: 18, fontWeight: 800, color: hcfg.labelColor }}>{section.title}</span>
+            </div>
+            <p style={{ fontSize: 14, color: hcfg.textColor, lineHeight: 1.8, margin: 0 }}>{section.content}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", padding: "40px 48px" }}>
+      <div style={{ fontSize: 10, color: "rgba(0,0,0,0.3)", marginBottom: 16, letterSpacing: "0.08em" }}>
+        SECTION {index + 1} / {total}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
+        <span style={{ fontSize: 18 }}>{section.icon ?? "📋"}</span>
+        <h2 style={{ fontSize: 20, fontWeight: 800, color, margin: 0 }}>{section.title}</h2>
+      </div>
+      <div style={{ flex: 1, overflow: "auto" }}>
+        <SectionBody section={section} color={color} />
+      </div>
+    </div>
+  );
+}
+
+// ── デザインスライド ──────────────────────────────────────────
+function DesignSlide({ spec, color }: { spec: DesignSpec; color: string }) {
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", padding: "40px 48px", overflow: "auto" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
+        <span style={{ fontSize: 18 }}>🎨</span>
+        <h2 style={{ fontSize: 20, fontWeight: 800, color, margin: 0 }}>Canva デザイン仕様</h2>
+      </div>
+      <p style={{ fontSize: 13, color: "rgba(0,0,0,0.5)", marginBottom: 20 }}>{spec.concept}</p>
+
+      <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+        {/* カラー */}
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>カラー</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {Object.entries(spec.colors).map(([k, v]) => (
+              <div key={k} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 18, height: 18, borderRadius: 4, background: v, border: "1px solid rgba(0,0,0,0.1)", flexShrink: 0 }} />
+                <span style={{ fontSize: 11, color: "#374151" }}>{k}: <span style={{ fontFamily: "monospace" }}>{v}</span></span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* フォント */}
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>フォント</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {Object.entries(spec.fonts).map(([k, v]) => (
+              <div key={k} style={{ fontSize: 11, color: "#374151" }}>
+                <span style={{ fontWeight: 600 }}>{k}:</span> {v}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Canva手順 */}
+      <div style={{ marginTop: 20 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Canva 作成手順</div>
+        <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.9, whiteSpace: "pre-line",
+          background: color + "06", padding: "12px 16px", borderRadius: 8, borderLeft: `3px solid ${color}` }}>
+          {spec.canvaInstructions}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── セクション本体 ────────────────────────────────────────────
+function SectionBody({ section, color }: { section: OutputSection; color: string }) {
   switch (section.type) {
     case "text":
       return (
-        <div className="or-text">
+        <div style={{ fontSize: 14, color: "#374151", lineHeight: 1.9 }}>
           {(section.content ?? "").split("\n").map((line, i) =>
-            line.trim() ? <p key={i}>{line}</p> : <span key={i} className="or-spacer" />
+            line.trim() ? <p key={i} style={{ margin: "0 0 8px" }}>{line}</p> : <div key={i} style={{ height: 8 }} />
           )}
         </div>
       );
-
     case "list":
       return (
-        <ul className="or-list">
+        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
           {(section.items ?? []).map((item, i) => (
-            <li key={i} className="or-list-item">
-              <span className="or-bullet" style={{ color: accentColor }}>▸</span>
-              <span>{item}</span>
+            <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <span style={{ color, fontSize: 14, flexShrink: 0, marginTop: 2 }}>▸</span>
+              <span style={{ fontSize: 14, color: "#374151", lineHeight: 1.6 }}>{item}</span>
             </li>
           ))}
         </ul>
       );
-
     case "steps":
       return (
-        <ol className="or-steps">
+        <ol style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
           {(section.items ?? []).map((item, i) => (
-            <li key={i} className="or-step">
-              <span className="or-step-num" style={{ background: accentColor }}>{i + 1}</span>
-              <div className="or-step-content">
-                <span className="or-step-text">{item}</span>
-              </div>
+            <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+              <span style={{
+                width: 26, height: 26, borderRadius: "50%", background: color,
+                color: "white", fontSize: 12, fontWeight: 900, flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>{i + 1}</span>
+              <span style={{ fontSize: 14, color: "#374151", lineHeight: 1.6, paddingTop: 3 }}>{item}</span>
             </li>
           ))}
         </ol>
       );
-
     case "table": {
       const { headers = [], rows = [] } = section.tableData ?? {};
       return (
-        <div className="or-table-wrap">
-          <table className="or-table">
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr>
                 {headers.map((h, i) => (
-                  <th key={i} style={{ background: accentColor + "15", color: accentColor }}>{h}</th>
+                  <th key={i} style={{
+                    padding: "10px 14px", textAlign: "left",
+                    background: color + "15", color,
+                    fontWeight: 700, fontSize: 12, letterSpacing: "0.04em",
+                    borderBottom: `2px solid ${color}30`,
+                  }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {rows.map((row, i) => (
-                <tr key={i} className={i % 2 === 1 ? "or-row-alt" : ""}>
+                <tr key={i} style={{ background: i % 2 === 1 ? "#f8fafc" : "white" }}>
                   {row.map((cell, j) => (
-                    <td key={j} className={j === 0 ? "or-td-first" : ""}>{cell}</td>
+                    <td key={j} style={{
+                      padding: "10px 14px", color: "#374151",
+                      fontWeight: j === 0 ? 600 : 400,
+                      borderBottom: "1px solid #f1f5f9",
+                    }}>{cell}</td>
                   ))}
                 </tr>
               ))}
@@ -220,8 +275,99 @@ function SectionBody({ section, accentColor }: { section: OutputSection; accentC
         </div>
       );
     }
-
-    default:
-      return null;
+    default: return null;
   }
+}
+
+// ── メインコンポーネント ──────────────────────────────────────
+export default function OutputRenderer({ data }: { data: StructuredOutput }) {
+  const cfg = TYPE_CONFIG[data.questionType] ?? TYPE_CONFIG["情報整理"];
+  const slides = buildSlides(data);
+  const [current, setCurrent] = useState(0);
+
+  const prev = () => setCurrent(i => Math.max(0, i - 1));
+  const next = () => setCurrent(i => Math.min(slides.length - 1, i + 1));
+
+  const slide = slides[current];
+  const sectionSlides = slides.filter(s => s.type === "section");
+
+  return (
+    <div style={{
+      height: "100%", display: "flex", flexDirection: "column",
+      background: "#f8fafc",
+    }}>
+      {/* スライド本体 */}
+      <div style={{
+        flex: 1, overflow: "hidden",
+        background: "white",
+        borderRadius: 12,
+        margin: "12px 12px 0",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05)",
+        position: "relative",
+      }}>
+        {slide.type === "cover" && (
+          <CoverSlide data={data} color={cfg.color} bg={cfg.bg} border={cfg.border} label={cfg.label} />
+        )}
+        {slide.type === "keypoints" && (
+          <KeyPointsSlide data={data} color={cfg.color} bg={cfg.bg} border={cfg.border} />
+        )}
+        {slide.type === "section" && (
+          <SectionSlide
+            section={slide.section}
+            index={slide.index}
+            total={sectionSlides.length}
+            color={cfg.color}
+          />
+        )}
+        {slide.type === "design" && (
+          <DesignSlide spec={slide.spec} color={cfg.color} />
+        )}
+      </div>
+
+      {/* ナビゲーション */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "10px 16px",
+        flexShrink: 0,
+      }}>
+        {/* 前へ */}
+        <button onClick={prev} disabled={current === 0} style={{
+          padding: "6px 16px", borderRadius: 8,
+          background: current === 0 ? "#f1f5f9" : cfg.color,
+          color: current === 0 ? "#94a3b8" : "white",
+          border: "none", cursor: current === 0 ? "default" : "pointer",
+          fontSize: 13, fontWeight: 600,
+          transition: "all 0.15s",
+        }}>← 前へ</button>
+
+        {/* ドットインジケーター */}
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          {slides.map((_s, i) => (
+            <button key={i} onClick={() => setCurrent(i)} style={{
+              width: i === current ? 20 : 7,
+              height: 7, borderRadius: 4,
+              background: i === current ? cfg.color : "#cbd5e1",
+              border: "none", cursor: "pointer", padding: 0,
+              transition: "all 0.2s",
+            }} />
+          ))}
+        </div>
+
+        {/* 次へ */}
+        <button onClick={next} disabled={current === slides.length - 1} style={{
+          padding: "6px 16px", borderRadius: 8,
+          background: current === slides.length - 1 ? "#f1f5f9" : cfg.color,
+          color: current === slides.length - 1 ? "#94a3b8" : "white",
+          border: "none", cursor: current === slides.length - 1 ? "default" : "pointer",
+          fontSize: 13, fontWeight: 600,
+          transition: "all 0.15s",
+        }}>次へ →</button>
+      </div>
+
+      {/* スライド番号 */}
+      <div style={{ textAlign: "center", paddingBottom: 8, fontSize: 11, color: "#94a3b8" }}>
+        {current + 1} / {slides.length}
+      </div>
+    </div>
+  );
 }

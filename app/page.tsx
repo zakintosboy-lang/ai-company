@@ -772,6 +772,7 @@ export default function Home() {
                   name: c.config.name,
                   status: c.status,
                   lastMessage: c.lastMessage,
+                  model: c.config.model.displayName,
                 }))}
                 isRunning={isRunning}
                 output={!!output}

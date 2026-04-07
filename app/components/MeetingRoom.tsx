@@ -8,7 +8,7 @@ type AgentRole   = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "d
 type AgentStatus = "idle" | "thinking" | "reviewing" | "done" | "waiting";
 
 interface LogEntry  { time: string; role: AgentRole; message: string; }
-interface AgentInfo { id: string; role: AgentRole; name: string; status: AgentStatus; lastMessage?: string; }
+interface AgentInfo { id: string; role: AgentRole; name: string; status: AgentStatus; lastMessage?: string; model?: string; }
 
 interface Props {
   logs: LogEntry[];
@@ -210,6 +210,11 @@ function CharacterUnit({ agent, showBubble, latestMessage }: {
         <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>
           {agent.name}
         </div>
+        {agent.model && (
+          <div style={{ fontSize: 7.5, color: "rgba(255,255,255,0.18)", marginTop: 2, letterSpacing: "0.04em" }}>
+            {agent.model}
+          </div>
+        )}
       </div>
     </div>
   );
