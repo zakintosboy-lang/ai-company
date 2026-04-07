@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import type { TargetAndTransition } from "framer-motion";
 
 type AgentRole   = "ceo" | "manager" | "worker" | "reviewer" | "system";
 type AgentStatus = "idle" | "thinking" | "reviewing" | "done" | "waiting";
@@ -156,34 +157,34 @@ function PixelGrid({ pixels, cellSize }: { pixels: PixelGrid; cellSize: number }
 
 // ─── アニメーション variant ──────────────────────────────────────
 
-const IDLE_ANIM = {
+const IDLE_ANIM: TargetAndTransition = {
   y: [0, -2, 0],
-  transition: { duration: 2.0, repeat: Infinity, ease: "easeInOut" as const },
+  transition: { duration: 2.0, repeat: Infinity, ease: "easeInOut" },
 };
 
-const THINKING_ANIM = {
+const THINKING_ANIM: TargetAndTransition = {
   y: [0, -4, 0],
-  transition: { duration: 0.6, repeat: Infinity, ease: "easeInOut" as const },
+  transition: { duration: 0.6, repeat: Infinity, ease: "easeInOut" },
 };
 
-const REVIEWING_ANIM = {
+const REVIEWING_ANIM: TargetAndTransition = {
   rotate: [-2, 2, -2],
-  transition: { duration: 0.8, repeat: Infinity, ease: "easeInOut" as const },
+  transition: { duration: 0.8, repeat: Infinity, ease: "easeInOut" },
 };
 
-const DONE_ANIM = {
+const DONE_ANIM: TargetAndTransition = {
   y: [0, -8, 0],
-  transition: { duration: 0.35, ease: "backOut" as const },
+  transition: { duration: 0.35, ease: "backOut" },
 };
 
-const WAITING_ANIM = {
+const WAITING_ANIM: TargetAndTransition = {
   y: [0, -1, 0],
-  transition: { duration: 3.5, repeat: Infinity, ease: "easeInOut" as const },
+  transition: { duration: 3.5, repeat: Infinity, ease: "easeInOut" },
 };
 
 // ─── メインコンポーネント ────────────────────────────────────────
 
-export default function PixelCharacter({ role, status, agentId, size = 3 }: Props) {
+export default function PixelCharacter({ role, status, size = 3 }: Props) {
   const pixelMap: Partial<Record<AgentRole, PixelGrid>> = {
     ceo:      CEO_PIXELS,
     manager:  MANAGER_PIXELS,
@@ -193,7 +194,7 @@ export default function PixelCharacter({ role, status, agentId, size = 3 }: Prop
 
   const pixels = pixelMap[role] ?? CEO_PIXELS;
 
-  const animMap: Record<AgentStatus, object> = {
+  const animMap: Record<AgentStatus, TargetAndTransition> = {
     idle:      IDLE_ANIM,
     thinking:  THINKING_ANIM,
     reviewing: REVIEWING_ANIM,
