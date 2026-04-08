@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import type { TargetAndTransition } from "framer-motion";
 
-type AgentRole   = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "designer" | "system";
+type AgentRole   = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "designer" | "editor" | "system";
 type AgentStatus = "idle" | "thinking" | "reviewing" | "done" | "waiting";
 
 interface Props {
@@ -58,6 +58,12 @@ const P = {
   dH2: "#831843",
   dA: "#f9a8d4",
   dP: "#ec4899", // パレット
+
+  // Editor（黄緑）
+  edH: "#3f6212",
+  edH2: "#365314",
+  edA: "#bef264",
+  edP: "#84cc16", // ペン
 
   // System
   sys: "#475569",
@@ -188,6 +194,26 @@ const DESIGNER_PIXELS: PixelGrid = [
   [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
 ];
 
+// Editor: 黄緑コート + ペン
+const EDITOR_PIXELS: PixelGrid = [
+  [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  [null,null,null,P.bk,P.edH,P.edA,P.edH,P.edH,P.edH,P.edA,P.edH,P.bk,null,null,null,null],
+  [null,null,P.bk,P.edA,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.edA,P.bk,null,null,null],
+  [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
+  [null,null,P.bk,P.sk,P.ey,P.sk,P.sk,P.sk,P.sk,P.ey,P.sk,P.sk,P.bk,null,null,null],
+  [null,null,P.bk,P.sk,P.sk,P.sk,P.edA,P.sk,P.edA,P.sk,P.sk,P.sk,P.bk,null,null,null],
+  [null,null,P.bk,P.sk,P.sk,P.sk2,P.sk,P.bk,P.sk2,P.sk,P.sk,P.sk,P.bk,null,null,null],
+  [null,null,null,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,null,null,null,null],
+  [null,P.bk,P.edA,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edA,P.bk,null,null],
+  [null,P.edH,P.edH,P.edH,P.edP,P.edA,P.edP,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,null,null],
+  [null,P.edH,P.edA,P.edH,P.edA,P.edP,P.edA,P.edH,P.edH,P.edH,P.edH,P.edH,P.edA,P.edH,null,null],
+  [null,P.edH2,P.edH,P.edH,P.edP,P.edA,P.edP,null,null,null,null,P.edH,P.edH,P.edH2,null,null],
+  [null,null,P.edH2,P.edH,null,null,null,null,null,null,null,P.edH,P.edH2,null,null,null],
+  [null,null,P.edH,P.edH2,null,null,null,null,null,null,null,P.edH2,P.edH,null,null,null],
+  [null,null,P.edH,P.edH,null,null,null,null,null,null,null,null,P.edH,null,null,null],
+  [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+];
+
 // ─── ピクセルグリッド描画 ────────────────────────────────────────
 
 function PixelGrid({ pixels, cellSize }: { pixels: PixelGrid; cellSize: number }) {
@@ -244,6 +270,7 @@ export default function PixelCharacter({ role, status, size = 3 }: Props) {
     reviewer:   REVIEWER_PIXELS,
     researcher: RESEARCHER_PIXELS,
     designer:   DESIGNER_PIXELS,
+    editor:     EDITOR_PIXELS,
   };
 
   const pixels = pixelMap[role] ?? CEO_PIXELS;

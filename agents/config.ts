@@ -115,6 +115,22 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     ],
   },
   {
+    id: "editor",
+    role: "editor",
+    name: "Editor",
+    model: {
+      provider: "openai",
+      modelId: "gpt-4.1",
+      displayName: "GPT-4.1",
+    },
+    criteria: [
+      "文章が論理的な順序で整理されていること",
+      "表現が統一されていること",
+      "冗長な繰り返しが除去されていること",
+      "読み手に伝わりやすい構成であること",
+    ],
+  },
+  {
     id: "designer",
     role: "designer",
     name: "Designer",

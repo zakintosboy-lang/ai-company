@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import PixelCharacter from "./PixelCharacter";
 
-type AgentRole   = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "designer" | "system";
+type AgentRole   = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "designer" | "editor" | "system";
 type AgentStatus = "idle" | "thinking" | "reviewing" | "done" | "waiting";
 
 interface LogEntry  { time: string; role: AgentRole; message: string; }
@@ -50,6 +50,13 @@ const ROLE_CONFIG: Record<AgentRole, {
     glow: "rgba(52,211,153,0.35)",
     bubbleBg: "rgba(6,46,32,0.85)",
     bubbleBorder: "rgba(52,211,153,0.5)",
+  },
+  editor: {
+    jaLabel: "編集者",
+    color: "#a3e635",
+    glow: "rgba(163,230,53,0.35)",
+    bubbleBg: "rgba(30,50,10,0.85)",
+    bubbleBorder: "rgba(163,230,53,0.5)",
   },
   researcher: {
     jaLabel: "リサーチ担当",
@@ -328,6 +335,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
   const workers    = ["worker-1", "worker-2", "worker-3"].map(id => getAgent(id)).filter(Boolean) as AgentInfo[];
   const reviewer   = getAgent("reviewer");
   const researcher = getAgent("researcher");
+  const editor     = getAgent("editor");
   const designer   = getAgent("designer");
 
   // プレースホルダー
@@ -405,8 +413,8 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           />
         </div>
 
-        {/* Row 2: Manager + Researcher + Reviewer（3列） */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingInline: 12 }}>
+        {/* Row 2: Manager + Researcher + Editor + Reviewer（4列） */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingInline: 8 }}>
           <CharacterUnit
             agent={manager ?? ph("manager", "manager")}
             showBubble
@@ -416,6 +424,11 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
             agent={researcher ?? ph("researcher", "researcher")}
             showBubble
             latestMessage={agentMessages["researcher"]}
+          />
+          <CharacterUnit
+            agent={editor ?? ph("editor", "editor")}
+            showBubble
+            latestMessage={agentMessages["editor"]}
           />
           <CharacterUnit
             agent={reviewer ?? ph("reviewer", "reviewer")}

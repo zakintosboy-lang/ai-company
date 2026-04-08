@@ -718,7 +718,17 @@ export default function Home() {
           <div className="header-logo">AI</div>
           <div>
             <div className="header-title">AI Company</div>
-            <div className="header-subtitle">CEO · Manager · Worker × 3 · Reviewer</div>
+            <div className="header-subtitle">
+              {Object.values(agents).length > 0
+                ? Object.values(agents).map(a => (
+                    <span key={a.config.id} style={{ marginRight: 10, whiteSpace: "nowrap" }}>
+                      {a.config.name}
+                      <span style={{ opacity: 0.4, marginLeft: 3, fontSize: 9 }}>({a.config.model.displayName})</span>
+                    </span>
+                  ))
+                : "CEO · Manager · Researcher · Worker × 3 · Editor · Reviewer · Designer"
+              }
+            </div>
           </div>
         </div>
         <div className="status-badge">

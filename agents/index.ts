@@ -6,6 +6,7 @@ import { executeTask } from "./worker";
 import { reviewWork } from "./reviewer";
 import { analyzeStrategy, makeFinalDecision } from "./ceo";
 import { conductResearch } from "./researcher";
+import { editContent } from "./editor";
 import { generateDesignSpec } from "./designer";
 import { formatOutput } from "./formatter";
 
@@ -37,9 +38,10 @@ export async function runCompany(
   const manager    = agentMap["manager"];
   const reviewer   = agentMap["reviewer"];
   const researcher = agentMap["researcher"];
+  const editor     = agentMap["editor"];
   const designer   = agentMap["designer"];
 
-  onLog({ role: "system", message: "=== AI Company 起動 — 6フェーズ開始 ===" });
+  onLog({ role: "system", message: "=== AI Company 起動 — 7フェーズ開始 ===" });
 
   // ── Phase 1: CEO 戦略設計 ─────────────────────────────────────
   onLog({ role: "system", message: "【Phase 1】CEO が戦略を設計します" });
@@ -128,8 +130,12 @@ ${researchResult.rawText}
     const aggregated = await aggregateResults(manager, ceoCycleInstruction, results);
     manager.setDone("集約完了");
 
+    // ── Editor 編集 ───────────────────────────────────────────
+    onLog({ role: "system", message: "【Editor】文章・構成を編集します" });
+    const edited = await editContent(editor, aggregated, ceoCycleInstruction);
+
     // CEO 最終判断
-    const decision = await makeFinalDecision(ceo, ceoCycleInstruction, aggregated);
+    const decision = await makeFinalDecision(ceo, ceoCycleInstruction, edited);
 
     if (decision.approved && decision.finalAnswer) {
       // Formatter 構造化
@@ -148,7 +154,7 @@ ${researchResult.rawText}
       ceo.log(`差し戻しフィードバック: ${decision.feedback}`);
       ceoCycleInstruction = `${instruction}\n\n[CEOの改善要求]: ${decision.feedback}`;
     } else {
-      const structured = await formatOutput(instruction, aggregated, onLog);
+      const structured = await formatOutput(instruction, edited, onLog);
       const designSpec = await generateDesignSpec(designer, structured);
       if (designSpec) structured.designSpec = designSpec;
       onLog({ role: "system", message: "=== 処理完了（最大サイクル到達） ===" });

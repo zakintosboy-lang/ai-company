@@ -1,4 +1,4 @@
-export type AgentRole = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "designer" | "system";
+export type AgentRole = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "designer" | "editor" | "system";
 export type AgentStatus = "idle" | "thinking" | "reviewing" | "done" | "waiting";
 export type ModelProvider = "claude" | "openai" | "gemini";
 
