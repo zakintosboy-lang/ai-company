@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { StructuredOutput, OutputSection, HighlightVariant, DesignSpec } from "@/agents/types";
 
 // ── 質問タイプ設定 ─────────────────────────────────────────────
@@ -93,6 +93,13 @@ function buildSlides(data: StructuredOutput) {
     ...(data.designSpec ? [{ type: "design" as const, spec: data.designSpec, data }] : []),
   ];
   return slides;
+}
+
+function buildSubtitle(data: StructuredOutput) {
+  const stageNames = Array.from(new Set(buildStructuredSections(data.sections).map((entry) => STAGE_META[entry.stage].title)));
+  return stageNames.length > 0
+    ? `${stageNames.join(" / ")} を1本のレポートに整理`
+    : "調査から提案までを整理した共有レポート";
 }
 
 // ── カバースライド ────────────────────────────────────────────
@@ -369,6 +376,17 @@ export default function OutputRenderer({ data }: { data: StructuredOutput }) {
   const cfg = TYPE_CONFIG[data.questionType] ?? TYPE_CONFIG["情報整理"];
   const slides = buildSlides(data);
   const [current, setCurrent] = useState(0);
+  const [isCompact, setIsCompact] = useState(false);
+  const createdAt = new Date().toLocaleString("ja-JP");
+  const subtitle = buildSubtitle(data);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 640px)");
+    const sync = () => setIsCompact(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
 
   const prev = () => setCurrent(i => Math.max(0, i - 1));
   const next = () => setCurrent(i => Math.min(slides.length - 1, i + 1));
@@ -379,14 +397,89 @@ export default function OutputRenderer({ data }: { data: StructuredOutput }) {
   return (
     <div style={{
       height: "100%", display: "flex", flexDirection: "column",
-      background: "#f8fafc",
+      background: "linear-gradient(180deg, #f7f2ea 0%, #f3f6fb 100%)",
     }}>
+      <div style={{
+        margin: isCompact ? "12px 12px 0" : "16px 16px 0",
+        padding: isCompact ? "12px 14px" : "14px 16px",
+        borderRadius: 16,
+        background: "rgba(255,255,255,0.78)",
+        border: "1px solid rgba(28,24,20,0.08)",
+        boxShadow: "0 10px 30px rgba(28,24,20,0.06)",
+        backdropFilter: "blur(10px)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(28,24,20,0.5)", marginBottom: 4 }}>
+              Shared Report
+            </div>
+            <div style={{
+              fontSize: isCompact ? 15 : 16,
+              fontWeight: 800,
+              color: "#1c1814",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}>
+              {data.title}
+            </div>
+            <div style={{ fontSize: 12, lineHeight: 1.6, color: "#6b6258", marginTop: 4 }}>
+              {subtitle}
+            </div>
+          </div>
+          <div style={{
+            flexShrink: 0,
+            fontSize: 11,
+            fontWeight: 700,
+            color: cfg.color,
+            background: cfg.bg,
+            border: `1px solid ${cfg.border}`,
+            borderRadius: 999,
+            padding: "5px 10px",
+          }}>
+            {current + 1} / {slides.length}
+          </div>
+        </div>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: isCompact ? "1fr" : "repeat(3, minmax(0, 1fr))",
+          gap: 8,
+          marginBottom: 8,
+        }}>
+          {[
+            { label: "作成日時", value: createdAt },
+            { label: "作成者", value: "AI Company" },
+            { label: "共有用サブタイトル", value: subtitle },
+          ].map((item) => (
+            <div
+              key={item.label}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 12,
+                background: "rgba(255,255,255,0.72)",
+                border: "1px solid rgba(28,24,20,0.08)",
+              }}
+            >
+              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(28,24,20,0.45)", marginBottom: 4 }}>
+                {item.label}
+              </div>
+              <div style={{ fontSize: 12.5, lineHeight: 1.6, color: "#3d342c" }}>
+                {item.value}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontSize: 12.5, lineHeight: 1.7, color: "#5a4e44" }}>
+          調査結果からおすすめ案、企画メモまでをそのまま共有できるビューです。
+        </div>
+      </div>
+
       {/* スライド本体 */}
       <div style={{
         flex: 1, overflow: "hidden",
         background: "white",
         borderRadius: 12,
-        margin: "12px 12px 0",
+        margin: isCompact ? "12px 12px 0" : "12px 12px 0",
         boxShadow: "0 4px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05)",
         position: "relative",
       }}>
@@ -415,25 +508,32 @@ export default function OutputRenderer({ data }: { data: StructuredOutput }) {
       {/* ナビゲーション */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "10px 16px",
+        padding: isCompact ? "14px 12px calc(14px + env(safe-area-inset-bottom))" : "10px 16px",
         flexShrink: 0,
+        position: isCompact ? "sticky" : "static",
+        bottom: 0,
+        background: isCompact ? "rgba(237,234,227,0.92)" : "transparent",
+        backdropFilter: isCompact ? "blur(12px)" : "none",
+        borderTop: isCompact ? "1px solid rgba(28,24,20,0.08)" : "none",
       }}>
         {/* 前へ */}
         <button onClick={prev} disabled={current === 0} style={{
-          padding: "6px 16px", borderRadius: 8,
+          padding: isCompact ? "14px 18px" : "6px 16px", borderRadius: isCompact ? 14 : 8,
           background: current === 0 ? "#f1f5f9" : cfg.color,
           color: current === 0 ? "#94a3b8" : "white",
           border: "none", cursor: current === 0 ? "default" : "pointer",
-          fontSize: 13, fontWeight: 600,
+          fontSize: isCompact ? 16 : 13, fontWeight: 700,
+          minWidth: isCompact ? 112 : "auto",
           transition: "all 0.15s",
+          boxShadow: isCompact && current !== 0 ? "0 8px 18px rgba(0,0,0,0.12)" : "none",
         }}>← 前へ</button>
 
         {/* ドットインジケーター */}
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: isCompact ? 8 : 6, alignItems: "center", justifyContent: "center", flex: 1, padding: "0 10px" }}>
           {slides.map((_s, i) => (
             <button key={i} onClick={() => setCurrent(i)} style={{
-              width: i === current ? 20 : 7,
-              height: 7, borderRadius: 4,
+              width: i === current ? (isCompact ? 24 : 20) : (isCompact ? 10 : 7),
+              height: isCompact ? 10 : 7, borderRadius: 999,
               background: i === current ? cfg.color : "#cbd5e1",
               border: "none", cursor: "pointer", padding: 0,
               transition: "all 0.2s",
@@ -443,17 +543,19 @@ export default function OutputRenderer({ data }: { data: StructuredOutput }) {
 
         {/* 次へ */}
         <button onClick={next} disabled={current === slides.length - 1} style={{
-          padding: "6px 16px", borderRadius: 8,
+          padding: isCompact ? "14px 18px" : "6px 16px", borderRadius: isCompact ? 14 : 8,
           background: current === slides.length - 1 ? "#f1f5f9" : cfg.color,
           color: current === slides.length - 1 ? "#94a3b8" : "white",
           border: "none", cursor: current === slides.length - 1 ? "default" : "pointer",
-          fontSize: 13, fontWeight: 600,
+          fontSize: isCompact ? 16 : 13, fontWeight: 700,
+          minWidth: isCompact ? 112 : "auto",
           transition: "all 0.15s",
+          boxShadow: isCompact && current !== slides.length - 1 ? "0 8px 18px rgba(0,0,0,0.12)" : "none",
         }}>次へ →</button>
       </div>
 
       {/* スライド番号 */}
-      <div style={{ textAlign: "center", paddingBottom: 8, fontSize: 11, color: "#94a3b8" }}>
+      <div style={{ textAlign: "center", paddingBottom: isCompact ? 6 : 8, fontSize: 11, color: "#94a3b8" }}>
         {current + 1} / {slides.length}
       </div>
     </div>

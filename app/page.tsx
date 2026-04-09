@@ -29,31 +29,122 @@ interface SavedResult {
   agentSnapshot: { id: string; name: string; model: string }[];
 }
 
+type SampleGenre = "all" | "finance" | "health" | "company" | "education" | "real-estate" | "legal" | "recruiting";
+interface SamplePrompt {
+  title: string;
+  body: string;
+  genre: Exclude<SampleGenre, "all">;
+}
+
 // ── 定数 ───────────────────────────────────────────────────────
 const ROLE_LABEL:   Record<AgentRole, string>     = { ceo:"CEO", manager:"Manager", worker:"Worker", reviewer:"Reviewer", system:"System" };
 const PROVIDER_LABEL: Record<ModelProvider,string>= { claude:"Claude", openai:"OpenAI", gemini:"Gemini" };
 const AGENT_ORDER = ["ceo","manager","worker-1","worker-2","worker-3","reviewer"];
 const STORAGE_KEY = "ai-company-results";
 const RUN_COUNT_KEY = "ai-company-run-count";
-const SAMPLE_PROMPTS = [
+const SAMPLE_GENRE_META: Record<SampleGenre, { label: string; icon: string; color: string; bg: string; border: string }> = {
+  all: { label: "おすすめ", icon: "✨", color: "#7c58c8", bg: "rgba(124,88,200,0.10)", border: "rgba(124,88,200,0.18)" },
+  finance: { label: "金融", icon: "¥", color: "#0f766e", bg: "rgba(15,118,110,0.10)", border: "rgba(15,118,110,0.18)" },
+  health: { label: "健康", icon: "◯", color: "#c2410c", bg: "rgba(194,65,12,0.10)", border: "rgba(194,65,12,0.18)" },
+  company: { label: "企業", icon: "□", color: "#1d4ed8", bg: "rgba(29,78,216,0.10)", border: "rgba(29,78,216,0.18)" },
+  education: { label: "教育", icon: "△", color: "#7c3aed", bg: "rgba(124,58,237,0.10)", border: "rgba(124,58,237,0.18)" },
+  "real-estate": { label: "不動産", icon: "⌂", color: "#b45309", bg: "rgba(180,83,9,0.10)", border: "rgba(180,83,9,0.18)" },
+  legal: { label: "法務", icon: "§", color: "#334155", bg: "rgba(51,65,85,0.10)", border: "rgba(51,65,85,0.18)" },
+  recruiting: { label: "採用", icon: "◇", color: "#be185d", bg: "rgba(190,24,93,0.10)", border: "rgba(190,24,93,0.18)" },
+};
+const SAMPLE_PROMPTS: SamplePrompt[] = [
   {
     title: "SaaS比較",
     body: "AI議事録ツールを調査し、主要サービスを比較したうえで、おすすめ案を1つ選び、社内提案メモの形までまとめてください",
+    genre: "company",
   },
   {
     title: "市場調査",
     body: "中小企業向け福利厚生サービス市場を調査し、競合の特徴を整理したうえで、参入余地がありそうな案を提案してください",
+    genre: "company",
   },
   {
     title: "新規企画",
     body: "学生向けキャリア支援アプリの企画を考えたいです。関連サービスを比較し、おすすめの方向性を出して、企画書のたたき台まで作ってください",
+    genre: "company",
   },
-] as const;
+  {
+    title: "金融レポート",
+    body: "個人向け資産運用アプリ市場を調査し、主要サービスを比較したうえで、初心者向けにおすすめの参入テーマを提案してください",
+    genre: "finance",
+  },
+  {
+    title: "保険比較",
+    body: "オンライン保険相談サービスを調査し、各社の強みを比較したうえで、差別化しやすい事業案をまとめてください",
+    genre: "finance",
+  },
+  {
+    title: "健康企画",
+    body: "生活習慣改善アプリ市場を調査し、人気機能や継続率向上の工夫を比較したうえで、おすすめ企画を提案してください",
+    genre: "health",
+  },
+  {
+    title: "ヘルスケア比較",
+    body: "オンライン診療サービスを調査し、主要プレイヤーを比較したうえで、新しく作るならどの領域が有望か提案してください",
+    genre: "health",
+  },
+  {
+    title: "企業支援",
+    body: "中堅企業向けAI研修サービスを調査し、競合比較と提供価値の整理をしたうえで、営業提案メモの形までまとめてください",
+    genre: "company",
+  },
+  {
+    title: "教育比較",
+    body: "オンライン学習サービス市場を調査し、主要プレイヤーの特徴を比較したうえで、伸びやすい新規企画を提案してください",
+    genre: "education",
+  },
+  {
+    title: "学校向け企画",
+    body: "学校向け保護者連絡アプリを調査し、既存サービスの機能や課題を比較したうえで、おすすめ案を企画メモまでまとめてください",
+    genre: "education",
+  },
+  {
+    title: "不動産DX",
+    body: "賃貸仲介のDXサービスを調査し、主要サービスを比較したうえで、不動産会社向けに提案しやすい新規案をまとめてください",
+    genre: "real-estate",
+  },
+  {
+    title: "物件比較支援",
+    body: "不動産購入検討者向け比較サービスを調査し、競合の強みと弱みを整理したうえで、おすすめ機能案を提案してください",
+    genre: "real-estate",
+  },
+  {
+    title: "法務支援",
+    body: "AI契約レビューサービスを調査し、主要サービスの比較と導入メリットを整理したうえで、企業向け提案メモを作ってください",
+    genre: "legal",
+  },
+  {
+    title: "コンプラ比較",
+    body: "コンプライアンス研修サービスを調査し、各社の特徴を比較したうえで、差別化しやすい法務支援サービス案を提案してください",
+    genre: "legal",
+  },
+  {
+    title: "採用広報",
+    body: "採用広報支援サービスを調査し、競合比較をしたうえで、企業が導入したくなる提案内容を整理してください",
+    genre: "recruiting",
+  },
+  {
+    title: "面接DX",
+    body: "面接評価の効率化ツールを調査し、主要サービスを比較したうえで、おすすめ案と導入企画メモを作成してください",
+    genre: "recruiting",
+  },
+];
 
 type Tab = "logs" | "output";
 
 // ── ヘルパー ──────────────────────────────────────────────────
 function now() { return new Date().toLocaleTimeString("ja-JP", { hour12: false }); }
+
+function pickSamples(genre: SampleGenre, count = 3) {
+  const pool = genre === "all" ? SAMPLE_PROMPTS : SAMPLE_PROMPTS.filter((item) => item.genre === genre);
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
 
 function escapeHtml(t: string) {
   return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -483,6 +574,9 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("logs");
   const [runCount, setRunCount]   = useState<number>(0);
   const [toast, setToast]         = useState<string | null>(null);
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [sampleGenre, setSampleGenre] = useState<SampleGenre>("all");
+  const [visibleSamples, setVisibleSamples] = useState<SamplePrompt[]>(() => pickSamples("all"));
   const logBottomRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -499,6 +593,22 @@ export default function Home() {
       }
     } catch { /* ignore */ }
   }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 900px)");
+    const sync = () => setIsMobileView(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
+    if (isMobileView && output) setActiveTab("output");
+  }, [isMobileView, output]);
+
+  useEffect(() => {
+    setVisibleSamples(pickSamples(sampleGenre));
+  }, [sampleGenre]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -703,13 +813,13 @@ export default function Home() {
         </div>
         <div className="status-badge">
           <div className={`status-dot ${isRunning ? "running" : runCount > 0 ? "ready" : ""}`} />
-          {isRunning ? "Processing" : runCount > 0 ? "Ready" : "Standby"}
+          {isMobileView ? (isRunning ? "Mobile Running" : "Mobile Ready") : isRunning ? "Processing" : runCount > 0 ? "Ready" : "Standby"}
         </div>
       </header>
 
       <main className="main">
         {/* Left Panel */}
-        <aside className="panel-left">
+        <aside className={`panel-left ${isMobileView ? "mobile-edit-panel" : ""}`}>
           <div
             style={{
               padding: "14px 15px",
@@ -751,33 +861,104 @@ export default function Home() {
               disabled={isRunning || !hydrated}
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleRun(); }}
             />
-            {!isRunning && (
-              <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 12, opacity: 0.58, marginBottom: 8 }}>すぐ試せるサンプル指示</div>
-                <div style={{ display: "grid", gap: 8 }}>
-                  {SAMPLE_PROMPTS.map((sample) => {
-                    const selected = instruction === sample.body;
-                    return (
+                {!isRunning && (
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+                      <div style={{ fontSize: 12, opacity: 0.58 }}>
+                        すぐ試せるサンプル指示
+                      </div>
                       <button
-                        key={sample.title}
                         type="button"
-                        onClick={() => setInstruction(sample.body)}
+                        onClick={() => setVisibleSamples(pickSamples(sampleGenre))}
                         style={{
-                          textAlign: "left",
-                          padding: "12px 13px",
-                          borderRadius: 14,
-                          border: selected ? "1px solid rgba(255,255,255,0.26)" : "1px solid rgba(255,255,255,0.08)",
-                          background: selected ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)",
-                          color: "inherit",
+                          border: "1px solid rgba(28,24,20,0.08)",
+                          background: "rgba(255,255,255,0.5)",
+                          borderRadius: 999,
+                          padding: "5px 10px",
+                          fontSize: 11,
+                          fontWeight: 700,
                           cursor: "pointer",
-                          transition: "all 160ms ease",
+                          color: "var(--text-secondary)",
                         }}
                       >
-                        <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.72, marginBottom: 4 }}>
-                          {sample.title}
-                        </div>
-                        <div style={{ fontSize: 13, lineHeight: 1.6, opacity: 0.9 }}>
-                          {sample.body}
+                        シャッフル
+                      </button>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                      {(Object.keys(SAMPLE_GENRE_META) as SampleGenre[]).map((genre) => {
+                        const active = sampleGenre === genre;
+                        const meta = SAMPLE_GENRE_META[genre];
+                        return (
+                          <button
+                            key={genre}
+                            type="button"
+                            onClick={() => setSampleGenre(genre)}
+                            style={{
+                              border: active ? `1px solid ${meta.border}` : "1px solid rgba(28,24,20,0.08)",
+                              background: active ? meta.bg : "rgba(255,255,255,0.45)",
+                              borderRadius: 999,
+                              padding: "6px 11px",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              color: active ? meta.color : "inherit",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
+                          >
+                            <span style={{ fontSize: 11, lineHeight: 1 }}>{meta.icon}</span>
+                            {meta.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div style={{ display: "grid", gap: 8 }}>
+                      {visibleSamples.map((sample) => {
+                        const selected = instruction === sample.body;
+                        const meta = SAMPLE_GENRE_META[sample.genre];
+                        return (
+                          <button
+                            key={sample.title}
+                            type="button"
+                            onClick={() => setInstruction(sample.body)}
+                            style={{
+                              textAlign: "left",
+                              padding: "12px 13px",
+                              borderRadius: 14,
+                              border: selected ? `1px solid ${meta.border}` : "1px solid rgba(28,24,20,0.08)",
+                              background: selected ? meta.bg : "rgba(255,255,255,0.35)",
+                              color: "inherit",
+                              cursor: "pointer",
+                              transition: "all 160ms ease",
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  minWidth: 22,
+                                  height: 22,
+                                  borderRadius: 999,
+                                  background: meta.bg,
+                                  color: meta.color,
+                                  fontSize: 11,
+                                  fontWeight: 800,
+                                }}
+                              >
+                                {meta.icon}
+                              </span>
+                              <span style={{ fontSize: 12, fontWeight: 700, opacity: 0.82 }}>
+                                {meta.label}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.72, marginBottom: 4 }}>
+                              {sample.title}
+                            </div>
+                            <div style={{ fontSize: 13, lineHeight: 1.6, opacity: 0.9 }}>
+                              {sample.body}
                         </div>
                       </button>
                     );
@@ -794,7 +975,7 @@ export default function Home() {
           >
             {isRunning
               ? <>停止</>
-              : <><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 2L12 7L3 12V2Z" fill="currentColor"/></svg>実行 (⌘ Enter)</>
+              : <><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 2L12 7L3 12V2Z" fill="currentColor"/></svg>{isMobileView ? "実行" : "実行 (⌘ Enter)"}</>
             }
           </button>
 
@@ -831,7 +1012,7 @@ export default function Home() {
           {/* Tabs */}
           <div className="panel-tabs">
             <button className={`panel-tab ${activeTab==="logs"?"active":""}`} onClick={() => setActiveTab("logs")}>
-              会議室 {logs.length > 0 && `(${logs.length})`}
+              {isMobileView ? "進行" : "会議室"} {logs.length > 0 && `(${logs.length})`}
             </button>
             <button className={`panel-tab ${activeTab==="output"?"active":""}`} onClick={() => setActiveTab("output")}>
               成果物 {output && "✓"}
@@ -861,7 +1042,7 @@ export default function Home() {
           {activeTab === "output" && (
             <div className="output-panel">
               {!output
-                ? <div className="output-empty">調査結果の整理、おすすめ案、企画書っぽい最終成果物がここに表示されます</div>
+                ? <div className="output-empty">{isMobileView ? "スマホでも実行できます。指示を入力して、成果物タブで結果を確認してください" : "調査結果の整理、おすすめ案、企画書っぽい最終成果物がここに表示されます"}</div>
                 : <OutputRenderer data={output} />
               }
             </div>
