@@ -47,9 +47,7 @@ class OpenAIProvider implements LLMProvider {
   }
 }
 
-const GEMINI_FALLBACK: Record<string, string> = {
-  "gemini-3-flash-preview": "gemini-2.5-flash",
-};
+const GEMINI_FALLBACK: Record<string, string> = {};
 
 class GeminiProvider implements LLMProvider {
   private client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");

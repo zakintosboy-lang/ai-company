@@ -135,9 +135,9 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     role: "designer",
     name: "Designer",
     model: {
-      provider: "gemini",
-      modelId: "gemini-3-flash-preview",
-      displayName: "Gemini 3 Flash",
+      provider: "claude",
+      modelId: "claude-sonnet-4-5",
+      displayName: "Claude Sonnet 4.5",
     },
     criteria: [
       "Canvaで再現可能な具体的なデザイン仕様であること",
