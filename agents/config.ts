@@ -43,9 +43,9 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     role: "worker",
     name: "Worker Fast",
     model: {
-      provider: "gemini",
-      modelId: "gemini-3-flash-preview",
-      displayName: "Gemini 3 Flash",
+      provider: "claude",
+      modelId: "claude-haiku-4-5-20251001",
+      displayName: "Claude Haiku 4.5",
     },
     criteria: [
       "短時間で論点を広く拾えていること",
