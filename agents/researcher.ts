@@ -34,6 +34,13 @@ export interface ResearchResult {
   rawText: string;
 }
 
+function getCurrentDateContext() {
+  const now = new Date();
+  const isoDate = now.toISOString().slice(0, 10);
+  const year = now.getFullYear();
+  return { isoDate, year };
+}
+
 /**
  * OpenAI Responses API でウェブ検索を実行し、最新情報を取得する。
  */
@@ -69,29 +76,33 @@ export async function conductResearch(
 ): Promise<ResearchResult> {
   agent.log("ウェブ検索で最新情報を収集しています...");
 
+  const { isoDate, year } = getCurrentDateContext();
+
   // ウェブ検索クエリを構築
   const searchQuery = context
-    ? `${instruction} ${context} 最新情報 2025`
-    : `${instruction} 最新情報 2025`;
+    ? `${instruction} ${context} 最新情報 ${year} ${isoDate}`
+    : `${instruction} 最新情報 ${year} ${isoDate}`;
 
   let searchResult: string;
+  let usedKnowledgeFallback = false;
   try {
     searchResult = await webSearch(searchQuery);
-    agent.log("ウェブ検索完了。情報を整理しています...");
+    agent.log(`ウェブ検索完了。${isoDate} 時点の情報を整理しています...`);
   } catch (err) {
-    agent.log("ウェブ検索に失敗しました。知識ベースで回答します...");
+    usedKnowledgeFallback = true;
+    agent.log("ウェブ検索に失敗しました。最新情報の取得に失敗したため、知識ベースで補完します...");
     console.error("[Researcher] web search failed:", err);
-    searchResult = `検索失敗のため、知識ベースで回答します。テーマ: ${instruction}`;
+    searchResult = `検索失敗のため、最新情報の取得に失敗しました。以下は知識ベースによる補完です。調査テーマ: ${instruction} / 実行日: ${isoDate}`;
   }
 
   // 検索結果をもとにLLMで整理・分析
   const userContent = context
-    ? `調査テーマ: ${instruction}\n\nコンテキスト:\n${context}\n\nウェブ検索結果:\n${searchResult}\n\n上記の検索結果をもとに最新情報を整理してください。`
-    : `調査テーマ: ${instruction}\n\nウェブ検索結果:\n${searchResult}\n\n上記の検索結果をもとに最新情報・トレンド・比較を整理してください。`;
+    ? `調査テーマ: ${instruction}\n実行日: ${isoDate}\n検索モード: ${usedKnowledgeFallback ? "知識ベース補完あり" : "ウェブ検索ベース"}\n\nコンテキスト:\n${context}\n\nウェブ検索結果:\n${searchResult}\n\n上記の検索結果をもとに最新情報を整理してください。検索失敗時は、その旨を明記して鮮度に注意しながら整理してください。`
+    : `調査テーマ: ${instruction}\n実行日: ${isoDate}\n検索モード: ${usedKnowledgeFallback ? "知識ベース補完あり" : "ウェブ検索ベース"}\n\nウェブ検索結果:\n${searchResult}\n\n上記の検索結果をもとに最新情報・トレンド・比較を整理してください。検索失敗時は、その旨を明記して鮮度に注意しながら整理してください。`;
 
   const rawText = await agent.think(SYSTEM, userContent, 2048);
 
-  agent.log("ウェブ検索結果ベースで回答を整理しました");
+  agent.log(usedKnowledgeFallback ? "最新情報の一部取得に失敗したため、補完付きで回答を整理しました" : "ウェブ検索結果ベースで回答を整理しました");
   agent.log(`トレンド分析完了: ${rawText.slice(0, 50)}...`);
 
   // パース
