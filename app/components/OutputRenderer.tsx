@@ -470,7 +470,7 @@ export default function OutputRenderer({ data }: { data: StructuredOutput }) {
           ))}
         </div>
         <div style={{ fontSize: 12.5, lineHeight: 1.7, color: "#5a4e44" }}>
-          調査結果からおすすめ案、企画メモまでをそのまま共有できるビューです。
+          調査レポートからおすすめ案、提案・企画メモまでをそのまま共有できるビューです。
         </div>
       </div>
 

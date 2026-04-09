@@ -799,6 +799,9 @@ export default function Home() {
           <div className="header-logo">AI</div>
           <div>
             <div className="header-title">AI Company</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginTop: 2 }}>
+              調査レポートを納品するAIチーム
+            </div>
             <div className="header-subtitle">
               {Object.values(agents).length > 0
                 ? Object.values(agents).map(a => (
@@ -809,7 +812,7 @@ export default function Home() {
                       </span>
                     </span>
                   ))
-                : "Claude・OpenAI・Geminiが役割分担して、調査・比較・提案・企画化まで進めるAIチーム"
+                : "Claude・OpenAI・Geminiが分担して、調査レポートから提案・企画メモまで仕上げるAIチーム"
               }
             </div>
           </div>
@@ -833,17 +836,17 @@ export default function Home() {
             }}
           >
             <div style={{ fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", opacity: 0.56, marginBottom: 8 }}>
-              Workflow
+              Research Flow
             </div>
             <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.5, marginBottom: 10 }}>
-              調査して比較し、おすすめ案を出し、企画書っぽい形までまとめます。
+              市場調査レポートを作り、そこからおすすめ案と企画メモまでまとめます。
             </div>
             <div style={{ fontSize: 13, lineHeight: 1.8, opacity: 0.72 }}>
-              1. 調査して比較して整理する
+              1. 調査して比較レポートに整理する
               <br />
               2. おすすめ案を出す
               <br />
-              3. 企画書っぽい形まで仕上げる
+              3. 提案・企画メモまで仕上げる
             </div>
           </div>
 
@@ -858,7 +861,7 @@ export default function Home() {
             </div>
             <textarea
               className="instruction-textarea"
-              placeholder="例: AI議事録ツールを調査し、主要サービスを比較したうえで、おすすめ案を1つ選び、社内提案メモの形までまとめてください"
+              placeholder="例: AI議事録ツール市場を調査し、主要サービスの比較レポートを作成したうえで、おすすめ案を1つ選び、社内提案メモまでまとめてください"
               value={instruction}
               onChange={(e) => setInstruction(e.target.value)}
               disabled={isRunning || !hydrated}
@@ -1045,7 +1048,7 @@ export default function Home() {
           {activeTab === "output" && (
             <div className="output-panel">
               {!output
-                ? <div className="output-empty">{isMobileView ? "スマホでも実行できます。指示を入力して、成果物タブで結果を確認してください" : "調査結果の整理、おすすめ案、企画書っぽい最終成果物がここに表示されます"}</div>
+                ? <div className="output-empty">{isMobileView ? "スマホでも実行できます。指示を入力して、調査レポートと提案内容を成果物タブで確認してください" : "調査レポート、おすすめ案、提案・企画メモがここに表示されます"}</div>
                 : <OutputRenderer data={output} />
               }
             </div>

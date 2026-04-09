@@ -140,6 +140,21 @@ ${researchResult.rawText}
     if (decision.approved && decision.finalAnswer) {
       // Formatter 構造化
       const structured = await formatOutput(instruction, decision.finalAnswer, onLog);
+      structured.sections.unshift({
+        title: "最新情報ステータス",
+        type: "highlight",
+        icon: researchResult.usedKnowledgeFallback ? "⚠" : "✅",
+        highlight: researchResult.usedKnowledgeFallback ? "warning" : "success",
+        content: researchResult.usedKnowledgeFallback
+          ? `${researchResult.searchedAt} 時点でウェブ検索を試みましたが、一部は知識ベース補完で整理しています。重要な意思決定には日付と一次情報を再確認してください。`
+          : `${researchResult.searchedAt} 時点のウェブ検索結果をもとに整理しています。最新動向ベースのレポートとして参照できます。`,
+      });
+      structured.keyPoints = [
+        researchResult.usedKnowledgeFallback
+          ? `最新情報は ${researchResult.searchedAt} 時点で一部補完あり`
+          : `最新情報は ${researchResult.searchedAt} 時点で確認済み`,
+        ...structured.keyPoints,
+      ].slice(0, 3);
 
       // ── Phase 6: Designer デザイン仕様書 ───────────────────
       onLog({ role: "system", message: "【Phase 6】デザイン担当がデザイン仕様書を作成します" });
@@ -155,6 +170,21 @@ ${researchResult.rawText}
       ceoCycleInstruction = `${instruction}\n\n[CEOの改善要求]: ${decision.feedback}`;
     } else {
       const structured = await formatOutput(instruction, edited, onLog);
+      structured.sections.unshift({
+        title: "最新情報ステータス",
+        type: "highlight",
+        icon: researchResult.usedKnowledgeFallback ? "⚠" : "✅",
+        highlight: researchResult.usedKnowledgeFallback ? "warning" : "success",
+        content: researchResult.usedKnowledgeFallback
+          ? `${researchResult.searchedAt} 時点でウェブ検索を試みましたが、一部は知識ベース補完で整理しています。重要な意思決定には日付と一次情報を再確認してください。`
+          : `${researchResult.searchedAt} 時点のウェブ検索結果をもとに整理しています。最新動向ベースのレポートとして参照できます。`,
+      });
+      structured.keyPoints = [
+        researchResult.usedKnowledgeFallback
+          ? `最新情報は ${researchResult.searchedAt} 時点で一部補完あり`
+          : `最新情報は ${researchResult.searchedAt} 時点で確認済み`,
+        ...structured.keyPoints,
+      ].slice(0, 3);
       const designSpec = await generateDesignSpec(designer, structured);
       if (designSpec) structured.designSpec = designSpec;
       onLog({ role: "system", message: "=== 処理完了（最大サイクル到達） ===" });

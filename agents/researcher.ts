@@ -32,6 +32,8 @@ export interface ResearchResult {
   trends: string[];
   sources: string;
   rawText: string;
+  searchedAt: string;
+  usedKnowledgeFallback: boolean;
 }
 
 function getCurrentDateContext() {
@@ -115,5 +117,7 @@ export async function conductResearch(
     trends: (trendsMatch?.[1] ?? "").split("\n").filter(l => l.trim().startsWith("-")).map(l => l.replace(/^-\s*/, "")).filter(Boolean),
     sources: sourcesMatch?.[1]?.trim() ?? "",
     rawText,
+    searchedAt: isoDate,
+    usedKnowledgeFallback,
   };
 }
