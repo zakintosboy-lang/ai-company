@@ -11,7 +11,7 @@ import OutputRenderer from "./components/OutputRenderer";
 import MeetingRoom from "./components/MeetingRoom";
 
 // ── Agent UI 用型 ──────────────────────────────────────────────
-type AgentRole     = "ceo" | "manager" | "worker" | "reviewer" | "system";
+type AgentRole     = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "editor" | "designer" | "system";
 type AgentStatus   = "idle" | "thinking" | "reviewing" | "done" | "waiting";
 type ModelProvider = "claude" | "openai" | "gemini";
 
@@ -37,7 +37,16 @@ interface SamplePrompt {
 }
 
 // ── 定数 ───────────────────────────────────────────────────────
-const ROLE_LABEL:   Record<AgentRole, string>     = { ceo:"CEO", manager:"Manager", worker:"Worker", reviewer:"Reviewer", system:"System" };
+const ROLE_LABEL:   Record<AgentRole, string>     = {
+  ceo:"CEO",
+  manager:"Manager",
+  worker:"Worker",
+  reviewer:"Reviewer",
+  researcher:"Researcher",
+  editor:"Editor",
+  designer:"Designer",
+  system:"System",
+};
 const PROVIDER_LABEL: Record<ModelProvider,string>= { claude:"Claude", openai:"OpenAI", gemini:"Gemini" };
 const AGENT_ORDER = ["ceo","manager","worker-1","worker-2","worker-3","reviewer"];
 const STORAGE_KEY = "ai-company-results";

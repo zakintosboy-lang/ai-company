@@ -103,9 +103,9 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     ],
   },
   {
-    id: "researcher",
+    id: "researcher-1",
     role: "researcher",
-    name: "Researcher",
+    name: "Researcher News",
     model: {
       provider: "openai",
       modelId: "gpt-5.4",
@@ -118,13 +118,43 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     ],
   },
   {
-    id: "editor",
-    role: "editor",
-    name: "Editor",
+    id: "researcher-2",
+    role: "researcher",
+    name: "Researcher Compare",
+    model: {
+      provider: "openai",
+      modelId: "gpt-4.1",
+      displayName: "GPT-4.1",
+    },
+    criteria: [
+      "競合比較・選択肢比較が明確であること",
+      "価格・特徴・メリットデメリットが整理されていること",
+      "意思決定に使える比較視点を含むこと",
+    ],
+  },
+  {
+    id: "researcher-3",
+    role: "researcher",
+    name: "Researcher Source",
     model: {
       provider: "claude",
       modelId: "claude-sonnet-4-5",
       displayName: "Claude Sonnet 4.5",
+    },
+    criteria: [
+      "出典・発表日・一次情報が明確であること",
+      "信頼性や不確実性が適切に示されていること",
+      "最新性に関する注意点が明示されていること",
+    ],
+  },
+  {
+    id: "editor",
+    role: "editor",
+    name: "Editor",
+    model: {
+      provider: "openai",
+      modelId: "gpt-4.1",
+      displayName: "GPT-4.1",
     },
     criteria: [
       "文章が論理的な順序で整理されていること",

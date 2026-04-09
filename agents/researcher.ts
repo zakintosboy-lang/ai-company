@@ -34,6 +34,7 @@ export interface ResearchResult {
   rawText: string;
   searchedAt: string;
   usedKnowledgeFallback: boolean;
+  angle: string;
 }
 
 function getCurrentDateContext() {
@@ -74,7 +75,8 @@ async function webSearch(query: string): Promise<string> {
 export async function conductResearch(
   agent: Agent,
   instruction: string,
-  context?: string
+  context?: string,
+  angle = "最新情報の整理"
 ): Promise<ResearchResult> {
   agent.log("ウェブ検索で最新情報を収集しています...");
 
@@ -82,8 +84,8 @@ export async function conductResearch(
 
   // ウェブ検索クエリを構築
   const searchQuery = context
-    ? `${instruction} ${context} 最新情報 ${year} ${isoDate}`
-    : `${instruction} 最新情報 ${year} ${isoDate}`;
+    ? `${instruction} ${context} ${angle} 最新情報 ${year} ${isoDate}`
+    : `${instruction} ${angle} 最新情報 ${year} ${isoDate}`;
 
   let searchResult: string;
   let usedKnowledgeFallback = false;
@@ -99,8 +101,8 @@ export async function conductResearch(
 
   // 検索結果をもとにLLMで整理・分析
   const userContent = context
-    ? `調査テーマ: ${instruction}\n実行日: ${isoDate}\n検索モード: ${usedKnowledgeFallback ? "知識ベース補完あり" : "ウェブ検索ベース"}\n\nコンテキスト:\n${context}\n\nウェブ検索結果:\n${searchResult}\n\n上記の検索結果をもとに最新情報を整理してください。検索失敗時は、その旨を明記して鮮度に注意しながら整理してください。`
-    : `調査テーマ: ${instruction}\n実行日: ${isoDate}\n検索モード: ${usedKnowledgeFallback ? "知識ベース補完あり" : "ウェブ検索ベース"}\n\nウェブ検索結果:\n${searchResult}\n\n上記の検索結果をもとに最新情報・トレンド・比較を整理してください。検索失敗時は、その旨を明記して鮮度に注意しながら整理してください。`;
+    ? `調査テーマ: ${instruction}\n実行日: ${isoDate}\n調査観点: ${angle}\n検索モード: ${usedKnowledgeFallback ? "知識ベース補完あり" : "ウェブ検索ベース"}\n\nコンテキスト:\n${context}\n\nウェブ検索結果:\n${searchResult}\n\n上記の検索結果をもとに、特に「${angle}」を重視して最新情報を整理してください。検索失敗時は、その旨を明記して鮮度に注意しながら整理してください。`
+    : `調査テーマ: ${instruction}\n実行日: ${isoDate}\n調査観点: ${angle}\n検索モード: ${usedKnowledgeFallback ? "知識ベース補完あり" : "ウェブ検索ベース"}\n\nウェブ検索結果:\n${searchResult}\n\n上記の検索結果をもとに、特に「${angle}」を重視して最新情報・トレンド・比較を整理してください。検索失敗時は、その旨を明記して鮮度に注意しながら整理してください。`;
 
   const rawText = await agent.think(SYSTEM, userContent, 2048);
 
@@ -119,5 +121,6 @@ export async function conductResearch(
     rawText,
     searchedAt: isoDate,
     usedKnowledgeFallback,
+    angle,
   };
 }

@@ -323,18 +323,12 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
 // ─── メイン会議室 ────────────────────────────────────────────────
 
 export default function MeetingRoom({ logs, agents, isRunning }: Props) {
-  // 各エージェントの最新メッセージ（idごとに追跡）
-  const agentMessages: Partial<Record<string, string>> = {};
-  for (const log of logs) {
-    if (log.role !== "system") agentMessages[log.role] = log.message;
-  }
-
   const getAgent = (id: string) => agents.find(a => a.id === id);
   const ceo        = getAgent("ceo");
   const manager    = getAgent("manager");
   const workers    = ["worker-1", "worker-2", "worker-3"].map(id => getAgent(id)).filter(Boolean) as AgentInfo[];
   const reviewer   = getAgent("reviewer");
-  const researcher = getAgent("researcher");
+  const researchers = ["researcher-1", "researcher-2", "researcher-3"].map(id => getAgent(id)).filter(Boolean) as AgentInfo[];
   const editor     = getAgent("editor");
   const designer   = getAgent("designer");
 
@@ -409,31 +403,36 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           <CharacterUnit
             agent={ceo ?? ph("ceo", "ceo")}
             showBubble
-            latestMessage={agentMessages["ceo"]}
+            latestMessage={ceo?.lastMessage}
           />
         </div>
 
-        {/* Row 2: Manager + Researcher + Editor + Reviewer（4列） */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingInline: 8 }}>
+        {/* Row 2: Manager + Researchers + Editor + Reviewer */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingInline: 8, gap: 18 }}>
           <CharacterUnit
             agent={manager ?? ph("manager", "manager")}
             showBubble
-            latestMessage={agentMessages["manager"]}
+            latestMessage={manager?.lastMessage}
           />
-          <CharacterUnit
-            agent={researcher ?? ph("researcher", "researcher")}
-            showBubble
-            latestMessage={agentMessages["researcher"]}
-          />
+          <div style={{ display: "flex", gap: 18, alignItems: "flex-end", justifyContent: "center", flex: 1 }}>
+            {(researchers.length > 0 ? researchers : [ph("researcher-1", "researcher")]).map((agent) => (
+              <CharacterUnit
+                key={agent.id}
+                agent={agent}
+                showBubble
+                latestMessage={agent.lastMessage}
+              />
+            ))}
+          </div>
           <CharacterUnit
             agent={editor ?? ph("editor", "editor")}
             showBubble
-            latestMessage={agentMessages["editor"]}
+            latestMessage={editor?.lastMessage}
           />
           <CharacterUnit
             agent={reviewer ?? ph("reviewer", "reviewer")}
             showBubble
-            latestMessage={agentMessages["reviewer"]}
+            latestMessage={reviewer?.lastMessage}
           />
         </div>
 
@@ -444,14 +443,14 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
               <CharacterUnit
                 key={agent.id}
                 agent={agent}
-                showBubble={i === 0}
-                latestMessage={i === 0 ? agentMessages["worker"] : undefined}
+                showBubble
+                latestMessage={agent.lastMessage}
               />
             ))}
           <CharacterUnit
             agent={designer ?? ph("designer", "designer")}
             showBubble
-            latestMessage={agentMessages["designer"]}
+            latestMessage={designer?.lastMessage}
           />
         </div>
       </div>

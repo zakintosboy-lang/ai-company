@@ -9,9 +9,15 @@ import { conductResearch } from "./researcher";
 import { editContent } from "./editor";
 import { generateDesignSpec } from "./designer";
 import { formatOutput } from "./formatter";
+import type { ResearchResult } from "./researcher";
 
 const MAX_REVIEW_CYCLES = 2;
 const MAX_CEO_CYCLES = 2;
+const RESEARCH_ANGLES = [
+  "最新ニュース・更新情報",
+  "競合比較・選択肢比較",
+  "出典確認・信頼性評価",
+] as const;
 
 /**
  * AI Company オーケストレーター — 6フェーズ構成
@@ -36,10 +42,10 @@ export async function runCompany(
 
   const ceo        = agentMap["ceo"];
   const manager    = agentMap["manager"];
-  const reviewer   = agentMap["reviewer"];
-  const researcher = agentMap["researcher"];
-  const editor     = agentMap["editor"];
-  const designer   = agentMap["designer"];
+  const reviewer    = agentMap["reviewer"];
+  const researchers = ["researcher-1", "researcher-2", "researcher-3"].map((id) => agentMap[id]);
+  const editor      = agentMap["editor"];
+  const designer    = agentMap["designer"];
 
   onLog({ role: "system", message: "=== AI Company 起動 — 7フェーズ開始 ===" });
 
@@ -64,12 +70,20 @@ export async function runCompany(
 
   // ── Phase 3: Researcher リサーチ ─────────────────────────────
   onLog({ role: "system", message: "【Phase 3】リサーチ担当が最新情報を収集します" });
-  const researchResult = await conductResearch(
-    researcher,
-    instruction,
-    strategy.requirements.join(", ")
+  const researchResults = await Promise.all(
+    researchers.map((researcher, index) =>
+      conductResearch(
+        researcher,
+        instruction,
+        strategy.requirements.join(", "),
+        RESEARCH_ANGLES[index] ?? "最新情報の整理"
+      )
+    )
   );
-  researcher.setDone("リサーチ完了");
+  researchers.forEach((researcher, index) => {
+    researcher.setDone(`リサーチ完了: ${RESEARCH_ANGLES[index] ?? "最新情報の整理"}`);
+  });
+  const researchResult = mergeResearchResults(researchResults);
 
   // リサーチ結果をコンテキストとしてWorkerに渡す
   const researchContext = `
@@ -149,6 +163,14 @@ ${researchResult.rawText}
           ? `${researchResult.searchedAt} 時点でウェブ検索を試みましたが、一部は知識ベース補完で整理しています。重要な意思決定には日付と一次情報を再確認してください。`
           : `${researchResult.searchedAt} 時点のウェブ検索結果をもとに整理しています。最新動向ベースのレポートとして参照できます。`,
       });
+      if (researchResult.sources.trim()) {
+        structured.sections.push({
+          title: "出典・確認ポイント",
+          type: "text",
+          icon: "🔍",
+          content: researchResult.sources,
+        });
+      }
       structured.keyPoints = [
         researchResult.usedKnowledgeFallback
           ? `最新情報は ${researchResult.searchedAt} 時点で一部補完あり`
@@ -179,6 +201,14 @@ ${researchResult.rawText}
           ? `${researchResult.searchedAt} 時点でウェブ検索を試みましたが、一部は知識ベース補完で整理しています。重要な意思決定には日付と一次情報を再確認してください。`
           : `${researchResult.searchedAt} 時点のウェブ検索結果をもとに整理しています。最新動向ベースのレポートとして参照できます。`,
       });
+      if (researchResult.sources.trim()) {
+        structured.sections.push({
+          title: "出典・確認ポイント",
+          type: "text",
+          icon: "🔍",
+          content: researchResult.sources,
+        });
+      }
       structured.keyPoints = [
         researchResult.usedKnowledgeFallback
           ? `最新情報は ${researchResult.searchedAt} 時点で一部補完あり`
@@ -198,5 +228,22 @@ ${researchResult.rawText}
     summary: "処理を完了できませんでした。",
     keyPoints: ["処理が完了しませんでした", "もう一度お試しください", "問題が続く場合はサポートへ"],
     sections: [{ title: "エラー", type: "text", content: "エラー: 処理を完了できませんでした" }],
+  };
+}
+
+function mergeResearchResults(results: ResearchResult[]): ResearchResult {
+  const searchedAt = results[0]?.searchedAt ?? new Date().toISOString().slice(0, 10);
+  const usedKnowledgeFallback = results.some((result) => result.usedKnowledgeFallback);
+
+  return {
+    summary: results.map((result) => `【${result.angle}】\n${result.summary}`).join("\n\n"),
+    trends: results.flatMap((result) => result.trends),
+    sources: results.map((result) => `【${result.angle}】\n${result.sources || "出典整理なし"}`).join("\n\n"),
+    rawText: results
+      .map((result) => `### ${result.angle}\n${result.rawText}`)
+      .join("\n\n---\n\n"),
+    searchedAt,
+    usedKnowledgeFallback,
+    angle: "統合リサーチ",
   };
 }
