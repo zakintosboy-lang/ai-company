@@ -47,13 +47,17 @@ class OpenAIProvider implements LLMProvider {
   }
 }
 
+const GEMINI_FALLBACK: Record<string, string> = {
+  "gemini-2.5-flash": "gemini-1.5-flash",
+};
+
 class GeminiProvider implements LLMProvider {
   private client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
   constructor(private modelId: string) {}
 
-  async complete(system: string, messages: ConversationEntry[], maxTokens: number): Promise<string> {
+  private async callModel(modelId: string, system: string, messages: ConversationEntry[], maxTokens: number): Promise<string> {
     const model = this.client.getGenerativeModel({
-      model: this.modelId,
+      model: modelId,
       systemInstruction: system,
       generationConfig: { maxOutputTokens: maxTokens },
     });
@@ -68,6 +72,26 @@ class GeminiProvider implements LLMProvider {
     const chat = model.startChat({ history });
     const result = await chat.sendMessage(lastMessage);
     return result.response.text();
+  }
+
+  async complete(system: string, messages: ConversationEntry[], maxTokens: number): Promise<string> {
+    try {
+      return await this.callModel(this.modelId, system, messages, maxTokens);
+    } catch (error) {
+      const fallbackId = GEMINI_FALLBACK[this.modelId];
+      if (fallbackId && this.isServiceUnavailable(error)) {
+        console.warn(`[Gemini] ${this.modelId} unavailable, falling back to ${fallbackId}`);
+        return await this.callModel(fallbackId, system, messages, maxTokens);
+      }
+      throw error;
+    }
+  }
+
+  private isServiceUnavailable(error: unknown): boolean {
+    if (error instanceof Error) {
+      return error.message.includes("503") || error.message.includes("Service Unavailable") || error.message.includes("high demand");
+    }
+    return false;
   }
 }
 
