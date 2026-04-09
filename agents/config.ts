@@ -44,8 +44,8 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     name: "Worker 1",
     model: {
       provider: "gemini",
-      modelId: "gemini-2.5-flash",
-      displayName: "Gemini 2.5 Flash",
+      modelId: "gemini-3-flash-preview",
+      displayName: "Gemini 3 Flash",
     },
     criteria: [
       "回答が具体的かつ正確であること",
@@ -59,8 +59,8 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     name: "Worker 2",
     model: {
       provider: "gemini",
-      modelId: "gemini-2.5-flash",
-      displayName: "Gemini 2.5 Flash",
+      modelId: "gemini-3-flash-preview",
+      displayName: "Gemini 3 Flash",
     },
     criteria: [
       "回答が具体的かつ正確であること",
@@ -74,8 +74,8 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     name: "Worker 3",
     model: {
       provider: "gemini",
-      modelId: "gemini-2.5-flash",
-      displayName: "Gemini 2.5 Flash",
+      modelId: "gemini-3-flash-preview",
+      displayName: "Gemini 3 Flash",
     },
     criteria: [
       "回答が具体的かつ正確であること",
@@ -136,8 +136,8 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     name: "Designer",
     model: {
       provider: "gemini",
-      modelId: "gemini-2.5-flash",
-      displayName: "Gemini 2.5 Flash",
+      modelId: "gemini-3-flash-preview",
+      displayName: "Gemini 3 Flash",
     },
     criteria: [
       "Canvaで再現可能な具体的なデザイン仕様であること",

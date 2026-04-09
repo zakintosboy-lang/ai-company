@@ -48,7 +48,7 @@ class OpenAIProvider implements LLMProvider {
 }
 
 const GEMINI_FALLBACK: Record<string, string> = {
-  "gemini-2.5-flash": "gemini-2.5-flash-8b",
+  "gemini-3-flash-preview": "gemini-2.5-flash",
 };
 
 class GeminiProvider implements LLMProvider {
