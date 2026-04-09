@@ -617,6 +617,9 @@ export default function Home() {
 
   const addLog = (role: AgentRole, message: string) => {
     setLogs((prev) => [...prev, { time: now(), role, message }]);
+    if (message.includes("一次モデルが混雑中のため")) {
+      showToast(message);
+    }
     setTimeout(() => logBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
 
