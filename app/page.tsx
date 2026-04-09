@@ -677,10 +677,12 @@ export default function Home() {
                 ? Object.values(agents).map(a => (
                     <span key={a.config.id} style={{ marginRight: 10, whiteSpace: "nowrap" }}>
                       {a.config.name}
-                      <span style={{ opacity: 0.4, marginLeft: 3, fontSize: 9 }}>({a.config.model.displayName})</span>
+                      <span style={{ opacity: 0.4, marginLeft: 3, fontSize: 9 }}>
+                        ({a.config.model.displayName} / {PROVIDER_LABEL[a.config.model.provider]})
+                      </span>
                     </span>
                   ))
-                : "CEO · Manager · Researcher · Worker × 3 · Editor · Reviewer · Designer"
+                : "Claude・OpenAI・Geminiが役割分担して、調査・比較・提案・企画化まで進めるAIチーム"
               }
             </div>
           </div>
@@ -694,6 +696,30 @@ export default function Home() {
       <main className="main">
         {/* Left Panel */}
         <aside className="panel-left">
+          <div
+            style={{
+              padding: "14px 15px",
+              borderRadius: 16,
+              border: "1px solid rgba(255,255,255,0.08)",
+              background: "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))",
+              marginBottom: 14,
+            }}
+          >
+            <div style={{ fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", opacity: 0.56, marginBottom: 8 }}>
+              Workflow
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.5, marginBottom: 10 }}>
+              調査して比較し、おすすめ案を出し、企画書っぽい形までまとめます。
+            </div>
+            <div style={{ fontSize: 13, lineHeight: 1.8, opacity: 0.72 }}>
+              1. 調査して比較して整理する
+              <br />
+              2. おすすめ案を出す
+              <br />
+              3. 企画書っぽい形まで仕上げる
+            </div>
+          </div>
+
           <div>
             <div className="instruction-label-row">
               <div className="panel-section-label">指示内容</div>
@@ -705,7 +731,7 @@ export default function Home() {
             </div>
             <textarea
               className="instruction-textarea"
-              placeholder="AIチームへの指示を入力してください..."
+              placeholder="例: AI議事録ツールを調査し、主要サービスを比較したうえで、おすすめ案を1つ選び、社内提案メモの形までまとめてください"
               value={instruction}
               onChange={(e) => setInstruction(e.target.value)}
               disabled={isRunning || !hydrated}
@@ -787,7 +813,7 @@ export default function Home() {
           {activeTab === "output" && (
             <div className="output-panel">
               {!output
-                ? <div className="output-empty">実行後に最終成果物がここに表示されます</div>
+                ? <div className="output-empty">調査結果の整理、おすすめ案、企画書っぽい最終成果物がここに表示されます</div>
                 : <OutputRenderer data={output} />
               }
             </div>
