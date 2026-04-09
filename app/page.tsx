@@ -35,6 +35,20 @@ const PROVIDER_LABEL: Record<ModelProvider,string>= { claude:"Claude", openai:"O
 const AGENT_ORDER = ["ceo","manager","worker-1","worker-2","worker-3","reviewer"];
 const STORAGE_KEY = "ai-company-results";
 const RUN_COUNT_KEY = "ai-company-run-count";
+const SAMPLE_PROMPTS = [
+  {
+    title: "SaaS比較",
+    body: "AI議事録ツールを調査し、主要サービスを比較したうえで、おすすめ案を1つ選び、社内提案メモの形までまとめてください",
+  },
+  {
+    title: "市場調査",
+    body: "中小企業向け福利厚生サービス市場を調査し、競合の特徴を整理したうえで、参入余地がありそうな案を提案してください",
+  },
+  {
+    title: "新規企画",
+    body: "学生向けキャリア支援アプリの企画を考えたいです。関連サービスを比較し、おすすめの方向性を出して、企画書のたたき台まで作ってください",
+  },
+] as const;
 
 type Tab = "logs" | "output";
 
@@ -737,6 +751,40 @@ export default function Home() {
               disabled={isRunning || !hydrated}
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleRun(); }}
             />
+            {!isRunning && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 12, opacity: 0.58, marginBottom: 8 }}>すぐ試せるサンプル指示</div>
+                <div style={{ display: "grid", gap: 8 }}>
+                  {SAMPLE_PROMPTS.map((sample) => {
+                    const selected = instruction === sample.body;
+                    return (
+                      <button
+                        key={sample.title}
+                        type="button"
+                        onClick={() => setInstruction(sample.body)}
+                        style={{
+                          textAlign: "left",
+                          padding: "12px 13px",
+                          borderRadius: 14,
+                          border: selected ? "1px solid rgba(255,255,255,0.26)" : "1px solid rgba(255,255,255,0.08)",
+                          background: selected ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)",
+                          color: "inherit",
+                          cursor: "pointer",
+                          transition: "all 160ms ease",
+                        }}
+                      >
+                        <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.72, marginBottom: 4 }}>
+                          {sample.title}
+                        </div>
+                        <div style={{ fontSize: 13, lineHeight: 1.6, opacity: 0.9 }}>
+                          {sample.body}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <button

@@ -19,12 +19,77 @@ const HL: Record<HighlightVariant, { bg: string; border: string; leftBar: string
   important: { bg:"#faf5ff", border:"#ddd6fe", leftBar:"#7c3aed", labelColor:"#6d28d9", textColor:"#4c1d95", icon:"📌" },
 };
 
+type OutputStage = "research" | "recommendation" | "proposal";
+
+const STAGE_META: Record<OutputStage, { label: string; title: string; keywords: string[] }> = {
+  research: {
+    label: "STEP 1",
+    title: "調査・比較",
+    keywords: ["調査", "比較", "分析", "概要", "市場", "競合", "背景", "目的", "特徴", "データ", "情報", "リサーチ"],
+  },
+  recommendation: {
+    label: "STEP 2",
+    title: "おすすめ案",
+    keywords: ["おすすめ", "推奨", "結論", "提案", "選定", "判断", "最適", "案", "方向性"],
+  },
+  proposal: {
+    label: "STEP 3",
+    title: "企画メモ",
+    keywords: ["実施", "実行", "手順", "計画", "アクション", "ロードマップ", "進め方", "企画", "機能", "収益", "リスク", "準備"],
+  },
+};
+
+function classifySectionStage(section: OutputSection): OutputStage {
+  const haystack = `${section.title} ${section.content ?? ""} ${(section.items ?? []).join(" ")}`.toLowerCase();
+
+  if (STAGE_META.recommendation.keywords.some((keyword) => haystack.includes(keyword.toLowerCase()))) {
+    return "recommendation";
+  }
+  if (
+    section.type === "steps" ||
+    STAGE_META.proposal.keywords.some((keyword) => haystack.includes(keyword.toLowerCase()))
+  ) {
+    return "proposal";
+  }
+  return "research";
+}
+
+function buildStructuredSections(sections: OutputSection[]) {
+  const staged = sections.map((section, originalIndex) => ({
+    section,
+    stage: classifySectionStage(section),
+    originalIndex,
+  }));
+
+  staged.sort((a, b) => {
+    const order: OutputStage[] = ["research", "recommendation", "proposal"];
+    const stageDiff = order.indexOf(a.stage) - order.indexOf(b.stage);
+    return stageDiff !== 0 ? stageDiff : a.originalIndex - b.originalIndex;
+  });
+
+  return staged.map((entry, index, arr) => ({
+    ...entry,
+    stageIndex: arr.filter((item) => item.stage === entry.stage && item.originalIndex <= entry.originalIndex).length - 1,
+    stageTotal: arr.filter((item) => item.stage === entry.stage).length,
+    displayIndex: index,
+  }));
+}
+
 // ── スライドデータ生成 ────────────────────────────────────────
 function buildSlides(data: StructuredOutput) {
+  const structuredSections = buildStructuredSections(data.sections);
   const slides = [
     { type: "cover" as const, data },
     { type: "keypoints" as const, data },
-    ...data.sections.map((s, i) => ({ type: "section" as const, index: i, section: s, data })),
+    ...structuredSections.map((entry) => ({
+      type: "section" as const,
+      index: entry.displayIndex,
+      section: entry.section,
+      stage: entry.stage,
+      stageIndex: entry.stageIndex,
+      stageTotal: entry.stageTotal,
+      data,
+    })),
     ...(data.designSpec ? [{ type: "design" as const, spec: data.designSpec, data }] : []),
   ];
   return slides;
@@ -109,15 +174,26 @@ function KeyPointsSlide({ data, color, bg, border }: {
 }
 
 // ── セクションスライド ────────────────────────────────────────
-function SectionSlide({ section, index, total, color }: {
-  section: OutputSection; index: number; total: number; color: string;
+function SectionSlide({ section, index, total, color, stage, stageIndex, stageTotal }: {
+  section: OutputSection; index: number; total: number; color: string; stage: OutputStage; stageIndex: number; stageTotal: number;
 }) {
+  const stageMeta = STAGE_META[stage];
+
   if (section.type === "highlight") {
     const hcfg = HL[section.highlight ?? "info"];
     return (
       <div style={{ height: "100%", display: "flex", flexDirection: "column", padding: "40px 48px" }}>
-        <div style={{ fontSize: 10, color: "rgba(0,0,0,0.3)", marginBottom: 20, letterSpacing: "0.08em" }}>
-          SECTION {index + 1} / {total}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 10, color: "rgba(0,0,0,0.3)", letterSpacing: "0.08em" }}>
+            SECTION {index + 1} / {total}
+          </div>
+          <div style={{
+            fontSize: 10, fontWeight: 800, letterSpacing: "0.08em",
+            color, background: color + "12", border: `1px solid ${color}22`,
+            borderRadius: 999, padding: "4px 10px",
+          }}>
+            {stageMeta.label} • {stageMeta.title} {stageTotal > 1 ? `${stageIndex + 1}/${stageTotal}` : ""}
+          </div>
         </div>
         <div style={{
           flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
@@ -141,8 +217,17 @@ function SectionSlide({ section, index, total, color }: {
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", padding: "40px 48px" }}>
-      <div style={{ fontSize: 10, color: "rgba(0,0,0,0.3)", marginBottom: 16, letterSpacing: "0.08em" }}>
-        SECTION {index + 1} / {total}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+        <div style={{ fontSize: 10, color: "rgba(0,0,0,0.3)", letterSpacing: "0.08em" }}>
+          SECTION {index + 1} / {total}
+        </div>
+        <div style={{
+          fontSize: 10, fontWeight: 800, letterSpacing: "0.08em",
+          color, background: color + "12", border: `1px solid ${color}22`,
+          borderRadius: 999, padding: "4px 10px",
+        }}>
+          {stageMeta.label} • {stageMeta.title} {stageTotal > 1 ? `${stageIndex + 1}/${stageTotal}` : ""}
+        </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
         <span style={{ fontSize: 18 }}>{section.icon ?? "📋"}</span>
@@ -317,6 +402,9 @@ export default function OutputRenderer({ data }: { data: StructuredOutput }) {
             index={slide.index}
             total={sectionSlides.length}
             color={cfg.color}
+            stage={slide.stage}
+            stageIndex={slide.stageIndex}
+            stageTotal={slide.stageTotal}
           />
         )}
         {slide.type === "design" && (
