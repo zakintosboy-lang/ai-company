@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import PixelCharacter from "./PixelCharacter";
+import AgentCharacter from "./AgentCharacter";
 
 type AgentRole   = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "designer" | "editor" | "system";
 type AgentStatus = "idle" | "thinking" | "reviewing" | "done" | "waiting";
@@ -206,7 +206,9 @@ function CharacterUnit({ agent, showBubble, latestMessage }: {
             transition={{ duration: 1, repeat: Infinity }}
           />
         )}
-        <PixelCharacter role={agent.role} status={agent.status} agentId={agent.id} size={3} />
+        <div style={{ width: 84, height: 112 }}>
+          <AgentCharacter role={agent.role} status={agent.status} agentId={agent.id} />
+        </div>
       </motion.div>
 
       {/* 役職名 */}
@@ -415,7 +417,10 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
             latestMessage={manager?.lastMessage}
           />
           <div style={{ display: "flex", gap: 18, alignItems: "flex-end", justifyContent: "center", flex: 1 }}>
-            {(researchers.length > 0 ? researchers : [ph("researcher-1", "researcher")]).map((agent) => (
+            {(researchers.length > 0
+              ? researchers
+              : [ph("researcher-1", "researcher"), ph("researcher-2", "researcher"), ph("researcher-3", "researcher")]
+            ).map((agent) => (
               <CharacterUnit
                 key={agent.id}
                 agent={agent}

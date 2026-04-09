@@ -638,6 +638,241 @@ function ReviewerCharacter({ status }: { status: AgentStatus }) {
   );
 }
 
+function ResearcherCharacter({ status, agentId }: { status: AgentStatus; agentId?: string }) {
+  const isActive = status === "thinking" || status === "reviewing";
+  const isDone = status === "done";
+  const variant = agentId === "researcher-2" ? "compare" : agentId === "researcher-3" ? "source" : "news";
+  const palette = variant === "compare"
+    ? {
+        glow: "#93c5fd",
+        glowDark: "#2563eb",
+        hair1: "#eff6ff",
+        hair2: "#93c5fd",
+        hair3: "#1d4ed8",
+        coat1: "#eff6ff",
+        coat2: "#bfdbfe",
+        side: "#dbeafe",
+        iris: "#1d4ed8",
+        brow: "#1e40af",
+        propFill: "#172554",
+        propStroke: "#60a5fa",
+        propLine: "#bfdbfe",
+        active: "#fde68a",
+        done: "#2563eb",
+      }
+    : variant === "source"
+    ? {
+        glow: "#cbd5e1",
+        glowDark: "#475569",
+        hair1: "#f8fafc",
+        hair2: "#cbd5e1",
+        hair3: "#475569",
+        coat1: "#f8fafc",
+        coat2: "#e2e8f0",
+        side: "#e5e7eb",
+        iris: "#334155",
+        brow: "#475569",
+        propFill: "#111827",
+        propStroke: "#94a3b8",
+        propLine: "#e5e7eb",
+        active: "#fef08a",
+        done: "#475569",
+      }
+    : {
+        glow: "#67e8f9",
+        glowDark: "#0891b2",
+        hair1: "#d9fbff",
+        hair2: "#67e8f9",
+        hair3: "#0e7490",
+        coat1: "#ecfeff",
+        coat2: "#a5f3fc",
+        side: "#cffafe",
+        iris: "#0f766e",
+        brow: "#0e7490",
+        propFill: "#083344",
+        propStroke: "#22d3ee",
+        propLine: "#67e8f9",
+        active: "#fef08a",
+        done: "#0891b2",
+      };
+  return (
+    <svg viewBox="0 0 100 130" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: "visible", width: "100%", height: "100%" }}>
+      <defs>
+        <radialGradient id="rsGlow" cx="50%" cy="60%" r="55%">
+          <stop offset="0%" stopColor={palette.glow} stopOpacity="0.26" />
+          <stop offset="100%" stopColor={palette.glowDark} stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="rsHair" x1="0" y1="0" x2="0.2" y2="1">
+          <stop stopColor={palette.hair1} />
+          <stop offset="0.45" stopColor={palette.hair2} />
+          <stop offset="1" stopColor={palette.hair3} />
+        </linearGradient>
+        <linearGradient id="rsCoat" x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor={palette.coat1} />
+          <stop offset="1" stopColor={palette.coat2} />
+        </linearGradient>
+      </defs>
+      <ellipse cx="50" cy="82" rx="38" ry="32" fill="url(#rsGlow)" />
+      <path d="M42 69 Q42 80 45 85 L55 85 Q58 80 58 69 Z" fill="#f5c49a" />
+      <path d="M20 130 Q22 98 36 89 L50 94 L64 89 Q78 98 80 130 Z" fill="url(#rsCoat)" />
+      <path d="M40 90 L50 96 L60 90 L58 130 L42 130 Z" fill="#ffffff" opacity="0.92" />
+      <path d="M34 89 Q38 96 42 130 L26 130 Q23 107 22 99 Z" fill={palette.side} />
+      <path d="M66 89 Q62 96 58 130 L74 130 Q77 107 78 99 Z" fill={palette.side} />
+      <ellipse cx="50" cy="49" rx="22" ry="23" fill="#f8d6b2" />
+      <path d="M28 44 Q31 24 50 24 Q69 24 72 44 Q64 31 50 31 Q36 31 28 44 Z" fill="url(#rsHair)" />
+      <path d="M26 48 Q21 57 24 83 Q27 90 30 87 Q29 69 34 54 Z" fill={palette.hair2} opacity="0.65" />
+      <path d="M74 48 Q79 57 76 83 Q73 90 70 87 Q71 69 66 54 Z" fill={palette.hair2} opacity="0.65" />
+      <circle cx="41" cy="49" r="5.6" fill="white" />
+      <circle cx="59" cy="49" r="5.6" fill="white" />
+      <circle cx="41" cy="49.5" r="3.5" fill={palette.iris} />
+      <circle cx="59" cy="49.5" r="3.5" fill={palette.iris} />
+      <circle cx="41.8" cy="48" r="1" fill="white" />
+      <circle cx="59.8" cy="48" r="1" fill="white" />
+      <path d="M35.5 41 Q41 38 46 41" stroke={palette.brow} strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M54 41 Q59 38 64.5 41" stroke={palette.brow} strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M44 63 Q50 66 56 63" stroke="#e58d8d" strokeWidth="1.2" strokeLinecap="round" />
+      {variant === "news" && (
+        <>
+          <rect x="75" y="72" width="16" height="22" rx="3" fill={palette.propFill} stroke={palette.propStroke} strokeWidth="1" />
+          <line x1="79" y1="78" x2="87" y2="78" stroke={palette.propLine} strokeWidth="1.2" />
+          <line x1="79" y1="83" x2="87" y2="83" stroke={palette.propLine} strokeWidth="1.2" />
+          <line x1="79" y1="88" x2="85" y2="88" stroke={palette.propLine} strokeWidth="1.2" />
+        </>
+      )}
+      {variant === "compare" && (
+        <>
+          <rect x="74" y="72" width="18" height="22" rx="3" fill={palette.propFill} stroke={palette.propStroke} strokeWidth="1" />
+          <rect x="78" y="84" width="2.5" height="6" rx="1" fill={palette.propLine} />
+          <rect x="82" y="80" width="2.5" height="10" rx="1" fill={palette.propLine} />
+          <rect x="86" y="76" width="2.5" height="14" rx="1" fill={palette.propLine} />
+          <line x1="77" y1="90.5" x2="90" y2="90.5" stroke={palette.propStroke} strokeWidth="1" />
+        </>
+      )}
+      {variant === "source" && (
+        <>
+          <rect x="74" y="71" width="18" height="24" rx="3" fill={palette.propFill} stroke={palette.propStroke} strokeWidth="1" />
+          <circle cx="79" cy="79" r="2.2" fill={palette.propLine} />
+          <line x1="82.5" y1="79" x2="88" y2="79" stroke={palette.propLine} strokeWidth="1.1" />
+          <line x1="78" y1="85" x2="88" y2="85" stroke={palette.propLine} strokeWidth="1.1" />
+          <line x1="78" y1="90" x2="86" y2="90" stroke={palette.propLine} strokeWidth="1.1" />
+        </>
+      )}
+      {isActive && (
+        <motion.circle
+          cx="83" cy="68" r="3.5" fill={palette.active}
+          animate={{ opacity: [0.4, 1, 0.4], scale: [0.9, 1.15, 0.9] }}
+          transition={{ duration: 1.2, repeat: Infinity }}
+        />
+      )}
+      {isDone && <DoneBadge x={82} y={20} color={palette.done} />}
+    </svg>
+  );
+}
+
+function EditorCharacter({ status }: { status: AgentStatus }) {
+  const isActive = status === "thinking" || status === "reviewing";
+  const isDone = status === "done";
+  return (
+    <svg viewBox="0 0 100 130" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: "visible", width: "100%", height: "100%" }}>
+      <defs>
+        <radialGradient id="edGlow2" cx="50%" cy="60%" r="55%">
+          <stop offset="0%" stopColor="#bef264" stopOpacity="0.24" />
+          <stop offset="100%" stopColor="#65a30d" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="edHair2" x1="0" y1="0" x2="0.2" y2="1">
+          <stop stopColor="#eefcc9" />
+          <stop offset="0.45" stopColor="#bef264" />
+          <stop offset="1" stopColor="#4d7c0f" />
+        </linearGradient>
+        <linearGradient id="edCloth2" x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#f7fee7" />
+          <stop offset="1" stopColor="#d9f99d" />
+        </linearGradient>
+      </defs>
+      <ellipse cx="50" cy="82" rx="38" ry="32" fill="url(#edGlow2)" />
+      <path d="M42 69 Q42 80 45 85 L55 85 Q58 80 58 69 Z" fill="#f5c49a" />
+      <path d="M18 130 Q20 98 36 88 L50 93 L64 88 Q80 98 82 130 Z" fill="url(#edCloth2)" />
+      <path d="M41 88 L50 94 L59 88 L57 130 L43 130 Z" fill="#fff" opacity="0.92" />
+      <ellipse cx="50" cy="49" rx="22" ry="23" fill="#f8d6b2" />
+      <path d="M28 44 Q30 24 50 24 Q70 24 72 44 Q66 30 50 30 Q34 30 28 44 Z" fill="url(#edHair2)" />
+      <path d="M30 43 Q24 52 25 74 Q26 84 32 82 Q31 66 34 52 Z" fill="#84cc16" opacity="0.6" />
+      <path d="M70 43 Q76 52 75 74 Q74 84 68 82 Q69 66 66 52 Z" fill="#84cc16" opacity="0.6" />
+      <circle cx="41" cy="49" r="5.4" fill="white" />
+      <circle cx="59" cy="49" r="5.4" fill="white" />
+      <circle cx="41" cy="49.5" r="3.2" fill="#3f6212" />
+      <circle cx="59" cy="49.5" r="3.2" fill="#3f6212" />
+      <path d="M36 41 Q41 38 46 41" stroke="#4d7c0f" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M54 41 Q59 38 64 41" stroke="#4d7c0f" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M44 63 Q50 66 56 63" stroke="#d97777" strokeWidth="1.2" strokeLinecap="round" />
+      <rect x="74" y="74" width="15" height="18" rx="3" fill="#f7fee7" stroke="#84cc16" strokeWidth="1" />
+      <path d="M80 92 L89 100" stroke="#65a30d" strokeWidth="2" strokeLinecap="round" />
+      <path d="M77 76 L86 76" stroke="#84cc16" strokeWidth="1" />
+      <path d="M77 80 L85 80" stroke="#84cc16" strokeWidth="1" />
+      {isActive && (
+        <motion.path
+          d="M82 70 Q86 66 89 70"
+          stroke="#a3e635" strokeWidth="1.5" fill="none"
+          animate={{ opacity: [0.3, 1, 0.3], y: [0, -2, 0] }}
+          transition={{ duration: 1.1, repeat: Infinity }}
+        />
+      )}
+      {isDone && <DoneBadge x={82} y={20} color="#65a30d" />}
+    </svg>
+  );
+}
+
+function DesignerCharacter({ status }: { status: AgentStatus }) {
+  const isActive = status === "thinking" || status === "reviewing";
+  const isDone = status === "done";
+  return (
+    <svg viewBox="0 0 100 130" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: "visible", width: "100%", height: "100%" }}>
+      <defs>
+        <radialGradient id="dsGlow" cx="50%" cy="60%" r="55%">
+          <stop offset="0%" stopColor="#f9a8d4" stopOpacity="0.24" />
+          <stop offset="100%" stopColor="#db2777" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="dsHair" x1="0" y1="0" x2="0.2" y2="1">
+          <stop stopColor="#ffe4f0" />
+          <stop offset="0.45" stopColor="#f9a8d4" />
+          <stop offset="1" stopColor="#be185d" />
+        </linearGradient>
+        <linearGradient id="dsCloth" x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#fdf2f8" />
+          <stop offset="1" stopColor="#fbcfe8" />
+        </linearGradient>
+      </defs>
+      <ellipse cx="50" cy="82" rx="38" ry="32" fill="url(#dsGlow)" />
+      <path d="M42 69 Q42 80 45 85 L55 85 Q58 80 58 69 Z" fill="#f5c49a" />
+      <path d="M18 130 Q20 98 36 88 L50 93 L64 88 Q80 98 82 130 Z" fill="url(#dsCloth)" />
+      <path d="M41 88 L50 94 L59 88 L57 130 L43 130 Z" fill="#fff" opacity="0.92" />
+      <ellipse cx="50" cy="49" rx="22" ry="23" fill="#f8d6b2" />
+      <path d="M28 44 Q30 24 50 24 Q70 24 72 44 Q65 29 50 29 Q35 29 28 44 Z" fill="url(#dsHair)" />
+      <path d="M28 44 Q22 55 24 90 Q28 96 32 92 Q30 70 34 54 Z" fill="#ec4899" opacity="0.55" />
+      <path d="M72 44 Q78 55 76 90 Q72 96 68 92 Q70 70 66 54 Z" fill="#ec4899" opacity="0.55" />
+      <circle cx="41" cy="49" r="5.5" fill="white" />
+      <circle cx="59" cy="49" r="5.5" fill="white" />
+      <circle cx="41" cy="49.5" r="3.2" fill="#9d174d" />
+      <circle cx="59" cy="49.5" r="3.2" fill="#9d174d" />
+      <path d="M35.5 41 Q41 38 46 41" stroke="#be185d" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M54 41 Q59 38 64.5 41" stroke="#be185d" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M44 63 Q50 67 56 63" stroke="#d96c96" strokeWidth="1.2" strokeLinecap="round" />
+      <ellipse cx="82" cy="84" rx="8" ry="6" fill="#fce7f3" stroke="#ec4899" strokeWidth="1" />
+      <circle cx="79" cy="83" r="1.5" fill="#f59e0b" />
+      <circle cx="82" cy="81" r="1.5" fill="#22c55e" />
+      <circle cx="85" cy="84" r="1.5" fill="#3b82f6" />
+      <path d="M83 89 L90 98" stroke="#ec4899" strokeWidth="2" strokeLinecap="round" />
+      {isActive && (
+        <motion.circle
+          cx="88" cy="70" r="4" fill="#f9a8d4"
+          animate={{ opacity: [0.25, 0.8, 0.25], y: [0, -4, 0] }}
+          transition={{ duration: 1.3, repeat: Infinity }}
+        />
+      )}
+      {isDone && <DoneBadge x={82} y={20} color="#db2777" />}
+    </svg>
+  );
+}
+
 // ─── メインエクスポート ────────────────────────────────────────────
 const WORKER_VARIANT: Record<string, number> = {
   "worker-1": 0, "worker-2": 1, "worker-3": 2,
@@ -656,6 +891,9 @@ export default function AgentCharacter({ role, status, agentId }: Props) {
       {role === "manager"  && <ManagerCharacter status={status} />}
       {role === "worker"   && <WorkerCharacter status={status} variant={workerVariant} />}
       {role === "reviewer" && <ReviewerCharacter status={status} />}
+      {role === "researcher" && <ResearcherCharacter status={status} agentId={agentId} />}
+      {role === "editor" && <EditorCharacter status={status} />}
+      {role === "designer" && <DesignerCharacter status={status} />}
       {role === "system"   && (
         <svg viewBox="0 0 100 130" fill="none">
           <circle cx="50" cy="60" r="28" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />

@@ -104,7 +104,7 @@ export async function conductResearch(
     ? `調査テーマ: ${instruction}\n実行日: ${isoDate}\n調査観点: ${angle}\n検索モード: ${usedKnowledgeFallback ? "知識ベース補完あり" : "ウェブ検索ベース"}\n\nコンテキスト:\n${context}\n\nウェブ検索結果:\n${searchResult}\n\n上記の検索結果をもとに、特に「${angle}」を重視して最新情報を整理してください。検索失敗時は、その旨を明記して鮮度に注意しながら整理してください。`
     : `調査テーマ: ${instruction}\n実行日: ${isoDate}\n調査観点: ${angle}\n検索モード: ${usedKnowledgeFallback ? "知識ベース補完あり" : "ウェブ検索ベース"}\n\nウェブ検索結果:\n${searchResult}\n\n上記の検索結果をもとに、特に「${angle}」を重視して最新情報・トレンド・比較を整理してください。検索失敗時は、その旨を明記して鮮度に注意しながら整理してください。`;
 
-  const rawText = await agent.think(SYSTEM, userContent, 2048);
+  const rawText = await agent.think(SYSTEM, userContent, 1024);
 
   agent.log(usedKnowledgeFallback ? "最新情報の一部取得に失敗したため、補完付きで回答を整理しました" : "ウェブ検索結果ベースで回答を整理しました");
   agent.log(`トレンド分析完了: ${rawText.slice(0, 50)}...`);

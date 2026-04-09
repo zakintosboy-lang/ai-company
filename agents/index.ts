@@ -85,10 +85,10 @@ export async function runCompany(
   });
   const researchResult = mergeResearchResults(researchResults);
 
-  // リサーチ結果をコンテキストとしてWorkerに渡す
+  // リサーチ結果をコンテキストとしてWorkerに渡す（トークン超過防止のため要約のみ）
   const researchContext = `
 【リサーチ担当からの情報】（最新情報ベース）
-${researchResult.rawText}
+${researchResult.summary.slice(0, 2000)}
 `.trim();
 
   manager.log("リサーチ結果を確認しました。実行担当に制作を依頼します");
