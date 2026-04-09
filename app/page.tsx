@@ -550,67 +550,21 @@ export default function Home() {
     showToast("🖨️ PDF印刷ダイアログを表示しました");
   };
 
-  // ── Retro PDF ─────────────────────────────────────────────
-  const handleRetroPdf = async () => {
+  // ── Canva ────────────────────────────────────────────────
+  const handleOpenCanva = () => {
     if (!output) return;
-    showToast("🎮 レトロPDF生成中...");
+    const text = structuredToMd(output, instruction, logs.length);
+    navigator.clipboard.writeText(text).catch(() => {});
+    window.open("https://www.canva.com/create/infographics/", "_blank");
+    showToast("📋 内容をコピーしました。CanvaでCTRL+Vで貼り付けてください");
+  };
 
-    // StructuredOutput → PdfData に変換
-    const pdfData = {
-      title: output.title || "AI REPORT",
-      subtitle: instruction.slice(0, 60) || undefined,
-      concept: output.summary || "",
-      info: [
-        { icon: "📋", label: "SECTIONS", value: `${output.sections.length} 項目` },
-        { icon: "💡", label: "KEY POINTS", value: `${output.keyPoints.length} ポイント` },
-        { icon: "📊", label: "TYPE", value: output.questionType ?? "—" },
-        { icon: "📝", label: "LOGS", value: `${logs.length} 件` },
-      ],
-      days: output.sections.map((sec, i) => ({
-        dayLabel: `SECTION ${String(i + 1).padStart(2, "0")}`,
-        commands: [
-          {
-            category: sec.type === "list" ? "リスト" : sec.type === "steps" ? "手順" : sec.type === "table" ? "テーブル" : "詳細",
-            title: sec.title,
-            detail: sec.content ?? (sec.items ?? []).join(" / ") ?? "—",
-          },
-          ...(output.keyPoints[i] ? [{
-            category: "ポイント",
-            title: `Key Point ${i + 1}`,
-            detail: output.keyPoints[i],
-          }] : []),
-        ],
-      })),
-      summary: {
-        totalCost: "—",
-        breakdown: [],
-        hp: 90,
-        mp: 75,
-        exp: 100,
-        bonuses: output.keyPoints.slice(0, 3),
-        notes: [],
-      },
-    };
-
-    try {
-      const res = await fetch("/api/pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(pdfData),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `retro-report-${Date.now()}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast("🎮 レトロPDF ダウンロード完了！");
-    } catch (err) {
-      console.error(err);
-      showToast("⚠ PDF生成に失敗しました");
-    }
+  // ── Genspark ─────────────────────────────────────────────
+  const handleOpenGenspark = () => {
+    if (!output) return;
+    const query = encodeURIComponent(output.title || instruction);
+    window.open(`https://www.genspark.ai/agents?type=ppt_presentation&query=${query}`, "_blank");
+    showToast("✨ Gensparkでスライドを生成しています...");
   };
 
   // ── Run ───────────────────────────────────────────────────
@@ -788,11 +742,12 @@ export default function Home() {
           <div className={`export-section ${canExport ? "visible" : ""}`}>
             <div className="panel-section-label">エクスポート</div>
             <div className="export-buttons">
-              <button className="export-btn btn-save" onClick={handleSave}     disabled={!canExport}><span className="export-icon">💾</span>保存</button>
-              <button className="export-btn btn-txt"  onClick={handleDownloadTxt} disabled={!canExport}><span className="export-icon">📄</span>TXT</button>
-              <button className="export-btn btn-md"   onClick={handleDownloadMd}  disabled={!canExport}><span className="export-icon">📝</span>MD</button>
-              <button className="export-btn btn-pdf"  onClick={handlePrintPDF}    disabled={!canExport}><span className="export-icon">🖨️</span>PDF</button>
-              <button className="export-btn btn-retro" onClick={handleRetroPdf}   disabled={!canExport}><span className="export-icon">🎮</span>レトロ</button>
+              <button className="export-btn btn-save"     onClick={handleSave}          disabled={!canExport}><span className="export-icon">💾</span>保存</button>
+              <button className="export-btn btn-txt"      onClick={handleDownloadTxt}   disabled={!canExport}><span className="export-icon">📄</span>TXT</button>
+              <button className="export-btn btn-md"       onClick={handleDownloadMd}    disabled={!canExport}><span className="export-icon">📝</span>MD</button>
+              <button className="export-btn btn-pdf"      onClick={handlePrintPDF}      disabled={!canExport}><span className="export-icon">🖨️</span>PDF</button>
+              <button className="export-btn btn-canva"    onClick={handleOpenCanva}     disabled={!canExport}><span className="export-icon">🎨</span>Canva</button>
+              <button className="export-btn btn-genspark" onClick={handleOpenGenspark}  disabled={!canExport}><span className="export-icon">✨</span>Genspark</button>
             </div>
           </div>
         </aside>

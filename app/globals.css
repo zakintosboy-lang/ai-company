@@ -225,7 +225,8 @@ html, body {
 .btn-txt:hover:not(:disabled)   { border-color: var(--border-mid);   color: var(--text-primary); }
 .btn-md:hover:not(:disabled)    { border-color: rgba(124,88,200,.4); color: var(--color-ceo); }
 .btn-pdf:hover:not(:disabled)   { border-color: rgba(200,56,32,.4);  color: var(--error); }
-.btn-retro:hover:not(:disabled) { border-color: rgba(196,120,48,.4); color: var(--accent); }
+.btn-canva:hover:not(:disabled)    { border-color: rgba(0,196,140,.4);  color: #00c48c; }
+.btn-genspark:hover:not(:disabled) { border-color: rgba(99,102,241,.4); color: #6366f1; }
 
 /* ── Right Panel ── */
 .panel-right {
