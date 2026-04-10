@@ -11,9 +11,9 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     role: "ceo",
     name: "CEO",
     model: {
-      provider: "claude",
-      modelId: "claude-opus-4-5",
-      displayName: "Claude Opus 4.5",
+      provider: "openai",
+      modelId: "gpt-5.4",
+      displayName: "GPT-5.4",
     },
     criteria: [
       "ユーザーの指示を完全に満たしているか",
@@ -27,9 +27,9 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     role: "manager",
     name: "Manager",
     model: {
-      provider: "openai",
-      modelId: "gpt-4.1",
-      displayName: "GPT-4.1",
+      provider: "claude",
+      modelId: "claude-sonnet-4-5",
+      displayName: "Claude Sonnet 4.5",
     },
     criteria: [
       "指示を適切な数のサブタスクに分解できているか",
@@ -41,11 +41,11 @@ export const AGENT_CONFIGS: AgentConfig[] = [
   {
     id: "worker-1",
     role: "worker",
-    name: "Worker Fast",
+    name: "Worker Lead",
     model: {
       provider: "claude",
-      modelId: "claude-haiku-4-5-20251001",
-      displayName: "Claude Haiku 4.5",
+      modelId: "claude-sonnet-4-5",
+      displayName: "Claude Sonnet 4.5",
     },
     criteria: [
       "短時間で論点を広く拾えていること",
@@ -108,8 +108,8 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     name: "Researcher News",
     model: {
       provider: "openai",
-      modelId: "gpt-5.4",
-      displayName: "GPT-5.4",
+      modelId: "gpt-4.1",
+      displayName: "GPT-4.1",
     },
     criteria: [
       "最新情報・トレンドを網羅していること",
