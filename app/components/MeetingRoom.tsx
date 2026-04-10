@@ -81,31 +81,25 @@ const ROLE_CONFIG: Record<AgentRole, {
 };
 
 function getAvatarTheme(agent: AgentInfo) {
+  // PPGスタイル：鮮やかなドレスカラー
   if (agent.role === "researcher") {
     if (agent.id === "researcher-2") {
-      return { hair: "#60a5fa", hairDark: "#2563eb", outfit: "#dbeafe", accent: "#1d4ed8", accessory: "bars" as const };
+      return { hair: "#93c5fd", hairDark: "#2563eb", outfit: "#3b82f6", accent: "#1d4ed8", accessory: "bars" as const };
     }
     if (agent.id === "researcher-3") {
-      return { hair: "#94a3b8", hairDark: "#475569", outfit: "#e2e8f0", accent: "#334155", accessory: "note" as const };
+      return { hair: "#cbd5e1", hairDark: "#475569", outfit: "#64748b", accent: "#334155", accessory: "note" as const };
     }
-    return { hair: "#67e8f9", hairDark: "#0891b2", outfit: "#cffafe", accent: "#0e7490", accessory: "news" as const };
+    return { hair: "#a5f3fc", hairDark: "#0891b2", outfit: "#06b6d4", accent: "#0e7490", accessory: "news" as const };
   }
 
   switch (agent.role) {
-    case "ceo":
-      return { hair: "#c4b5fd", hairDark: "#7c3aed", outfit: "#ede9fe", accent: "#7c3aed", accessory: "crown" as const };
-    case "manager":
-      return { hair: "#93c5fd", hairDark: "#2878d8", outfit: "#dbeafe", accent: "#2878d8", accessory: "headset" as const };
-    case "worker":
-      return { hair: "#fdba74", hairDark: "#c86820", outfit: "#ffedd5", accent: "#c86820", accessory: "cap" as const };
-    case "reviewer":
-      return { hair: "#86efac", hairDark: "#208858", outfit: "#dcfce7", accent: "#208858", accessory: "check" as const };
-    case "editor":
-      return { hair: "#bef264", hairDark: "#65a30d", outfit: "#ecfccb", accent: "#65a30d", accessory: "pen" as const };
-    case "designer":
-      return { hair: "#f9a8d4", hairDark: "#db2777", outfit: "#fce7f3", accent: "#db2777", accessory: "spark" as const };
-    default:
-      return { hair: "#cbd5e1", hairDark: "#64748b", outfit: "#e2e8f0", accent: "#64748b", accessory: "none" as const };
+    case "ceo":      return { hair: "#c4b5fd", hairDark: "#7c3aed", outfit: "#d946ef", accent: "#a855f7", accessory: "crown" as const };
+    case "manager":  return { hair: "#93c5fd", hairDark: "#2563eb", outfit: "#3b82f6", accent: "#2563eb", accessory: "headset" as const };
+    case "worker":   return { hair: "#fde68a", hairDark: "#d97706", outfit: "#f97316", accent: "#fbbf24", accessory: "cap" as const };
+    case "reviewer": return { hair: "#86efac", hairDark: "#16a34a", outfit: "#22c55e", accent: "#16a34a", accessory: "check" as const };
+    case "editor":   return { hair: "#bef264", hairDark: "#65a30d", outfit: "#84cc16", accent: "#65a30d", accessory: "pen" as const };
+    case "designer": return { hair: "#f9a8d4", hairDark: "#db2777", outfit: "#f472b6", accent: "#db2777", accessory: "spark" as const };
+    default:         return { hair: "#cbd5e1", hairDark: "#64748b", outfit: "#94a3b8", accent: "#64748b", accessory: "none" as const };
   }
 }
 
@@ -114,169 +108,176 @@ function StreamerAvatar({ agent }: { agent: AgentInfo }) {
   const isActive = agent.status === "thinking" || agent.status === "reviewing";
   const isDone   = agent.status === "done";
 
+  // PPG共通カラー
+  const SK = "#f9c9a3"; // 肌
+  const BK = "#111111"; // アウトライン
+  const WH = "#ffffff"; // 白ハイライト
+  const BL = "#ffb3c6"; // ほっぺ
+
   return (
     <motion.div
-      style={{
-        width: 90, height: 116,
-        position: "relative",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-      animate={isActive ? { y: [0, -6, 0] } : { y: [0, -2, 0] }}
-      transition={{ duration: isActive ? 0.75 : 3, repeat: Infinity, ease: "easeInOut" }}
+      style={{ width: 90, height: 122, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}
+      animate={isActive ? { y: [0, -5, 0] } : { y: [0, -2, 0] }}
+      transition={{ duration: isActive ? 0.8 : 3, repeat: Infinity, ease: "easeInOut" }}
     >
-      {/* 床の影 */}
+      {/* 影 */}
       <div style={{
-        position: "absolute", bottom: 4,
-        width: 54, height: 10, borderRadius: 999,
-        background: `${theme.accent}55`, filter: "blur(8px)",
+        position: "absolute", bottom: 2, width: 48, height: 8,
+        borderRadius: 999, background: `${theme.accent}44`, filter: "blur(6px)",
       }} />
 
-      <svg viewBox="0 0 100 130" width="90" height="116" fill="none">
+      <svg viewBox="0 0 100 130" width="90" height="122" fill="none">
 
-        {/* ── ドレス / ボディ ── */}
-        <path d="M26 74 Q17 98 15 130 L85 130 Q83 98 74 74 Z"
-          fill={theme.outfit} stroke="#1a1a2e" strokeWidth="2" />
-        {/* ドレスのライン */}
-        <path d="M35 84 L50 81 L65 84"
-          stroke={theme.accent} strokeWidth="2.2" strokeLinecap="round" />
-        <path d="M30 96 L50 92 L70 96"
-          stroke={theme.accent} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+        {/* ===== Layer 1: 足（ドレスの下） ===== */}
+        <rect x="36" y="108" width="12" height="18" rx="6" fill={SK} stroke={BK} strokeWidth="1.5" />
+        <rect x="52" y="108" width="12" height="18" rx="6" fill={SK} stroke={BK} strokeWidth="1.5" />
 
-        {/* ── 首 ── */}
-        <ellipse cx="50" cy="73" rx="10" ry="6" fill="#f9c8a8" />
+        {/* ===== Layer 2: ドレス（Aライン） ===== */}
+        <path d="M38 70 Q18 92 14 120 L86 120 Q82 92 62 70 Z"
+          fill={theme.outfit} stroke={BK} strokeWidth="2.2" strokeLinejoin="round" />
+        {/* ドレスのウエストライン */}
+        <path d="M40 76 Q50 73 60 76" stroke={WH} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+        {/* ドレスのスカートライン */}
+        <path d="M28 96 Q50 91 72 96" stroke={WH} strokeWidth="1.5" strokeLinecap="round" opacity="0.35" />
 
-        {/* ── 頭 ── PPGのでっかい丸頭 */}
-        <circle cx="50" cy="42" r="32" fill="#f9c8a8" stroke="#1a1a2e" strokeWidth="2.5" />
+        {/* ===== Layer 3: 首 ===== */}
+        <rect x="43" y="66" width="14" height="9" rx="5" fill={SK} />
 
-        {/* ── 髪型（役職別） ── */}
+        {/* ===== Layer 4: 髪（頭の後ろ側・顔の下に来る） ===== */}
 
-        {/* CEO: ロングヘア + 王冠 (ブロッサム風) */}
-        {agent.role === "ceo" && <>
-          {/* ロングヘア */}
-          <path d="M18 42 Q16 16 50 10 Q84 16 82 42 L82 58 Q74 52 70 60 L70 92 Q60 86 54 98 L50 100 L46 98 Q40 86 30 92 L30 60 Q26 52 18 58 Z"
-            fill={theme.hair} stroke="#1a1a2e" strokeWidth="2" />
-          {/* 王冠 */}
-          <path d="M30 16 L35 24 L42 14 L48 23 L50 13 L52 23 L58 14 L65 24 L70 16 L68 27 L32 27 Z"
-            fill="#fbbf24" stroke="#d97706" strokeWidth="1.5" />
-          {/* 王冠ハイライト */}
-          <circle cx="50" cy="16" r="3" fill="#fef08a" />
-          <circle cx="36" cy="20" r="2" fill="#fef08a" />
-          <circle cx="64" cy="20" r="2" fill="#fef08a" />
-        </>}
+        {/* CEO: ロングヘア後部（ブロッサム風） */}
+        {agent.role === "ceo" && (
+          <path d="M20 40 Q18 18 50 10 Q82 18 80 40 L80 58 Q68 52 62 70 L50 78 L38 70 Q32 52 20 58 Z"
+            fill={theme.hair} stroke={BK} strokeWidth="2" />
+        )}
+        {/* Manager: ミディアムボブ後部 */}
+        {agent.role === "manager" && (
+          <path d="M20 40 Q20 16 50 10 Q80 16 80 40 L80 56 L50 62 L20 56 Z"
+            fill={theme.hair} stroke={BK} strokeWidth="2" />
+        )}
+        {/* Worker: ショートヘア後部（バターカップ風） */}
+        {agent.role === "worker" && (
+          <path d="M22 40 Q22 20 50 13 Q78 20 78 40 L78 50 L50 56 L22 50 Z"
+            fill={theme.hair} stroke={BK} strokeWidth="2" />
+        )}
+        {/* Reviewer: ボブカット後部 */}
+        {agent.role === "reviewer" && (
+          <>
+            <path d="M20 40 Q20 16 50 10 Q80 16 80 40 L80 60 Q65 66 50 66 Q35 66 20 60 Z"
+              fill={theme.hair} stroke={BK} strokeWidth="2" />
+            <path d="M20 58 Q15 70 21 76" stroke={theme.hair} strokeWidth="9" strokeLinecap="round" />
+            <path d="M80 58 Q85 70 79 76" stroke={theme.hair} strokeWidth="9" strokeLinecap="round" />
+            <path d="M20 58 Q15 70 21 76" stroke={BK} strokeWidth="2" strokeLinecap="round" />
+            <path d="M80 58 Q85 70 79 76" stroke={BK} strokeWidth="2" strokeLinecap="round" />
+          </>
+        )}
+        {/* Researcher: ツインテール後部（バブルス風） */}
+        {agent.role === "researcher" && (
+          <>
+            <path d="M22 40 Q22 18 50 11 Q78 18 78 40 L78 52 L50 58 L22 52 Z"
+              fill={theme.hair} stroke={BK} strokeWidth="2" />
+            <ellipse cx="7"  cy="54" rx="12" ry="19" fill={theme.hair} stroke={BK} strokeWidth="2" />
+            <ellipse cx="93" cy="54" rx="12" ry="19" fill={theme.hair} stroke={BK} strokeWidth="2" />
+          </>
+        )}
+        {/* Designer: ロング後部 */}
+        {agent.role === "designer" && (
+          <path d="M20 40 Q17 17 50 10 Q83 17 80 40 L80 64 Q67 58 60 74 L50 82 L40 74 Q33 58 20 64 Z"
+            fill={theme.hair} stroke={BK} strokeWidth="2" />
+        )}
+        {/* Editor: ショートスパイキー後部 */}
+        {agent.role === "editor" && (
+          <path d="M22 40 Q22 18 50 11 Q78 18 78 40 L78 52 L50 58 L22 52 Z"
+            fill={theme.hair} stroke={BK} strokeWidth="2" />
+        )}
 
-        {/* Manager: ミディアム + ヘッドセット */}
-        {agent.role === "manager" && <>
-          <path d="M18 42 Q17 16 50 10 Q83 16 82 42 L82 54 Q74 50 70 54 L70 74 L50 78 L30 74 L30 54 Q26 50 18 54 Z"
-            fill={theme.hair} stroke="#1a1a2e" strokeWidth="2" />
-          {/* ヘッドセット */}
-          <path d="M16 36 Q16 12 50 12 Q84 12 84 36"
-            stroke={theme.accent} strokeWidth="3.5" fill="none" strokeLinecap="round" />
-          <rect x="10" y="33" width="10" height="16" rx="5" fill={theme.accent} stroke="#1a1a2e" strokeWidth="1.5" />
-          <rect x="80" y="33" width="10" height="16" rx="5" fill={theme.accent} stroke="#1a1a2e" strokeWidth="1.5" />
-          {/* マイク */}
-          <path d="M10 42 Q4 46 6 50" stroke={theme.accent} strokeWidth="2" fill="none" strokeLinecap="round" />
-          <circle cx="6" cy="51" r="3" fill={theme.accent} stroke="#1a1a2e" strokeWidth="1" />
-        </>}
+        {/* ===== Layer 5: 顔（頭の丸）===== */}
+        <circle cx="50" cy="40" r="30" fill={SK} stroke={BK} strokeWidth="2.5" />
 
-        {/* Worker: ショート + 安全ヘルメット */}
-        {agent.role === "worker" && <>
-          <path d="M22 42 Q22 22 50 14 Q78 22 78 42 L78 52 L50 58 L22 52 Z"
-            fill={theme.hair} stroke="#1a1a2e" strokeWidth="2" />
-          {/* ヘルメット */}
-          <path d="M14 38 Q16 4 50 4 Q84 4 86 38 Z"
-            fill="#fbbf24" stroke="#1a1a2e" strokeWidth="2" />
-          <rect x="12" y="34" width="76" height="8" rx="4"
-            fill="#f59e0b" stroke="#1a1a2e" strokeWidth="1.5" />
-          {/* ヘルメットの光 */}
-          <path d="M30 14 Q40 10 55 12" stroke="#fef08a" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
-        </>}
-
-        {/* Reviewer: グリーンボブカット */}
-        {agent.role === "reviewer" && <>
-          <path d="M18 42 Q18 16 50 10 Q82 16 82 42 L82 60 Q66 66 50 66 Q34 66 18 60 Z"
-            fill={theme.hair} stroke="#1a1a2e" strokeWidth="2" />
-          {/* ボブの端 */}
-          <path d="M18 60 Q14 70 20 76" stroke={theme.hair} strokeWidth="7" strokeLinecap="round" />
-          <path d="M82 60 Q86 70 80 76" stroke={theme.hair} strokeWidth="7" strokeLinecap="round" />
-          {/* 内側のライン */}
-          <path d="M18 60 Q14 70 20 76" stroke={theme.hairDark} strokeWidth="2" strokeLinecap="round" opacity="0.4" />
-          <path d="M82 60 Q86 70 80 76" stroke={theme.hairDark} strokeWidth="2" strokeLinecap="round" opacity="0.4" />
-        </>}
-
-        {/* Researcher: ツインテール (バブルス風) */}
-        {agent.role === "researcher" && <>
-          {/* メイン髪 */}
-          <path d="M22 42 Q22 16 50 10 Q78 16 78 42 L78 52 L50 58 L22 52 Z"
-            fill={theme.hair} stroke="#1a1a2e" strokeWidth="2" />
-          {/* 左ツインテール */}
-          <ellipse cx="9" cy="57" rx="11" ry="16" fill={theme.hair} stroke="#1a1a2e" strokeWidth="2" />
-          {/* 右ツインテール */}
-          <ellipse cx="91" cy="57" rx="11" ry="16" fill={theme.hair} stroke="#1a1a2e" strokeWidth="2" />
-          {/* ヘアタイ */}
-          <circle cx="20" cy="48" r="5" fill={theme.accent} stroke="#1a1a2e" strokeWidth="1.5" />
-          <circle cx="80" cy="48" r="5" fill={theme.accent} stroke="#1a1a2e" strokeWidth="1.5" />
-          {/* ヘアタイの模様 */}
-          <circle cx="20" cy="48" r="2" fill="white" opacity="0.7" />
-          <circle cx="80" cy="48" r="2" fill="white" opacity="0.7" />
-        </>}
-
-        {/* Designer: ロング + アホ毛 */}
-        {agent.role === "designer" && <>
-          <path d="M18 42 Q16 16 50 10 Q84 16 82 42 L82 62 Q70 58 64 72 L50 78 L36 72 Q30 58 18 62 Z"
-            fill={theme.hair} stroke="#1a1a2e" strokeWidth="2" />
-          {/* アホ毛 */}
-          <path d="M50 10 Q56 0 62 4 Q66 -1 58 7" stroke={theme.hair} strokeWidth="5" strokeLinecap="round" fill="none" />
-          <circle cx="62" cy="3" r="5" fill={theme.hair} stroke="#1a1a2e" strokeWidth="1.5" />
-          {/* ハートのリボン */}
-          <path d="M38 14 Q42 10 46 14 Q50 10 54 14 Q54 20 46 24 Q38 20 38 14 Z"
-            fill={theme.accent} stroke="#1a1a2e" strokeWidth="1" />
-        </>}
-
-        {/* Editor: ショートスパイキー */}
-        {agent.role === "editor" && <>
-          <path d="M22 42 Q22 20 50 12 Q78 20 78 42 L78 54 L50 60 L22 54 Z"
-            fill={theme.hair} stroke="#1a1a2e" strokeWidth="2" />
-          {/* 跳ねた毛 */}
-          <path d="M26 22 Q20 10 28 14" stroke={theme.hair} strokeWidth="6" strokeLinecap="round" />
-          <path d="M38 12 Q34 2 42 6" stroke={theme.hair} strokeWidth="6" strokeLinecap="round" />
-          <path d="M50 10 Q47 1 53 5" stroke={theme.hair} strokeWidth="6" strokeLinecap="round" />
-          <path d="M62 12 Q66 2 58 6" stroke={theme.hair} strokeWidth="6" strokeLinecap="round" />
-          <path d="M74 22 Q80 10 72 14" stroke={theme.hair} strokeWidth="6" strokeLinecap="round" />
-        </>}
-
-        {/* ── 顔パーツ ── */}
-
-        {/* 左目 ── 巨大PPGオーバル */}
-        <ellipse cx="36" cy="43" rx="11" ry="13.5" fill="#1a1a2e" />
-        {/* 左目ハイライト */}
-        <ellipse cx="31" cy="38" rx="4.5" ry="3.5" fill="white" />
-        <circle  cx="36" cy="50" r="1.5" fill="white" opacity="0.5" />
-
-        {/* 右目 ── 巨大PPGオーバル */}
-        <ellipse cx="64" cy="43" rx="11" ry="13.5" fill="#1a1a2e" />
-        {/* 右目ハイライト */}
-        <ellipse cx="59" cy="38" rx="4.5" ry="3.5" fill="white" />
-        <circle  cx="64" cy="50" r="1.5" fill="white" opacity="0.5" />
-
+        {/* ===== Layer 6: 顔パーツ ===== */}
+        {/* 左目 — PPG超巨大オーバル */}
+        <ellipse cx="36" cy="39" rx="10.5" ry="13" fill={BK} />
+        <ellipse cx="31"  cy="34" rx="4.2"  ry="3.3" fill={WH} />
+        <circle  cx="37"  cy="46" r="1.5"   fill={WH} opacity="0.55" />
+        {/* 右目 */}
+        <ellipse cx="64" cy="39" rx="10.5" ry="13" fill={BK} />
+        <ellipse cx="59"  cy="34" rx="4.2"  ry="3.3" fill={WH} />
+        <circle  cx="65"  cy="46" r="1.5"   fill={WH} opacity="0.55" />
         {/* ほっぺ */}
-        <ellipse cx="19" cy="56" rx="9" ry="5.5" fill="#f9a8d4" opacity="0.5" />
-        <ellipse cx="81" cy="56" rx="9" ry="5.5" fill="#f9a8d4" opacity="0.5" />
-
+        <ellipse cx="18" cy="50" rx="7.5" ry="4.5" fill={BL} opacity="0.55" />
+        <ellipse cx="82" cy="50" rx="7.5" ry="4.5" fill={BL} opacity="0.55" />
         {/* 口 */}
-        <path d="M41 62 Q50 70 59 62"
-          stroke="#1a1a2e" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+        <path d="M43 56 Q50 63 57 56" stroke={BK} strokeWidth="2.2" fill="none" strokeLinecap="round" />
 
-        {/* アクティブインジケーター */}
+        {/* ===== Layer 7: 髪アクセサリー（顔の上） ===== */}
+
+        {/* CEO: 王冠 */}
+        {agent.role === "ceo" && (
+          <>
+            <path d="M28 14 L33 22 L40 12 L46 21 L50 10 L54 21 L60 12 L67 22 L72 14 L70 25 L30 25 Z"
+              fill="#fbbf24" stroke="#d97706" strokeWidth="1.5" />
+            <rect x="30" y="22" width="40" height="5" rx="2.5" fill="#f59e0b" stroke="#d97706" strokeWidth="1" />
+            <circle cx="50" cy="13" r="3"   fill="#fef9c3" />
+            <circle cx="34" cy="18" r="2.2" fill="#fef9c3" />
+            <circle cx="66" cy="18" r="2.2" fill="#fef9c3" />
+          </>
+        )}
+        {/* Manager: ヘッドセット */}
+        {agent.role === "manager" && (
+          <>
+            <path d="M18 33 Q18 10 50 10 Q82 10 82 33"
+              stroke={theme.accent} strokeWidth="3.5" fill="none" strokeLinecap="round" />
+            <rect x="11" y="30" width="9" height="15" rx="4.5" fill={theme.accent} stroke={BK} strokeWidth="1.3" />
+            <rect x="80" y="30" width="9" height="15" rx="4.5" fill={theme.accent} stroke={BK} strokeWidth="1.3" />
+            <path d="M11 36 Q4 41 6 47" stroke={theme.accent} strokeWidth="2.2" fill="none" strokeLinecap="round" />
+            <circle cx="6" cy="48" r="3.5" fill={theme.accent} stroke={BK} strokeWidth="1.2" />
+          </>
+        )}
+        {/* Worker: 安全ヘルメット */}
+        {agent.role === "worker" && (
+          <>
+            <path d="M15 36 Q17 4 50 4 Q83 4 85 36 Z" fill="#fbbf24" stroke={BK} strokeWidth="2" />
+            <rect x="13" y="32" width="74" height="8" rx="4" fill="#f59e0b" stroke={BK} strokeWidth="1.5" />
+            <path d="M28 13 Q40 8 56 11" stroke="#fef9c3" strokeWidth="3" strokeLinecap="round" opacity="0.75" />
+          </>
+        )}
+        {/* Researcher: ヘアタイ */}
+        {agent.role === "researcher" && (
+          <>
+            <circle cx="20" cy="47" r="6"   fill={theme.accent} stroke={BK} strokeWidth="1.5" />
+            <circle cx="80" cy="47" r="6"   fill={theme.accent} stroke={BK} strokeWidth="1.5" />
+            <circle cx="20" cy="47" r="2.8" fill={WH} opacity="0.85" />
+            <circle cx="80" cy="47" r="2.8" fill={WH} opacity="0.85" />
+          </>
+        )}
+        {/* Designer: リボン */}
+        {agent.role === "designer" && (
+          <>
+            <path d="M36 11 Q43 7 46 13 Q50 8 54 13 Q57 7 64 11 Q57 19 50 16 Q43 19 36 11 Z"
+              fill={theme.accent} stroke={BK} strokeWidth="1.3" />
+            <circle cx="50" cy="14" r="3.5" fill={theme.hair} stroke={BK} strokeWidth="1" />
+          </>
+        )}
+        {/* Editor: 前髪スパイク */}
+        {agent.role === "editor" && (
+          <>
+            <polygon points="24,22 19,6 31,16"  fill={theme.hair} stroke={BK} strokeWidth="1.2" />
+            <polygon points="36,13 33,1 44,11"  fill={theme.hair} stroke={BK} strokeWidth="1.2" />
+            <polygon points="50,10 49,0 57,9"   fill={theme.hair} stroke={BK} strokeWidth="1.2" />
+            <polygon points="64,13 67,1 56,11"  fill={theme.hair} stroke={BK} strokeWidth="1.2" />
+            <polygon points="76,22 81,6 69,16"  fill={theme.hair} stroke={BK} strokeWidth="1.2" />
+          </>
+        )}
+
+        {/* ===== 状態インジケーター ===== */}
         {isActive && (
-          <motion.circle cx="90" cy="22" r="5" fill="#fef08a"
+          <motion.circle cx="88" cy="20" r="5.5" fill="#fef08a"
             animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.3, 0.8] }}
             transition={{ duration: 0.9, repeat: Infinity }}
           />
         )}
         {isDone && (
-          <motion.circle cx="90" cy="18" r="9" fill={theme.accent}
+          <motion.circle cx="88" cy="16" r="8" fill={theme.accent}
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 420, damping: 18 }}
@@ -648,7 +649,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         {/* Row 3: Workers + Designer（横並び） */}
         <div style={{ display: "flex", justifyContent: "center", gap: 20 }}>
           {(workers.length > 0 ? workers : [ph("worker-1", "worker"), ph("worker-2", "worker"), ph("worker-3", "worker")])
-            .map((agent, i) => (
+            .map((agent) => (
               <CharacterUnit
                 key={agent.id}
                 agent={agent}
