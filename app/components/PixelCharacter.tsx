@@ -17,201 +17,197 @@ interface Props {
 
 const P = {
   // 共通
-  sk: "#f5c49a", // 肌
+  sk:  "#f9c8a8", // 肌（明るめ）
   sk2: "#e8a870", // 肌影
-  bk: "#1a1a2e", // アウトライン
-  wh: "#f8f8f8", // 白
-  ey: "#1a1a2e", // 目
+  bk:  "#1a1a2e", // アウトライン
+  wh:  "#ffffff", // ハイライト
+  bl:  "#f9a8d4", // ほっぺ
 
   // CEO（紫）
-  cH: "#7c3aed", // 帽子・スーツ
+  cH:  "#7c3aed",
   cH2: "#5b21b6",
-  cA: "#c4b5fd", // アクセント
-  cT: "#f59e0b", // クラウン
+  cA:  "#ddd6fe",
+  cT:  "#fbbf24", // 王冠
 
   // Manager（青）
-  mH: "#1d4ed8",
+  mH:  "#2563eb",
   mH2: "#1e40af",
-  mA: "#93c5fd",
-  mG: "#e2e8f0", // メガネ
+  mA:  "#bfdbfe",
 
   // Worker（オレンジ）
-  wH: "#c2410c",
+  wH:  "#ea580c",
   wH2: "#9a3412",
-  wA: "#fed7aa",
-  wT: "#fbbf24", // ヘルメット
+  wA:  "#fed7aa",
+  wT:  "#fbbf24", // ヘルメット
 
   // Reviewer（緑）
-  rH: "#065f46",
+  rH:  "#065f46",
   rH2: "#064e3b",
-  rA: "#6ee7b7",
-  rC: "#047857", // クリップボード
+  rA:  "#a7f3d0",
 
   // Researcher（シアン）
-  reH: "#0e7490",
+  reH:  "#0e7490",
   reH2: "#155e75",
-  reA: "#67e8f9",
-  reB: "#0891b2", // 本
+  reA:  "#a5f3fc",
 
   // Designer（ピンク）
-  dH: "#9d174d",
+  dH:  "#be185d",
   dH2: "#831843",
-  dA: "#f9a8d4",
-  dP: "#ec4899", // パレット
+  dA:  "#fbcfe8",
 
   // Editor（黄緑）
-  edH: "#3f6212",
+  edH:  "#4d7c0f",
   edH2: "#365314",
-  edA: "#bef264",
-  edP: "#84cc16", // ペン
+  edA:  "#d9f99d",
 
   // System
   sys: "#475569",
 };
 
-// ─── 16×16 ドット絵データ（1セル＝1色コード） ───────────────────
+// ─── 16×16 ドット絵（パワーパフガールズ風）───────────────────────
+// 大きな丸頭・巨大な目・シンプルなドレスボディ
 // null = 透明
 
 type PixelGrid = (string | null)[][];
 
-// CEO: 紫スーツ + 王冠
+// CEO: 紫ドレス + 王冠 + 長めのロングヘア
 const CEO_PIXELS: PixelGrid = [
-  [null,null,null,null,null,P.cT,null,P.cT,null,P.cT,null,null,null,null,null,null],
-  [null,null,null,null,P.cT,P.cT,P.cT,P.cT,P.cT,P.cT,P.cT,null,null,null,null,null],
-  [null,null,null,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,null,null,null,null],
+  [null,null,null,null,P.cT,null,P.cT,P.cT,P.cT,null,P.cT,null,null,null,null,null],
+  [null,null,null,P.bk,P.cT,P.cT,P.cT,P.cT,P.cT,P.cT,P.cT,P.bk,null,null,null,null],
+  [null,null,P.bk,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.bk,null,null,null],
+  [null,P.bk,P.cH,P.cH,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.cH,P.cH,P.cH,P.bk,null,null],
+  [null,P.bk,P.cH,P.sk,P.bk,P.bk,P.bk,P.sk,P.bk,P.bk,P.bk,P.sk,P.cH,P.bk,null,null],
+  [null,P.bk,P.cH,P.sk,P.bk,P.wh,P.bk,P.sk,P.bk,P.wh,P.bk,P.sk,P.cH,P.bk,null,null],
+  [null,P.bk,P.cH,P.sk,P.bk,P.bk,P.bk,P.sk,P.bk,P.bk,P.bk,P.sk,P.cH,P.bk,null,null],
+  [null,P.bk,P.sk,P.bl,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bl,P.sk,P.sk,P.bk,null,null],
+  [null,P.bk,P.sk,P.sk,P.sk,P.bk,P.bk,P.bk,P.bk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null],
   [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.ey,P.sk,P.sk,P.sk,P.sk,P.ey,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.sk,P.sk2,P.sk,P.sk2,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
   [null,null,null,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,null,null,null,null],
-  [null,P.bk,P.cA,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cA,P.bk,null,null],
-  [null,P.cH,P.cH,P.cH,P.cH,P.wh,P.cH,P.cH,P.cH,P.cH,P.wh,P.cH,P.cH,P.cH,null,null],
-  [null,P.cH,P.cA,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cA,P.cH,null,null],
-  [null,P.cH2,P.cH,P.cH,null,null,null,null,null,null,null,P.cH,P.cH,P.cH2,null,null],
-  [null,null,P.cH2,P.cH,null,null,null,null,null,null,null,P.cH,P.cH2,null,null,null],
-  [null,null,P.cH,P.cH2,null,null,null,null,null,null,null,P.cH2,P.cH,null,null,null],
-  [null,null,P.cH,P.cH,null,null,null,null,null,null,null,null,P.cH,null,null,null],
-  [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  [null,null,P.bk,P.cA,P.cA,P.cA,P.cA,P.cA,P.cA,P.cA,P.cA,P.cA,P.bk,null,null,null],
+  [null,P.bk,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.bk,null,null],
+  [null,P.bk,P.cH,P.cH,P.cA,P.cH,P.cH,P.cH,P.cH,P.cA,P.cH,P.cH,P.cH,P.bk,null,null],
+  [null,null,P.bk,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.cH,P.bk,null,null,null],
+  [null,null,null,P.bk,P.cH2,P.cH2,P.cH2,P.cH2,P.cH2,P.cH2,P.cH2,P.bk,null,null,null,null],
 ];
 
-// Manager: 青コート + メガネ
+// Manager: 青ドレス + ヘッドセット
 const MANAGER_PIXELS: PixelGrid = [
   [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
-  [null,null,null,P.bk,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.bk,null,null,null,null],
-  [null,null,P.bk,P.mH,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.mH,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.mG,P.mG,P.sk,P.sk,P.mG,P.mG,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.mG,P.ey,P.mG,P.mG,P.mG,P.ey,P.mG,P.sk,P.bk,null,null,null],
+  [null,null,null,null,P.mA,P.mH,P.mH,P.mH,P.mH,P.mH,P.mA,null,null,null,null,null],
+  [null,null,P.bk,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.bk,null,null,null],
+  [null,P.bk,P.mH,P.mH,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.mH,P.mH,P.mH,P.bk,null,null],
+  [P.mA,P.bk,P.mH,P.sk,P.bk,P.bk,P.bk,P.sk,P.bk,P.bk,P.bk,P.sk,P.mH,P.bk,P.mA,null],
+  [P.mH,P.bk,P.mH,P.sk,P.bk,P.wh,P.bk,P.sk,P.bk,P.wh,P.bk,P.sk,P.mH,P.bk,P.mH,null],
+  [P.mA,P.bk,P.mH,P.sk,P.bk,P.bk,P.bk,P.sk,P.bk,P.bk,P.bk,P.sk,P.mH,P.bk,P.mA,null],
+  [null,P.bk,P.sk,P.bl,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bl,P.sk,P.sk,P.bk,null,null],
+  [null,P.bk,P.sk,P.sk,P.sk,P.bk,P.bk,P.bk,P.bk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null],
   [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.sk,P.sk2,P.sk,P.bk,P.sk2,P.sk,P.sk,P.sk,P.bk,null,null,null],
   [null,null,null,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,null,null,null,null],
-  [null,P.bk,P.mA,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mA,P.bk,null,null],
-  [null,P.mH,P.mH,P.mH,P.rC,P.rC,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,null,null],
-  [null,P.mH,P.mA,P.mH,P.rC,P.rC,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mA,P.mH,null,null],
-  [null,P.mH2,P.mH,P.mH,null,null,null,null,null,null,null,P.mH,P.mH,P.mH2,null,null],
-  [null,null,P.mH2,P.mH,null,null,null,null,null,null,null,P.mH,P.mH2,null,null,null],
-  [null,null,P.mH,P.mH2,null,null,null,null,null,null,null,P.mH2,P.mH,null,null,null],
-  [null,null,P.mH,P.mH,null,null,null,null,null,null,null,null,P.mH,null,null,null],
-  [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  [null,null,P.bk,P.mA,P.mA,P.mA,P.mA,P.mA,P.mA,P.mA,P.mA,P.mA,P.bk,null,null,null],
+  [null,P.bk,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.bk,null,null],
+  [null,P.bk,P.mH,P.mH,P.mA,P.mH,P.mH,P.mH,P.mH,P.mA,P.mH,P.mH,P.mH,P.bk,null,null],
+  [null,null,P.bk,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.mH,P.bk,null,null,null],
+  [null,null,null,P.bk,P.mH2,P.mH2,P.mH2,P.mH2,P.mH2,P.mH2,P.mH2,P.bk,null,null,null,null],
 ];
 
-// Worker: オレンジ作業着 + ヘルメット
+// Worker: オレンジドレス + ヘルメット
 const WORKER_PIXELS: PixelGrid = [
-  [null,null,null,null,null,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,null,null,null,null,null],
-  [null,null,null,null,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,null,null,null,null],
-  [null,null,null,P.bk,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null],
-  [null,null,P.bk,P.sk,P.ey,P.sk,P.sk,P.sk,P.sk,P.ey,P.sk,P.sk,P.sk,P.bk,null,null],
-  [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null],
-  [null,null,P.bk,P.sk,P.sk,P.sk2,P.sk,P.bk,P.sk2,P.sk,P.sk,P.wA,P.sk,P.bk,null,null],
-  [null,null,null,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,null,null,null],
-  [null,P.bk,P.wA,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wA,P.bk,null,null],
-  [null,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,null,null],
-  [null,P.wH,P.wA,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wA,P.wH,null,null],
-  [null,P.wH2,P.wH,P.wH,null,null,P.wA,null,null,P.wA,null,P.wH,P.wH,P.wH2,null,null],
-  [null,null,P.wH2,P.wH,null,null,null,null,null,null,null,P.wH,P.wH2,null,null,null],
-  [null,null,P.wH,P.wH2,null,null,null,null,null,null,null,P.wH2,P.wH,null,null,null],
-  [null,null,P.wH,P.wH,null,null,null,null,null,null,null,null,P.wH,null,null,null],
-  [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  [null,null,null,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,null,null,null],
+  [null,null,P.bk,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,P.wT,P.bk,null,null,null],
+  [null,null,P.bk,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.bk,null,null,null],
+  [null,P.bk,P.wH,P.wH,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.wH,P.wH,P.wH,P.bk,null,null],
+  [null,P.bk,P.wH,P.sk,P.bk,P.bk,P.bk,P.sk,P.bk,P.bk,P.bk,P.sk,P.wH,P.bk,null,null],
+  [null,P.bk,P.wH,P.sk,P.bk,P.wh,P.bk,P.sk,P.bk,P.wh,P.bk,P.sk,P.wH,P.bk,null,null],
+  [null,P.bk,P.wH,P.sk,P.bk,P.bk,P.bk,P.sk,P.bk,P.bk,P.bk,P.sk,P.wH,P.bk,null,null],
+  [null,P.bk,P.sk,P.bl,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bl,P.sk,P.sk,P.bk,null,null],
+  [null,P.bk,P.sk,P.sk,P.sk,P.bk,P.bk,P.bk,P.bk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null],
+  [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
+  [null,null,null,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,null,null,null,null],
+  [null,null,P.bk,P.wA,P.wA,P.wA,P.wA,P.wA,P.wA,P.wA,P.wA,P.wA,P.bk,null,null,null],
+  [null,P.bk,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.bk,null,null],
+  [null,P.bk,P.wH,P.wH,P.wA,P.wH,P.wH,P.wH,P.wH,P.wA,P.wH,P.wH,P.wH,P.bk,null,null],
+  [null,null,P.bk,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.wH,P.bk,null,null,null],
+  [null,null,null,P.bk,P.wH2,P.wH2,P.wH2,P.wH2,P.wH2,P.wH2,P.wH2,P.bk,null,null,null,null],
 ];
 
-// Reviewer: 緑チェックコート + クリップボード
+// Reviewer: 緑ドレス + ショートヘア
 const REVIEWER_PIXELS: PixelGrid = [
   [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
-  [null,null,null,P.bk,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.bk,null,null,null,null],
-  [null,null,P.bk,P.rA,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.rA,P.bk,null,null,null],
+  [null,null,null,P.bk,P.rA,P.rH,P.rH,P.rH,P.rH,P.rH,P.rA,P.bk,null,null,null,null],
+  [null,null,P.bk,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.bk,null,null,null],
+  [null,P.bk,P.rH,P.rH,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.rH,P.rH,P.rH,P.bk,null,null],
+  [null,P.bk,P.rH,P.sk,P.bk,P.bk,P.bk,P.sk,P.bk,P.bk,P.bk,P.sk,P.rH,P.bk,null,null],
+  [null,P.bk,P.rH,P.sk,P.bk,P.wh,P.bk,P.sk,P.bk,P.wh,P.bk,P.sk,P.rH,P.bk,null,null],
+  [null,P.bk,P.rH,P.sk,P.bk,P.bk,P.bk,P.sk,P.bk,P.bk,P.bk,P.sk,P.rH,P.bk,null,null],
+  [null,P.bk,P.sk,P.bl,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bl,P.sk,P.sk,P.bk,null,null],
+  [null,P.bk,P.sk,P.sk,P.sk,P.bk,P.bk,P.bk,P.bk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null],
   [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.ey,P.sk,P.sk,P.sk,P.sk,P.ey,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.sk,P.sk2,P.sk,P.rA,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
   [null,null,null,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,null,null,null,null],
-  [null,P.bk,P.rA,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rA,P.bk,null,null],
-  [null,P.rH,P.rH,P.rH,P.rC,P.rC,P.rC,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,null,null],
-  [null,P.rH,P.rA,P.rH,P.rC,P.rA,P.rC,P.rH,P.rH,P.rH,P.rH,P.rH,P.rA,P.rH,null,null],
-  [null,P.rH2,P.rH,P.rH,P.rC,P.rC,P.rC,null,null,null,null,P.rH,P.rH,P.rH2,null,null],
-  [null,null,P.rH2,P.rH,null,null,null,null,null,null,null,P.rH,P.rH2,null,null,null],
-  [null,null,P.rH,P.rH2,null,null,null,null,null,null,null,P.rH2,P.rH,null,null,null],
-  [null,null,P.rH,P.rH,null,null,null,null,null,null,null,null,P.rH,null,null,null],
-  [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  [null,null,P.bk,P.rA,P.rA,P.rA,P.rA,P.rA,P.rA,P.rA,P.rA,P.rA,P.bk,null,null,null],
+  [null,P.bk,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.bk,null,null],
+  [null,P.bk,P.rH,P.rH,P.rA,P.rH,P.rH,P.rH,P.rH,P.rA,P.rH,P.rH,P.rH,P.bk,null,null],
+  [null,null,P.bk,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.rH,P.bk,null,null,null],
+  [null,null,null,P.bk,P.rH2,P.rH2,P.rH2,P.rH2,P.rH2,P.rH2,P.rH2,P.bk,null,null,null,null],
 ];
 
-// Researcher: シアンコート + 本
+// Researcher: シアンドレス + ロングヘア
 const RESEARCHER_PIXELS: PixelGrid = [
   [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
-  [null,null,null,P.bk,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.bk,null,null,null,null],
-  [null,null,P.bk,P.reA,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.reA,P.bk,null,null,null],
+  [null,null,null,null,P.reA,P.reH,P.reH,P.reH,P.reH,P.reH,P.reA,null,null,null,null,null],
+  [null,null,P.bk,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.bk,null,null,null],
+  [null,P.bk,P.reH,P.reH,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.reH,P.reH,P.reH,P.bk,null,null],
+  [null,P.bk,P.reH,P.sk,P.bk,P.bk,P.bk,P.sk,P.bk,P.bk,P.bk,P.sk,P.reH,P.bk,null,null],
+  [null,P.bk,P.reH,P.sk,P.bk,P.wh,P.bk,P.sk,P.bk,P.wh,P.bk,P.sk,P.reH,P.bk,null,null],
+  [null,P.bk,P.reH,P.sk,P.bk,P.bk,P.bk,P.sk,P.bk,P.bk,P.bk,P.sk,P.reH,P.bk,null,null],
+  [null,P.bk,P.sk,P.bl,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bl,P.sk,P.sk,P.bk,null,null],
+  [null,P.bk,P.sk,P.sk,P.sk,P.bk,P.bk,P.bk,P.bk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null],
   [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.ey,P.sk,P.sk,P.sk,P.sk,P.ey,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.sk,P.sk,P.reA,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.sk,P.sk2,P.sk,P.bk,P.sk2,P.sk,P.sk,P.sk,P.bk,null,null,null],
   [null,null,null,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,null,null,null,null],
-  [null,P.bk,P.reA,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reA,P.bk,null,null],
-  [null,P.reH,P.reH,P.reH,P.reB,P.reA,P.reB,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,null,null],
-  [null,P.reH,P.reA,P.reH,P.reB,P.reB,P.reB,P.reH,P.reH,P.reH,P.reH,P.reH,P.reA,P.reH,null,null],
-  [null,P.reH2,P.reH,P.reH,P.reB,P.reA,P.reB,null,null,null,null,P.reH,P.reH,P.reH2,null,null],
-  [null,null,P.reH2,P.reH,null,null,null,null,null,null,null,P.reH,P.reH2,null,null,null],
-  [null,null,P.reH,P.reH2,null,null,null,null,null,null,null,P.reH2,P.reH,null,null,null],
-  [null,null,P.reH,P.reH,null,null,null,null,null,null,null,null,P.reH,null,null,null],
-  [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  [null,null,P.bk,P.reA,P.reA,P.reA,P.reA,P.reA,P.reA,P.reA,P.reA,P.reA,P.bk,null,null,null],
+  [null,P.bk,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.bk,null,null],
+  [null,P.bk,P.reH,P.reH,P.reA,P.reH,P.reH,P.reH,P.reH,P.reA,P.reH,P.reH,P.reH,P.bk,null,null],
+  [null,null,P.bk,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.reH,P.bk,null,null,null],
+  [null,null,null,P.bk,P.reH2,P.reH2,P.reH2,P.reH2,P.reH2,P.reH2,P.reH2,P.bk,null,null,null,null],
 ];
 
-// Designer: ピンクコート + パレット
+// Designer: ピンクドレス + ツインテール
 const DESIGNER_PIXELS: PixelGrid = [
-  [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
-  [null,null,null,P.bk,P.dH,P.dA,P.dH,P.dH,P.dH,P.dA,P.dH,P.bk,null,null,null,null],
-  [null,null,P.bk,P.dA,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.dA,P.bk,null,null,null],
+  [null,null,P.dA,null,null,null,null,null,null,null,null,null,P.dA,null,null,null],
+  [null,P.bk,P.dH,P.bk,P.dA,P.dH,P.dH,P.dH,P.dH,P.dH,P.dA,P.bk,P.dH,P.bk,null,null],
+  [null,P.dH,P.bk,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.bk,P.dH,null,null],
+  [null,P.bk,P.dH,P.dH,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.dH,P.dH,P.dH,P.bk,null,null],
+  [null,P.bk,P.dH,P.sk,P.bk,P.bk,P.bk,P.sk,P.bk,P.bk,P.bk,P.sk,P.dH,P.bk,null,null],
+  [null,P.bk,P.dH,P.sk,P.bk,P.wh,P.bk,P.sk,P.bk,P.wh,P.bk,P.sk,P.dH,P.bk,null,null],
+  [null,P.bk,P.dH,P.sk,P.bk,P.bk,P.bk,P.sk,P.bk,P.bk,P.bk,P.sk,P.dH,P.bk,null,null],
+  [null,P.bk,P.sk,P.bl,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bl,P.sk,P.sk,P.bk,null,null],
+  [null,P.bk,P.sk,P.sk,P.sk,P.bk,P.bk,P.bk,P.bk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null],
   [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.ey,P.sk,P.sk,P.sk,P.sk,P.ey,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.dA,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.sk,P.sk2,P.sk,P.bk,P.sk2,P.sk,P.dP,P.sk,P.bk,null,null,null],
   [null,null,null,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,null,null,null,null],
-  [null,P.bk,P.dA,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dA,P.bk,null,null],
-  [null,P.dH,P.dH,P.dH,P.dP,P.dA,P.dP,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,null,null],
-  [null,P.dH,P.dA,P.dH,P.dP,P.dP,P.dA,P.dH,P.dH,P.dH,P.dH,P.dH,P.dA,P.dH,null,null],
-  [null,P.dH2,P.dH,P.dH,null,P.dA,null,null,null,null,null,P.dH,P.dH,P.dH2,null,null],
-  [null,null,P.dH2,P.dH,null,null,null,null,null,null,null,P.dH,P.dH2,null,null,null],
-  [null,null,P.dH,P.dH2,null,null,null,null,null,null,null,P.dH2,P.dH,null,null,null],
-  [null,null,P.dH,P.dH,null,null,null,null,null,null,null,null,P.dH,null,null,null],
-  [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  [null,null,P.bk,P.dA,P.dA,P.dA,P.dA,P.dA,P.dA,P.dA,P.dA,P.dA,P.bk,null,null,null],
+  [null,P.bk,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.bk,null,null],
+  [null,P.bk,P.dH,P.dH,P.dA,P.dH,P.dH,P.dH,P.dH,P.dA,P.dH,P.dH,P.dH,P.bk,null,null],
+  [null,null,P.bk,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.dH,P.bk,null,null,null],
+  [null,null,null,P.bk,P.dH2,P.dH2,P.dH2,P.dH2,P.dH2,P.dH2,P.dH2,P.bk,null,null,null,null],
 ];
 
-// Editor: 黄緑コート + ペン
+// Editor: 黄緑ドレス + ハイライトヘア
 const EDITOR_PIXELS: PixelGrid = [
   [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
   [null,null,null,P.bk,P.edH,P.edA,P.edH,P.edH,P.edH,P.edA,P.edH,P.bk,null,null,null,null],
-  [null,null,P.bk,P.edA,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.edA,P.bk,null,null,null],
+  [null,null,P.bk,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.bk,null,null,null],
+  [null,P.bk,P.edH,P.edH,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.edH,P.edH,P.edH,P.bk,null,null],
+  [null,P.bk,P.edH,P.sk,P.bk,P.bk,P.bk,P.sk,P.bk,P.bk,P.bk,P.sk,P.edH,P.bk,null,null],
+  [null,P.bk,P.edH,P.sk,P.bk,P.wh,P.bk,P.sk,P.bk,P.wh,P.bk,P.sk,P.edH,P.bk,null,null],
+  [null,P.bk,P.edH,P.sk,P.bk,P.bk,P.bk,P.sk,P.bk,P.bk,P.bk,P.sk,P.edH,P.bk,null,null],
+  [null,P.bk,P.sk,P.bl,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bl,P.sk,P.sk,P.bk,null,null],
+  [null,P.bk,P.sk,P.sk,P.sk,P.bk,P.bk,P.bk,P.bk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null],
   [null,null,P.bk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.ey,P.sk,P.sk,P.sk,P.sk,P.ey,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.sk,P.sk,P.edA,P.sk,P.edA,P.sk,P.sk,P.sk,P.bk,null,null,null],
-  [null,null,P.bk,P.sk,P.sk,P.sk2,P.sk,P.bk,P.sk2,P.sk,P.sk,P.sk,P.bk,null,null,null],
   [null,null,null,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,P.bk,null,null,null,null],
-  [null,P.bk,P.edA,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edA,P.bk,null,null],
-  [null,P.edH,P.edH,P.edH,P.edP,P.edA,P.edP,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,null,null],
-  [null,P.edH,P.edA,P.edH,P.edA,P.edP,P.edA,P.edH,P.edH,P.edH,P.edH,P.edH,P.edA,P.edH,null,null],
-  [null,P.edH2,P.edH,P.edH,P.edP,P.edA,P.edP,null,null,null,null,P.edH,P.edH,P.edH2,null,null],
-  [null,null,P.edH2,P.edH,null,null,null,null,null,null,null,P.edH,P.edH2,null,null,null],
-  [null,null,P.edH,P.edH2,null,null,null,null,null,null,null,P.edH2,P.edH,null,null,null],
-  [null,null,P.edH,P.edH,null,null,null,null,null,null,null,null,P.edH,null,null,null],
-  [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  [null,null,P.bk,P.edA,P.edA,P.edA,P.edA,P.edA,P.edA,P.edA,P.edA,P.edA,P.bk,null,null,null],
+  [null,P.bk,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.bk,null,null],
+  [null,P.bk,P.edH,P.edH,P.edA,P.edH,P.edH,P.edH,P.edH,P.edA,P.edH,P.edH,P.edH,P.bk,null,null],
+  [null,null,P.bk,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.edH,P.bk,null,null,null],
+  [null,null,null,P.bk,P.edH2,P.edH2,P.edH2,P.edH2,P.edH2,P.edH2,P.edH2,P.bk,null,null,null,null],
 ];
 
 // ─── ピクセルグリッド描画 ────────────────────────────────────────
@@ -236,33 +232,33 @@ function PixelGrid({ pixels, cellSize }: { pixels: PixelGrid; cellSize: number }
 // ─── アニメーション variant ──────────────────────────────────────
 
 const IDLE_ANIM: TargetAndTransition = {
-  y: [0, -2, 0],
-  transition: { duration: 2.0, repeat: Infinity, ease: "easeInOut" },
+  y: [0, -3, 0],
+  transition: { duration: 2.2, repeat: Infinity, ease: "easeInOut" },
 };
 
 const THINKING_ANIM: TargetAndTransition = {
-  y: [0, -4, 0],
-  transition: { duration: 0.6, repeat: Infinity, ease: "easeInOut" },
+  y: [0, -5, 0],
+  transition: { duration: 0.5, repeat: Infinity, ease: "easeInOut" },
 };
 
 const REVIEWING_ANIM: TargetAndTransition = {
-  rotate: [-2, 2, -2],
-  transition: { duration: 0.8, repeat: Infinity, ease: "easeInOut" },
+  rotate: [-3, 3, -3],
+  transition: { duration: 0.7, repeat: Infinity, ease: "easeInOut" },
 };
 
 const DONE_ANIM: TargetAndTransition = {
-  y: [0, -8, 0],
-  transition: { duration: 0.35, ease: "backOut" },
+  y: [0, -10, 0],
+  transition: { duration: 0.38, ease: "backOut" },
 };
 
 const WAITING_ANIM: TargetAndTransition = {
-  y: [0, -1, 0],
+  y: [0, -1.5, 0],
   transition: { duration: 3.5, repeat: Infinity, ease: "easeInOut" },
 };
 
 // ─── メインコンポーネント ────────────────────────────────────────
 
-export default function PixelCharacter({ role, status, size = 3 }: Props) {
+export default function PixelCharacter({ role, status, size = 4 }: Props) {
   const pixelMap: Partial<Record<AgentRole, PixelGrid>> = {
     ceo:        CEO_PIXELS,
     manager:    MANAGER_PIXELS,
@@ -285,21 +281,31 @@ export default function PixelCharacter({ role, status, size = 3 }: Props) {
 
   const anim = animMap[status] ?? IDLE_ANIM;
 
-  // 完了時の光エフェクト
   const isDone = status === "done";
   const isActive = status === "thinking" || status === "reviewing";
+
+  // ロールカラーマップ（グロー色）
+  const glowColor: Partial<Record<AgentRole, string>> = {
+    ceo:        "rgba(124,58,237,0.5)",
+    manager:    "rgba(37,99,235,0.5)",
+    worker:     "rgba(234,88,12,0.5)",
+    reviewer:   "rgba(6,95,70,0.5)",
+    researcher: "rgba(14,116,144,0.5)",
+    designer:   "rgba(190,24,93,0.5)",
+    editor:     "rgba(77,124,15,0.5)",
+  };
 
   return (
     <div style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
       {/* アクティブグロー */}
       {isActive && (
         <motion.div style={{
-          position: "absolute", inset: -8,
-          borderRadius: 8,
-          background: "radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 70%)",
+          position: "absolute", inset: -10,
+          borderRadius: 12,
+          background: `radial-gradient(circle, ${glowColor[role] ?? "rgba(99,102,241,0.4)"} 0%, transparent 70%)`,
         }}
-          animate={{ opacity: [0.5, 1, 0.5], scale: [0.95, 1.05, 0.95] }}
-          transition={{ duration: 1.2, repeat: Infinity }}
+          animate={{ opacity: [0.4, 1, 0.4], scale: [0.92, 1.08, 0.92] }}
+          transition={{ duration: 1.0, repeat: Infinity }}
         />
       )}
 
@@ -307,11 +313,11 @@ export default function PixelCharacter({ role, status, size = 3 }: Props) {
       {isDone && (
         <motion.div
           style={{
-            position: "absolute", top: -12, right: -8,
-            fontSize: 14, lineHeight: 1,
+            position: "absolute", top: -14, right: -10,
+            fontSize: 16, lineHeight: 1,
           }}
           initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1, rotate: [0, 15, -15, 0] }}
+          animate={{ scale: 1, opacity: 1, rotate: [0, 20, -20, 0] }}
           transition={{ type: "spring", stiffness: 400, damping: 15 }}
         >
           ⭐

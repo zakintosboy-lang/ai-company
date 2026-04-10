@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import PixelCharacter from "./PixelCharacter";
 
 type AgentRole   = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "designer" | "editor" | "system";
 type AgentStatus = "idle" | "thinking" | "reviewing" | "done" | "waiting";
@@ -354,7 +355,7 @@ function CharacterUnit({ agent, showBubble, latestMessage }: {
             transition={{ duration: 1, repeat: Infinity }}
           />
         )}
-        <StreamerAvatar agent={agent} />
+        <PixelCharacter role={agent.role} status={agent.status} size={4} />
       </motion.div>
 
       {/* 役職名 */}
