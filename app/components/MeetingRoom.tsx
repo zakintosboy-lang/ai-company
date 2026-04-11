@@ -354,14 +354,24 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         { id: "worker-2", role: "worker", name: "Worker Core", status: "idle" as AgentStatus },
         { id: "worker-3", role: "worker", name: "Worker Quality", status: "idle" as AgentStatus },
         { id: "reviewer", role: "reviewer", name: "Reviewer", status: "idle" as AgentStatus },
+        { id: "researcher-1", role: "researcher", name: "Researcher News", status: "idle" as AgentStatus },
+        { id: "researcher-2", role: "researcher", name: "Researcher Compare", status: "idle" as AgentStatus },
+        { id: "researcher-3", role: "researcher", name: "Researcher Source", status: "idle" as AgentStatus },
+        { id: "editor", role: "editor", name: "Editor", status: "idle" as AgentStatus },
+        { id: "designer", role: "designer", name: "Designer", status: "idle" as AgentStatus },
       ];
 
   const lineup = [
     getAgent("ceo"),
     getAgent("manager"),
+    getAgent("researcher-1"),
+    getAgent("researcher-2"),
+    getAgent("researcher-3"),
     getAgent("worker-1"),
     getAgent("worker-2"),
     getAgent("worker-3"),
+    getAgent("editor"),
+    getAgent("designer"),
     getAgent("reviewer"),
   ].filter(Boolean) as AgentInfo[];
 

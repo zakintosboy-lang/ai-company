@@ -9,6 +9,7 @@ import type {
 } from "@/agents/types";
 import OutputRenderer from "./components/OutputRenderer";
 import MeetingRoom from "./components/MeetingRoom";
+import WaitingGame from "./components/WaitingGame";
 
 // ── Agent UI 用型 ──────────────────────────────────────────────
 type AgentRole     = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "editor" | "designer" | "system";
@@ -51,6 +52,7 @@ const PROVIDER_LABEL: Record<ModelProvider,string>= { claude:"Claude", openai:"O
 const AGENT_ORDER = ["ceo","manager","worker-1","worker-2","worker-3","reviewer"];
 const STORAGE_KEY = "ai-company-results";
 const RUN_COUNT_KEY = "ai-company-run-count";
+const RUN_DURATIONS_KEY = "ai-company-run-durations";
 const SAMPLE_GENRE_META: Record<SampleGenre, { label: string; icon: string; color: string; bg: string; border: string }> = {
   all: { label: "おすすめ", icon: "✨", color: "#7c58c8", bg: "rgba(124,88,200,0.10)", border: "rgba(124,88,200,0.18)" },
   finance: { label: "金融", icon: "¥", color: "#0f766e", bg: "rgba(15,118,110,0.10)", border: "rgba(15,118,110,0.18)" },
@@ -146,6 +148,11 @@ const SAMPLE_PROMPTS: SamplePrompt[] = [
 
 type Tab = "logs" | "output";
 
+type ProgressMeta = {
+  label: string;
+  progress: number;
+};
+
 // ── ヘルパー ──────────────────────────────────────────────────
 function now() { return new Date().toLocaleTimeString("ja-JP", { hour12: false }); }
 
@@ -165,6 +172,28 @@ function downloadFile(content: string, filename: string, mime: string) {
   const a    = Object.assign(document.createElement("a"), { href: url, download: filename });
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function formatSeconds(totalSeconds: number) {
+  const seconds = Math.max(0, Math.round(totalSeconds));
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return mins > 0 ? `${mins}分${secs.toString().padStart(2, "0")}秒` : `${secs}秒`;
+}
+
+function getProgressMeta(logs: LogEntry[], isRunning: boolean, hasOutput: boolean): ProgressMeta {
+  if (hasOutput) return { label: "完了", progress: 1 };
+  if (!isRunning) return { label: "待機中", progress: 0 };
+
+  const joined = logs.map((log) => log.message).join("\n");
+  if (joined.includes("【Phase 6】")) return { label: "デザイン仕上げ", progress: 0.9 };
+  if (joined.includes("【Editor】")) return { label: "文章調整", progress: 0.82 };
+  if (joined.includes("【Phase 5】")) return { label: "品質レビュー", progress: 0.7 };
+  if (joined.includes("【Phase 4】")) return { label: "コンテンツ生成", progress: 0.56 };
+  if (joined.includes("【Phase 3】")) return { label: "最新情報を調査中", progress: 0.34 };
+  if (joined.includes("【Phase 2】")) return { label: "タスク分解中", progress: 0.18 };
+  if (joined.includes("【Phase 1】")) return { label: "戦略立案中", progress: 0.08 };
+  return { label: "準備中", progress: 0.04 };
 }
 
 // ── 構造化出力 → プレーンテキスト変換 ─────────────────────────
@@ -586,6 +615,9 @@ export default function Home() {
   const [isMobileView, setIsMobileView] = useState(false);
   const [sampleGenre, setSampleGenre] = useState<SampleGenre>("all");
   const [visibleSamples, setVisibleSamples] = useState<SamplePrompt[]>(() => pickSamples("all"));
+  const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [avgDurationSeconds, setAvgDurationSeconds] = useState(52);
   const logBottomRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -594,6 +626,14 @@ export default function Home() {
     try {
       const savedRunCount = Number(localStorage.getItem(RUN_COUNT_KEY) ?? "0");
       if (Number.isFinite(savedRunCount) && savedRunCount > 0) setRunCount(savedRunCount);
+
+      const savedDurations = JSON.parse(localStorage.getItem(RUN_DURATIONS_KEY) ?? "[]") as number[];
+      if (Array.isArray(savedDurations) && savedDurations.length > 0) {
+        const valid = savedDurations.filter((v) => Number.isFinite(v) && v > 0);
+        if (valid.length > 0) {
+          setAvgDurationSeconds(Math.round(valid.reduce((sum, value) => sum + value, 0) / valid.length));
+        }
+      }
 
       const saved: SavedResult[] = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
       if (saved.length > 0) {
@@ -618,6 +658,17 @@ export default function Home() {
   useEffect(() => {
     setVisibleSamples(pickSamples(sampleGenre));
   }, [sampleGenre]);
+
+  useEffect(() => {
+    if (!isRunning || !runStartedAt) {
+      setElapsedSeconds(0);
+      return;
+    }
+    const sync = () => setElapsedSeconds((Date.now() - runStartedAt) / 1000);
+    sync();
+    const id = window.setInterval(sync, 1000);
+    return () => window.clearInterval(id);
+  }, [isRunning, runStartedAt]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -711,8 +762,11 @@ export default function Home() {
   const handleRun = async () => {
     if (!instruction.trim() || isRunning) return;
     const controller = new AbortController();
+    const startedAt = Date.now();
     abortControllerRef.current = controller;
 
+    setRunStartedAt(startedAt);
+    setElapsedSeconds(0);
     setIsRunning(true);
     setLogs([]); setOutput(null); setAgents({}); setActiveTab("logs");
     addLog("system", "実行開始...");
@@ -754,6 +808,19 @@ export default function Home() {
           } else if (parsed.type === "complete") {
             const structured = parsed.data as StructuredOutput;
             setOutput(structured);
+            const durationSec = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
+            if (durationSec) {
+              try {
+                const existing = JSON.parse(localStorage.getItem(RUN_DURATIONS_KEY) ?? "[]") as number[];
+                const next = [durationSec, ...(Array.isArray(existing) ? existing : [])]
+                  .filter((v) => Number.isFinite(v) && v > 0)
+                  .slice(0, 12);
+                localStorage.setItem(RUN_DURATIONS_KEY, JSON.stringify(next));
+                setAvgDurationSeconds(Math.round(next.reduce((sum, value) => sum + value, 0) / next.length));
+              } catch {
+                // ignore
+              }
+            }
             setRunCount((c) => {
               const next = c + 1;
               try {
@@ -793,12 +860,17 @@ export default function Home() {
     } finally {
       abortControllerRef.current = null;
       setIsRunning(false);
+      setRunStartedAt(null);
     }
   };
 
   const activeWorkers = AGENT_ORDER.filter(id => id.startsWith("worker-"))
     .filter(id => agents[id]?.status === "thinking" || agents[id]?.status === "reviewing").length;
   const canExport = !!output && !isRunning;
+  const progressMeta = getProgressMeta(logs, isRunning, !!output);
+  const estimatedTotalSeconds = Math.max(avgDurationSeconds, 35);
+  const inferredProgress = isRunning ? Math.max(progressMeta.progress, Math.min(elapsedSeconds / estimatedTotalSeconds, 0.96)) : progressMeta.progress;
+  const remainingSeconds = isRunning ? Math.max(0, estimatedTotalSeconds * (1 - inferredProgress)) : 0;
 
   return (
     <div className="app">
@@ -1012,6 +1084,63 @@ export default function Home() {
               <div className="info-card-value">{logs.length}</div>
             </div>
           </div>
+
+          <div
+            style={{
+              border: "3px solid rgba(49, 64, 95, 0.16)",
+              borderRadius: 18,
+              background: "linear-gradient(180deg, #fff9f1 0%, #eef9ff 100%)",
+              boxShadow: "0 6px 0 rgba(49,64,95,0.08)",
+              padding: 12,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                  Progress
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 900, color: "#23324f" }}>
+                  {progressMeta.label}
+                </div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#51617c" }}>
+                  経過 {isRunning ? formatSeconds(elapsedSeconds) : "0秒"}
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#f97316" }}>
+                  残り {isRunning ? `約${formatSeconds(remainingSeconds)}` : `平均${formatSeconds(estimatedTotalSeconds)}`}
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                height: 16,
+                borderRadius: 999,
+                border: "3px solid #31405f",
+                background: "#fff8f1",
+                overflow: "hidden",
+                boxShadow: "inset 0 2px 0 rgba(49,64,95,0.08)",
+                marginBottom: 8,
+              }}
+            >
+              <div
+                style={{
+                  width: `${Math.max(4, inferredProgress * 100)}%`,
+                  height: "100%",
+                  background: "linear-gradient(90deg, #7f57f1 0%, #ff7b72 55%, #ffd558 100%)",
+                  transition: "width 300ms ease",
+                }}
+              />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 11, color: "#51617c", fontWeight: 800 }}>
+              <span>{isRunning ? `${Math.round(inferredProgress * 100)}%` : "0%"}</span>
+              <span>目安は過去の実行時間から推定</span>
+            </div>
+          </div>
+
+          <WaitingGame active={isRunning} />
 
           <div className={`export-section ${canExport ? "visible" : ""}`}>
             <div className="panel-section-label">エクスポート</div>
