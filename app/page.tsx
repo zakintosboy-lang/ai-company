@@ -7,7 +7,7 @@ import type {
   OutputSection,
   HighlightVariant,
 } from "@/agents/types";
-import OutputRenderer from "./components/OutputRenderer";
+import DeliverableTabs from "./components/DeliverableTabs";
 import MeetingRoom from "./components/MeetingRoom";
 
 // ── Agent UI 用型 ──────────────────────────────────────────────
@@ -1194,7 +1194,7 @@ export default function Home() {
             <div className="output-panel">
               {!output
                 ? <div className="output-empty">{isMobileView ? "スマホでも実行できます。指示を入力して、調査レポートと提案内容を成果物タブで確認してください" : "調査レポート、おすすめ案、提案・企画メモがここに表示されます"}</div>
-                : <OutputRenderer data={output} />
+                : <DeliverableTabs data={output} />
               }
             </div>
           )}

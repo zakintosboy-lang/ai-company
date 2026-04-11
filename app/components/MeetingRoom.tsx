@@ -725,6 +725,74 @@ function ZoneCard({
   );
 }
 
+function RouteBadge({ color, label }: { color: string; label: string }) {
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "6px 10px",
+        borderRadius: 999,
+        background: "rgba(255,248,241,0.92)",
+        border: "3px solid #31405f",
+        boxShadow: "0 4px 0 rgba(49,64,95,0.12)",
+        fontSize: 10,
+        fontWeight: 900,
+        color,
+        letterSpacing: "0.08em",
+      }}
+    >
+      <div
+        style={{
+          width: 12,
+          height: 12,
+          borderRadius: 999,
+          background: color,
+          boxShadow: "inset 0 0 0 3px rgba(255,255,255,0.5)",
+          flexShrink: 0,
+        }}
+      />
+      <span>{label}</span>
+      <motion.span
+        animate={{ x: [0, 3, 0] }}
+        transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+        style={{ color: "#31405f" }}
+      >
+        →
+      </motion.span>
+      <div
+        style={{
+          width: 24,
+          height: 4,
+          borderRadius: 999,
+          background: `repeating-linear-gradient(90deg, ${color} 0 8px, rgba(255,255,255,0) 8px 12px)`,
+          opacity: 0.72,
+        }}
+      />
+    </div>
+  );
+}
+
+function StagePanel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        position: "relative",
+        minHeight: 520,
+        borderRadius: 22,
+        border: "3px solid rgba(49,64,95,0.18)",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 100%)",
+        boxShadow: "inset 0 -10px 16px rgba(255,255,255,0.18)",
+        overflow: "hidden",
+        padding: "18px 18px 16px",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function MeetingRoom({ logs, agents, isRunning }: Props) {
   const getAgent = (id: string) => agents.find((a) => a.id === id);
   const all: AgentInfo[] = agents.length > 0
@@ -1090,53 +1158,28 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           flex: 1,
         }}
       >
-        <div
-          style={{
-            position: "relative",
-            minHeight: 510,
-            borderRadius: 22,
-            border: "3px solid rgba(49,64,95,0.18)",
-            background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)",
-            boxShadow: "inset 0 -10px 16px rgba(255,255,255,0.18)",
-            overflow: "hidden",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "center", paddingTop: 18 }}>
-            <ZoneCard title="CASTLE HQ" subtitle="社長エリア / 最終判断ポイント" accent="#8b5cf6">
-              {topRow.map((agent) => (
-                <CharacterUnit key={agent.id} agent={agent} />
-              ))}
-            </ZoneCard>
+        <StagePanel>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+            <div style={{ width: "min(100%, 290px)" }}>
+              <ZoneCard title="CASTLE HQ" subtitle="社長エリア / 最終判断ポイント" accent="#8b5cf6">
+                {topRow.map((agent) => (
+                  <CharacterUnit key={agent.id} agent={agent} />
+                ))}
+              </ZoneCard>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
+            <RouteBadge color="#06b6d4" label="REPORT ROUTE" />
+            <RouteBadge color="#3b82f6" label="PLAN ROUTE" />
+            <RouteBadge color="#22c55e" label="CHECK ROUTE" />
           </div>
 
           <div
             style={{
-              position: "absolute",
-              top: 126,
-              left: "50%",
-              transform: "translateX(-50%)",
-              fontSize: 10,
-              fontWeight: 900,
-              letterSpacing: "0.08em",
-              color: "#31405f",
-              background: "rgba(255,248,241,0.92)",
-              padding: "5px 10px",
-              borderRadius: 999,
-              border: "3px solid #31405f",
-              boxShadow: "0 4px 0 rgba(49,64,95,0.16)",
-            }}
-          >
-            REPORT ROUTE
-          </div>
-
-          <div
-            style={{
-              position: "absolute",
-              left: 20,
-              right: 20,
-              top: 156,
+              marginTop: 14,
               display: "grid",
-              gridTemplateColumns: "1.2fr 0.9fr 0.8fr",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
               gap: 12,
             }}
           >
@@ -1157,34 +1200,17 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
             </ZoneCard>
           </div>
 
-          <div
-            style={{
-              position: "absolute",
-              left: "50%",
-              top: 344,
-              transform: "translateX(-50%)",
-              fontSize: 10,
-              fontWeight: 900,
-              letterSpacing: "0.08em",
-              color: "#31405f",
-              background: "rgba(255,248,241,0.92)",
-              padding: "5px 10px",
-              borderRadius: 999,
-              border: "3px solid #31405f",
-              boxShadow: "0 4px 0 rgba(49,64,95,0.16)",
-            }}
-          >
-            TASK ROUTE
+          <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+            <RouteBadge color="#f97316" label="BUILD ROUTE" />
+            <RouteBadge color="#ec4899" label="POLISH ROUTE" />
+            <RouteBadge color="#8b5cf6" label="DECISION ROUTE" />
           </div>
 
           <div
             style={{
-              position: "absolute",
-              left: 40,
-              right: 40,
-              top: 376,
+              marginTop: 14,
               display: "grid",
-              gridTemplateColumns: "1.3fr 1fr",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
               gap: 16,
             }}
           >
@@ -1199,7 +1225,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
               ))}
             </ZoneCard>
           </div>
-        </div>
+        </StagePanel>
 
         <div
           style={{
