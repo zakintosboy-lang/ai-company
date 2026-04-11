@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import PixelCharacter from "./PixelCharacter";
 import WaitingGame from "./WaitingGame";
@@ -744,8 +743,6 @@ function FlowLines() {
 export default function MeetingRoom({ logs, agents, isRunning }: Props) {
   const BASE_W = 1120;
   const BASE_H = 540;
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const [stageScale, setStageScale] = useState(1);
   const getAgent = (id: string) => agents.find((a) => a.id === id);
   const all: AgentInfo[] = agents.length > 0
     ? agents
@@ -777,21 +774,6 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
     creative: all.filter((agent) => ["editor", "designer"].includes(agent.id)),
   };
 
-  useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-
-    const updateScale = () => {
-      const next = Math.min(el.clientWidth / BASE_W, el.clientHeight / BASE_H);
-      setStageScale(Math.max(0.1, next));
-    };
-
-    updateScale();
-    const observer = new ResizeObserver(updateScale);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [BASE_H, BASE_W]);
-
   return (
     <div
       style={{
@@ -814,16 +796,25 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         }}
       />
 
-      <div ref={viewportRef} style={{ position: "relative", flex: 1, minHeight: 0, padding: 8 }}>
+      <div
+        style={{
+          position: "relative",
+          flex: 1,
+          minHeight: 0,
+          padding: 8,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+        }}
+      >
         <div
           style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            width: BASE_W,
-            height: BASE_H,
-            transform: `translate(-50%, -50%) scale(${stageScale})`,
-            transformOrigin: "center center",
+            position: "relative",
+            width: "100%",
+            maxWidth: "100%",
+            maxHeight: "100%",
+            aspectRatio: `${BASE_W} / ${BASE_H}`,
           }}
         >
           <StagePanel>
