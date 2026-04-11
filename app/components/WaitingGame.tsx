@@ -1,22 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type GameState = "ready" | "playing" | "gameover";
 
 interface Props {
   active: boolean;
   size?: "small" | "large";
+  variant?: "card" | "embedded";
 }
 
 const GRAVITY = 0.62;
 const JUMP_POWER = -8.6;
-const GROUND_Y = 96;
 const PLAYER_X = 36;
 const PLAYER_SIZE = 20;
-const OBSTACLE_WIDTH = 14;
 
-export default function WaitingGame({ active, size = "small" }: Props) {
+export default function WaitingGame({ active, size = "small", variant = "card" }: Props) {
   const [gameState, setGameState] = useState<GameState>("ready");
   const [playerY, setPlayerY] = useState(0);
   const [velocityY, setVelocityY] = useState(0);
@@ -43,26 +42,46 @@ export default function WaitingGame({ active, size = "small" }: Props) {
     }
   }, []);
 
-  const obstacleHeight = useMemo(() => 22 + (score % 3) * 6, [score]);
   const large = size === "large";
   const stageHeight = large ? 228 : 132;
-  const scaledGroundY = large ? 170 : GROUND_Y;
+  const surfaceOffset = large ? 28 : 18;
   const scaledPlayerX = large ? 68 : PLAYER_X;
   const scaledPlayerSize = large ? 34 : PLAYER_SIZE;
-  const scaledObstacleWidth = large ? 24 : OBSTACLE_WIDTH;
+  const shellWidth = large ? 30 : 18;
+  const goombaWidth = large ? 32 : 18;
+  const blockWidth = large ? 28 : 16;
+  const fireballWidth = large ? 22 : 14;
   const cloudScale = large ? 1.7 : 1;
+  const embedded = variant === "embedded";
+  const [obstacleType, setObstacleType] = useState<"shell" | "goomba" | "block" | "fireball">("shell");
+  const obstacleTypeRef = useRef<"shell" | "goomba" | "block" | "fireball">("shell");
+
+  const pickObstacleType = () => {
+    const types: Array<"shell" | "goomba" | "block" | "fireball"> = ["shell", "goomba", "block", "fireball"];
+    return types[Math.floor(Math.random() * types.length)];
+  };
+
+  const getObstacleMetrics = (type: "shell" | "goomba" | "block" | "fireball", currentScore: number) => {
+    if (type === "shell") return { width: shellWidth, height: large ? 26 : 18 };
+    if (type === "goomba") return { width: goombaWidth, height: large ? 28 : 20 };
+    if (type === "block") return { width: blockWidth, height: large ? 30 : 22 };
+    return { width: fireballWidth, height: large ? 20 : 14 + (currentScore % 2) * 3 };
+  };
 
   const resetGame = () => {
+    const nextType = pickObstacleType();
     setGameState(active ? "playing" : "ready");
     setPlayerY(0);
     setVelocityY(0);
     setObstacleX(260);
     setScore(0);
+    setObstacleType(nextType);
     playerYRef.current = 0;
     velocityYRef.current = 0;
     obstacleXRef.current = 260;
     scoreRef.current = 0;
     scoreCarryRef.current = 0;
+    obstacleTypeRef.current = nextType;
   };
 
   const jump = () => {
@@ -90,11 +109,13 @@ export default function WaitingGame({ active, size = "small" }: Props) {
       setVelocityY(0);
       setObstacleX(260);
       setScore(0);
+      setObstacleType("shell");
       playerYRef.current = 0;
       velocityYRef.current = 0;
       obstacleXRef.current = 260;
       scoreRef.current = 0;
       scoreCarryRef.current = 0;
+      obstacleTypeRef.current = "shell";
       return;
     }
     resetGame();
@@ -134,24 +155,26 @@ export default function WaitingGame({ active, size = "small" }: Props) {
       const speed = (4.8 + Math.min(scoreRef.current, 20) * 0.12) * delta;
       let nextX = obstacleXRef.current - speed;
 
-      if (nextX < -scaledObstacleWidth) {
+      const metrics = getObstacleMetrics(obstacleTypeRef.current, scoreRef.current);
+
+      if (nextX < -metrics.width) {
         nextX = 260 + Math.random() * 90;
         scoreCarryRef.current += 1;
         scoreRef.current = scoreCarryRef.current;
         setScore(scoreCarryRef.current);
+        const nextType = pickObstacleType();
+        obstacleTypeRef.current = nextType;
+        setObstacleType(nextType);
       }
 
       obstacleXRef.current = nextX;
       setObstacleX(nextX);
 
-      const currentObstacleHeight = 22 + (scoreRef.current % 3) * 6;
-      const playerBottom = scaledGroundY - playerYRef.current;
-      const playerTop = playerBottom - scaledPlayerSize;
+      const currentMetrics = getObstacleMetrics(obstacleTypeRef.current, scoreRef.current);
       const obstacleLeft = nextX;
-      const obstacleRight = nextX + scaledObstacleWidth;
-      const obstacleTop = scaledGroundY - currentObstacleHeight;
+      const obstacleRight = nextX + currentMetrics.width;
       const hitX = scaledPlayerX + scaledPlayerSize - 4 >= obstacleLeft && scaledPlayerX + 4 <= obstacleRight;
-      const hitY = playerBottom >= obstacleTop && playerTop <= scaledGroundY;
+      const hitY = playerYRef.current < currentMetrics.height - 2;
 
       if (hitX && hitY) {
         setGameState("gameover");
@@ -174,21 +197,22 @@ export default function WaitingGame({ active, size = "small" }: Props) {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [active, gameState, scaledGroundY, scaledObstacleWidth, scaledPlayerSize, scaledPlayerX]);
+  }, [active, gameState, fireballWidth, goombaWidth, blockWidth, large, scaledPlayerSize, scaledPlayerX, shellWidth]);
 
   return (
     <div
       style={{
         border: "3px solid rgba(49, 64, 95, 0.16)",
         borderRadius: large ? 24 : 18,
-        background: "linear-gradient(180deg, #e4f8ff 0%, #fdf8ef 100%)",
-        boxShadow: "0 6px 0 rgba(49,64,95,0.08)",
-        padding: large ? 18 : 12,
+        background: embedded ? "transparent" : "linear-gradient(180deg, #e4f8ff 0%, #fdf8ef 100%)",
+        boxShadow: embedded ? "none" : "0 6px 0 rgba(49,64,95,0.08)",
+        padding: embedded ? 0 : large ? 18 : 12,
         width: "100%",
         maxWidth: large ? 760 : "none",
+        borderColor: embedded ? "transparent" : "rgba(49, 64, 95, 0.16)",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: large ? 12 : 8, gap: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: large ? 12 : 8, gap: 12, paddingInline: embedded ? 10 : 0 }}>
         <div>
           <div style={{ fontSize: large ? 13 : 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.08em", textTransform: "uppercase" }}>
             Waiting Game
@@ -231,7 +255,9 @@ export default function WaitingGame({ active, size = "small" }: Props) {
           overflow: "hidden",
           borderRadius: large ? 18 : 14,
           border: "3px solid #31405f",
-          background: "linear-gradient(180deg, #7ad8ff 0%, #c7f1ff 58%, #d9f0bf 58%, #d9f0bf 100%)",
+          background: embedded
+            ? "linear-gradient(180deg, rgba(122,216,255,0.72) 0%, rgba(199,241,255,0.72) 58%, rgba(217,240,191,0.72) 58%, rgba(217,240,191,0.72) 100%)"
+            : "linear-gradient(180deg, #7ad8ff 0%, #c7f1ff 58%, #d9f0bf 58%, #d9f0bf 100%)",
           boxShadow: "inset 0 -8px 0 rgba(69, 120, 42, 0.12)",
         }}
       >
@@ -249,7 +275,7 @@ export default function WaitingGame({ active, size = "small" }: Props) {
           style={{
             position: "absolute",
             left: scaledPlayerX,
-            bottom: scaledGroundY - playerY - scaledPlayerSize,
+            bottom: surfaceOffset + playerY,
             width: scaledPlayerSize,
             height: scaledPlayerSize,
             borderRadius: 4,
@@ -262,18 +288,57 @@ export default function WaitingGame({ active, size = "small" }: Props) {
         </div>
 
         <div
-          style={{
-            position: "absolute",
-            left: obstacleX,
-            bottom: scaledGroundY - obstacleHeight,
-            width: scaledObstacleWidth,
-            height: obstacleHeight,
-            borderRadius: "6px 6px 0 0",
-            background: "linear-gradient(180deg, #7bd95d 0%, #2fa84f 100%)",
-            border: "3px solid #31405f",
-            boxSizing: "border-box",
-          }}
-        />
+          style={{ position: "absolute", left: obstacleX, bottom: surfaceOffset }}
+        >
+          {obstacleType === "shell" && (
+            <div
+              style={{
+                width: shellWidth,
+                height: large ? 26 : 18,
+                borderRadius: "999px 999px 8px 8px",
+                background: "linear-gradient(180deg, #46c85c 0%, #2fa84f 100%)",
+                border: "3px solid #31405f",
+                boxSizing: "border-box",
+              }}
+            />
+          )}
+          {obstacleType === "goomba" && (
+            <div
+              style={{
+                width: goombaWidth,
+                height: large ? 28 : 20,
+                borderRadius: "10px 10px 8px 8px",
+                background: "linear-gradient(180deg, #a16a3d 0%, #7a4e2b 100%)",
+                border: "3px solid #31405f",
+                boxSizing: "border-box",
+              }}
+            />
+          )}
+          {obstacleType === "block" && (
+            <div
+              style={{
+                width: blockWidth,
+                height: large ? 30 : 22,
+                background: "#d38a4a",
+                border: "3px solid #31405f",
+                boxShadow: "inset 0 0 0 3px #e8a66f",
+                boxSizing: "border-box",
+              }}
+            />
+          )}
+          {obstacleType === "fireball" && (
+            <div
+              style={{
+                width: fireballWidth,
+                height: large ? 20 : 14,
+                borderRadius: "50%",
+                background: "radial-gradient(circle at 35% 35%, #ffe188 0%, #ff9f43 45%, #e2552f 100%)",
+                border: "3px solid #31405f",
+                boxSizing: "border-box",
+              }}
+            />
+          )}
+        </div>
 
         {!active && (
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,248,241,0.68)", fontSize: large ? 14 : 12, fontWeight: 900, color: "#51617c" }}>

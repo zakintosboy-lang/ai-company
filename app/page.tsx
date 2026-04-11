@@ -9,7 +9,6 @@ import type {
 } from "@/agents/types";
 import OutputRenderer from "./components/OutputRenderer";
 import MeetingRoom from "./components/MeetingRoom";
-import WaitingGame from "./components/WaitingGame";
 
 // ── Agent UI 用型 ──────────────────────────────────────────────
 type AgentRole     = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "editor" | "designer" | "system";
@@ -904,6 +903,67 @@ export default function Home() {
         </div>
       </header>
 
+      <div
+        style={{
+          margin: "14px 14px 0",
+          border: "4px solid #31405f",
+          borderRadius: 20,
+          background: "linear-gradient(90deg, #fff8f1 0%, #eef9ff 100%)",
+          boxShadow: "0 8px 0 rgba(49,64,95,0.10)",
+          padding: isMobileView ? "10px 12px" : "12px 16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 16,
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+            Live Progress
+          </div>
+          <div style={{ fontSize: isMobileView ? 14 : 16, fontWeight: 900, color: "#23324f", marginTop: 2 }}>
+            {progressMeta.label}
+          </div>
+        </div>
+
+        <div style={{ flex: 1, minWidth: isMobileView ? "100%" : 260 }}>
+          <div
+            style={{
+              height: 18,
+              borderRadius: 999,
+              border: "3px solid #31405f",
+              background: "#fff8f1",
+              overflow: "hidden",
+              boxShadow: "inset 0 2px 0 rgba(49,64,95,0.08)",
+              marginBottom: 6,
+            }}
+          >
+            <div
+              style={{
+                width: `${Math.max(4, inferredProgress * 100)}%`,
+                height: "100%",
+                background: "linear-gradient(90deg, #7f57f1 0%, #ff7b72 55%, #ffd558 100%)",
+                transition: "width 300ms ease",
+              }}
+            />
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 11, color: "#51617c", fontWeight: 800 }}>
+            <span>{isRunning ? `${Math.round(inferredProgress * 100)}% 完了見込み` : "待機中"}</span>
+            <span>{isRunning ? `残り約${formatSeconds(remainingSeconds)}` : `平均${formatSeconds(estimatedTotalSeconds)}`}</span>
+          </div>
+        </div>
+
+        <div style={{ textAlign: isMobileView ? "left" : "right", minWidth: 140 }}>
+          <div style={{ fontSize: 12, fontWeight: 900, color: "#51617c" }}>
+            経過 {isRunning ? formatSeconds(elapsedSeconds) : "0秒"}
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#f97316", marginTop: 2 }}>
+            目安は過去の実行時間から推定
+          </div>
+        </div>
+      </div>
+
       <main className="main">
         {/* Left Panel */}
         <aside className={`panel-left ${isMobileView ? "mobile-edit-panel" : ""}`}>
@@ -1085,61 +1145,6 @@ export default function Home() {
             </div>
           </div>
 
-          <div
-            style={{
-              border: "3px solid rgba(49, 64, 95, 0.16)",
-              borderRadius: 18,
-              background: "linear-gradient(180deg, #fff9f1 0%, #eef9ff 100%)",
-              boxShadow: "0 6px 0 rgba(49,64,95,0.08)",
-              padding: 12,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                  Progress
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 900, color: "#23324f" }}>
-                  {progressMeta.label}
-                </div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: "#51617c" }}>
-                  経過 {isRunning ? formatSeconds(elapsedSeconds) : "0秒"}
-                </div>
-                <div style={{ fontSize: 11, fontWeight: 900, color: "#f97316" }}>
-                  残り {isRunning ? `約${formatSeconds(remainingSeconds)}` : `平均${formatSeconds(estimatedTotalSeconds)}`}
-                </div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                height: 16,
-                borderRadius: 999,
-                border: "3px solid #31405f",
-                background: "#fff8f1",
-                overflow: "hidden",
-                boxShadow: "inset 0 2px 0 rgba(49,64,95,0.08)",
-                marginBottom: 8,
-              }}
-            >
-              <div
-                style={{
-                  width: `${Math.max(4, inferredProgress * 100)}%`,
-                  height: "100%",
-                  background: "linear-gradient(90deg, #7f57f1 0%, #ff7b72 55%, #ffd558 100%)",
-                  transition: "width 300ms ease",
-                }}
-              />
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 11, color: "#51617c", fontWeight: 800 }}>
-              <span>{isRunning ? `${Math.round(inferredProgress * 100)}%` : "0%"}</span>
-              <span>目安は過去の実行時間から推定</span>
-            </div>
-          </div>
-
           <div className={`export-section ${canExport ? "visible" : ""}`}>
             <div className="panel-section-label">エクスポート</div>
             <div className="export-buttons">
@@ -1168,19 +1173,7 @@ export default function Home() {
           {/* Meeting Room */}
           {activeTab === "logs" && (
             <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-              {isRunning && (
-                <div
-                  style={{
-                    padding: isMobileView ? "10px" : "16px 16px 0",
-                    display: "flex",
-                    justifyContent: "center",
-                    background: "rgba(255,255,255,0.18)",
-                  }}
-                >
-                  <WaitingGame active={isRunning} size="large" />
-                </div>
-              )}
-              <div style={{ flex: 1, overflow: "hidden", paddingTop: isRunning ? 12 : 0 }}>
+              <div style={{ flex: 1, overflow: "hidden" }}>
                 <MeetingRoom
                   logs={logs}
                   agents={Object.values(agents).map(c => ({

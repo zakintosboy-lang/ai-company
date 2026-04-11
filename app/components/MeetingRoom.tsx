@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import PixelCharacter from "./PixelCharacter";
+import WaitingGame from "./WaitingGame";
 
 type AgentRole = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "designer" | "editor" | "system";
 type AgentStatus = "idle" | "thinking" | "reviewing" | "done" | "waiting";
@@ -752,7 +753,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           alignItems: "flex-end",
           justifyContent: "center",
           gap: 16,
-          padding: "96px 24px 154px",
+          padding: "96px 24px 286px",
           position: "relative",
           zIndex: 1,
           flexWrap: "wrap",
@@ -761,6 +762,23 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         {cast.map((agent) => (
           <CharacterUnit key={agent.id} agent={agent} />
         ))}
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          left: 18,
+          right: 18,
+          bottom: 196,
+          zIndex: 2,
+          display: "flex",
+          justifyContent: "center",
+          pointerEvents: "none",
+        }}
+      >
+        <div style={{ width: "100%", maxWidth: 780, pointerEvents: "auto" }}>
+          <WaitingGame active={isRunning} size="large" variant="embedded" />
+        </div>
       </div>
 
       <ConversationStream logs={logs} />
