@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import PixelCharacter from "./PixelCharacter";
 import WaitingGame from "./WaitingGame";
@@ -306,19 +306,26 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
 
 function ConversationStream({ logs }: { logs: LogEntry[] }) {
   const [showAll, setShowAll] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const displayed = showAll ? logs : logs.slice(-8);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [logs.length, showAll]);
 
   return (
     <div
       style={{
-        margin: "0 14px 14px",
+        margin: "0 8px 10px",
         border: "4px solid #31405f",
         borderRadius: 14,
         background: "#f7f1e7",
         boxShadow: "0 8px 0 rgba(49,64,95,0.22)",
         overflow: "hidden",
-        maxHeight: 188,
+        maxHeight: 214,
         display: "flex",
         flexDirection: "column",
       }}
@@ -353,7 +360,7 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
         )}
       </div>
 
-      <div style={{ overflowY: "auto", padding: "8px 12px 10px", background: "#fff8f1" }}>
+      <div ref={scrollRef} style={{ overflowY: "auto", padding: "8px 10px 10px", background: "#fff8f1" }}>
         {logs.length === 0 ? (
           <div style={{ padding: "18px 0", textAlign: "center", fontSize: 11, color: "#64748b", fontWeight: 700 }}>
             実行するとここにチームの会話が流れます
@@ -366,8 +373,8 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
                 key={`${log.time}-${i}`}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "52px 62px 1fr",
-                  gap: 8,
+                  gridTemplateColumns: "48px 56px 1fr",
+                  gap: 6,
                   alignItems: "start",
                   padding: "4px 0",
                   borderBottom: i === displayed.length - 1 ? "none" : "1px dashed rgba(49,64,95,0.18)",
