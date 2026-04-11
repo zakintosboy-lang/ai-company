@@ -17,6 +17,8 @@ interface Props {
   output: boolean;
 }
 
+type PixelGrid = (string | null)[][];
+
 const ROLE_CONFIG: Record<AgentRole, {
   jaLabel: string;
   color: string;
@@ -33,6 +35,78 @@ const ROLE_CONFIG: Record<AgentRole, {
   editor:     { jaLabel: "編集者", color: "#84cc16", bubbleBg: "#f8ffe7", bubbleBorder: "#84cc16", plate: "#d9f99d" },
   system:     { jaLabel: "システム", color: "#64748b", bubbleBg: "#f8fafc", bubbleBorder: "#94a3b8", plate: "#e2e8f0" },
 };
+
+function spriteFromRows(rows: string[], palette: Record<string, string | null>): PixelGrid {
+  return rows.map((row) => row.split("").map((cell) => palette[cell] ?? null));
+}
+
+const DECOR_PALETTE = {
+  ".": null,
+  K: "#1d2438",
+  W: "#ffffff",
+  G: "#2fa84f",
+  H: "#237d3a",
+  Y: "#ffd558",
+  O: "#d7a82b",
+  N: "#8f5c36",
+  M: "#5d391f",
+  C: "#edf2ff",
+  A: "#cfd6ea",
+};
+
+const COIN_SPRITE = spriteFromRows([
+  "..YYYY..",
+  ".YYOOYY.",
+  "YYOOOOYY",
+  "YYOOOOYY",
+  "YYOOOOYY",
+  "YYOOOOYY",
+  ".YYOOYY.",
+  "..YYYY..",
+], DECOR_PALETTE);
+
+const GOOMBA_SPRITE = spriteFromRows([
+  "...NNNN...",
+  "..NNNNNN..",
+  ".NNWNNWNN.",
+  ".NNKNNKNN.",
+  ".NNNNNNNN.",
+  "..NMMMMN..",
+  "..SS..SS..",
+  ".SSS..SSS.",
+], DECOR_PALETTE);
+
+const LAKITU_SPRITE = spriteFromRows([
+  "...GGGG...",
+  "..GGYYGG..",
+  "..GYWWYG..",
+  "..GYKKYG..",
+  "...WSSW...",
+  ".CCCCCCCC.",
+  "CCCAAACCCC",
+  ".CCCCCCCC.",
+], DECOR_PALETTE);
+
+function PixelDecor({ pixels, cellSize }: { pixels: PixelGrid; cellSize: number }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", imageRendering: "pixelated" }}>
+      {pixels.map((row, y) => (
+        <div key={y} style={{ display: "flex" }}>
+          {row.map((color, x) => (
+            <div
+              key={x}
+              style={{
+                width: cellSize,
+                height: cellSize,
+                background: color ?? "transparent",
+              }}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function SpeechBubble({ message, cfg }: { message: string; cfg: (typeof ROLE_CONFIG)[AgentRole] }) {
   return (
@@ -160,7 +234,7 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
             boxShadow: "inset 0 0 0 3px rgba(255,255,255,0.28)",
           }}
         >
-          <PixelCharacter role={agent.role} status={agent.status} size={size} />
+          <PixelCharacter role={agent.role} status={agent.status} agentId={agent.id} size={size} />
         </motion.div>
       </div>
 
@@ -489,6 +563,42 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           </div>
         ))}
       </div>
+
+      <motion.div
+        style={{ position: "absolute", top: 38, left: 260, zIndex: 1, pointerEvents: "none" }}
+        animate={{ y: [0, -4, 0] }}
+        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <PixelDecor pixels={COIN_SPRITE} cellSize={4} />
+      </motion.div>
+      <motion.div
+        style={{ position: "absolute", top: 62, left: 324, zIndex: 1, pointerEvents: "none" }}
+        animate={{ y: [0, -5, 0] }}
+        transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <PixelDecor pixels={COIN_SPRITE} cellSize={3.6} />
+      </motion.div>
+      <motion.div
+        style={{ position: "absolute", top: 54, right: 180, zIndex: 1, pointerEvents: "none" }}
+        animate={{ x: [0, 6, 0], y: [0, -2, 0] }}
+        transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <PixelDecor pixels={LAKITU_SPRITE} cellSize={4} />
+      </motion.div>
+      <motion.div
+        style={{ position: "absolute", bottom: 182, left: 220, zIndex: 1, pointerEvents: "none" }}
+        animate={{ x: [0, 6, 0] }}
+        transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <PixelDecor pixels={GOOMBA_SPRITE} cellSize={4} />
+      </motion.div>
+      <motion.div
+        style={{ position: "absolute", bottom: 184, right: 228, zIndex: 1, pointerEvents: "none" }}
+        animate={{ x: [0, -5, 0] }}
+        transition={{ duration: 3.1, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <PixelDecor pixels={GOOMBA_SPRITE} cellSize={3.6} />
+      </motion.div>
 
       <div
         style={{
