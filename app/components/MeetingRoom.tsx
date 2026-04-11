@@ -570,94 +570,6 @@ function lineupOrFallback(
   ];
 }
 
-function ConversationStream({ logs }: { logs: LogEntry[] }) {
-  const [showAll, setShowAll] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const displayed = showAll ? logs : logs.slice(-8);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [logs.length, showAll]);
-
-  return (
-    <div
-      style={{
-        border: "4px solid #31405f",
-        borderRadius: 14,
-        background: "#f7f1e7",
-        boxShadow: "0 8px 0 rgba(49,64,95,0.22)",
-        overflow: "hidden",
-        minHeight: 278,
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "7px 10px",
-          background: "linear-gradient(180deg, #f8bfd4 0%, #ee95ba 100%)",
-          borderBottom: "4px solid #31405f",
-        }}
-      >
-        <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: "0.08em", color: "#31405f" }}>TEAM LOG</span>
-        {logs.length > 8 && (
-          <button
-            onClick={() => setShowAll(!showAll)}
-            style={{
-              border: "3px solid #31405f",
-              borderRadius: 999,
-              padding: "2px 8px",
-              background: "#fff8f1",
-              color: "#31405f",
-              fontSize: 9,
-              fontWeight: 800,
-              cursor: "pointer",
-            }}
-          >
-            {showAll ? "折りたたむ" : `全${logs.length}件`}
-          </button>
-        )}
-      </div>
-
-      <div ref={scrollRef} style={{ overflowY: "auto", padding: "10px 14px 12px", background: "#fff8f1", flex: 1 }}>
-        {logs.length === 0 ? (
-          <div style={{ padding: "18px 0", textAlign: "center", fontSize: 11, color: "#64748b", fontWeight: 700 }}>
-            実行するとここにチームの会話が流れます
-          </div>
-        ) : (
-          displayed.map((log, i) => {
-            const cfg = ROLE_CONFIG[log.role] ?? ROLE_CONFIG.system;
-            return (
-              <div
-                key={`${log.time}-${i}`}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "54px 78px 1fr",
-                  columnGap: 10,
-                  alignItems: "start",
-                  padding: "6px 0",
-                  borderBottom: i === displayed.length - 1 ? "none" : "1px dashed rgba(49,64,95,0.18)",
-                }}
-              >
-                <span style={{ fontSize: 9, color: "#64748b", fontWeight: 800, whiteSpace: "nowrap" }}>{log.time}</span>
-                <span style={{ fontSize: 9, color: cfg.color, fontWeight: 900, whiteSpace: "nowrap" }}>{cfg.jaLabel}</span>
-                <span style={{ fontSize: 10.5, color: "#334155", lineHeight: 1.6, fontWeight: 700, wordBreak: "break-word" }}>{log.message}</span>
-              </div>
-            );
-          })
-        )}
-      </div>
-    </div>
-  );
-}
-
 function CompactLogStrip({ logs }: { logs: LogEntry[] }) {
   const recent = logs.slice(-3);
 
@@ -786,56 +698,6 @@ function ZoneCard({
   );
 }
 
-function RouteBadge({ color, label }: { color: string; label: string }) {
-  return (
-    <div
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 7,
-        padding: "4px 8px",
-        borderRadius: 999,
-        background: "rgba(255,248,241,0.72)",
-        border: `1.5px solid ${color}55`,
-        boxShadow: "0 6px 14px rgba(49,64,95,0.08)",
-        fontSize: 9,
-        fontWeight: 900,
-        color,
-        letterSpacing: "0.08em",
-        backdropFilter: "blur(6px)",
-      }}
-    >
-      <div
-        style={{
-          width: 12,
-          height: 12,
-          borderRadius: 999,
-          background: color,
-          boxShadow: "inset 0 0 0 3px rgba(255,255,255,0.5)",
-          flexShrink: 0,
-        }}
-      />
-      <span>{label}</span>
-      <motion.span
-        animate={{ x: [0, 3, 0] }}
-        transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-        style={{ color: "rgba(49,64,95,0.7)" }}
-      >
-        →
-      </motion.span>
-      <div
-        style={{
-          width: 24,
-          height: 4,
-          borderRadius: 999,
-          background: `repeating-linear-gradient(90deg, ${color} 0 8px, rgba(255,255,255,0) 8px 12px)`,
-          opacity: 0.72,
-        }}
-      />
-    </div>
-  );
-}
-
 function StagePanel({ children }: { children: React.ReactNode }) {
   return (
     <div
@@ -880,6 +742,10 @@ function FlowLines() {
 }
 
 export default function MeetingRoom({ logs, agents, isRunning }: Props) {
+  const BASE_W = 1120;
+  const BASE_H = 540;
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [stageScale, setStageScale] = useState(1);
   const getAgent = (id: string) => agents.find((a) => a.id === id);
   const all: AgentInfo[] = agents.length > 0
     ? agents
@@ -911,6 +777,21 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
     creative: all.filter((agent) => ["editor", "designer"].includes(agent.id)),
   };
 
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+
+    const updateScale = () => {
+      const next = Math.min(el.clientWidth / BASE_W, el.clientHeight / BASE_H);
+      setStageScale(Math.max(0.1, next));
+    };
+
+    updateScale();
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [BASE_H, BASE_W]);
+
   return (
     <div
       style={{
@@ -918,14 +799,14 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        background: "linear-gradient(180deg, #77d6ff 0%, #8fe2ff 38%, #d8f5ff 39%, #d8f5ff 100%)",
+        background: "linear-gradient(180deg, #77d6ff 0%, #8fe2ff 42%, #d8f5ff 43%, #d8f5ff 100%)",
         position: "relative",
       }}
     >
       <div
         style={{
           position: "absolute",
-          inset: 8,
+          inset: 6,
           border: "4px solid #7f57f1",
           borderRadius: 18,
           boxShadow: "inset 0 0 0 4px #ffe85d",
@@ -933,324 +814,169 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         }}
       />
 
-      <div
-        style={{
-          position: "absolute",
-          inset: 20,
-          pointerEvents: "none",
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.14) 1px, transparent 1px)",
-          backgroundSize: "20px 20px",
-          opacity: 0.16,
-        }}
-      />
-
-      <div style={{ position: "absolute", top: 32, left: 42, width: 96, height: 20, borderRadius: 999, background: "#ffffff", boxShadow: "22px 5px 0 0 #ffffff, 46px 0 0 0 #ffffff" }} />
-      <div style={{ position: "absolute", top: 66, right: 118, width: 72, height: 16, borderRadius: 999, background: "#ffffff", boxShadow: "18px -4px 0 0 #ffffff, 38px 2px 0 0 #ffffff" }} />
-      <div style={{ position: "absolute", top: 84, right: 58, width: 52, height: 12, borderRadius: 999, background: "#ffffff", boxShadow: "14px 0 0 0 #ffffff" }} />
-
-      <div
-        style={{
-          position: "absolute",
-          left: 40,
-          top: 300,
-          width: 210,
-          height: 112,
-          background: "#8ed36e",
-          borderRadius: "50% 50% 0 0",
-          boxShadow: "inset 0 -10px 0 #79c25a",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          left: 102,
-          top: 334,
-          width: 12,
-          height: 12,
-          borderRadius: "50%",
-          background: "#ffffff",
-          boxShadow: "34px 0 0 #ffffff, 72px 0 0 #ffffff",
-          opacity: 0.75,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          right: 36,
-          top: 304,
-          width: 240,
-          height: 126,
-          background: "#9ce07f",
-          borderRadius: "55% 55% 0 0",
-          boxShadow: "inset 0 -10px 0 #84cb66",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          right: 102,
-          top: 342,
-          width: 12,
-          height: 12,
-          borderRadius: "50%",
-          background: "#ffffff",
-          boxShadow: "38px 0 0 #ffffff, 80px 0 0 #ffffff",
-          opacity: 0.75,
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 288,
-          width: "32%",
-          height: 128,
-          background: "#b6a0d5",
-          clipPath: "polygon(0 100%, 0 42%, 16% 20%, 36% 34%, 56% 12%, 78% 28%, 100% 18%, 100% 100%)",
-          opacity: 0.72,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          right: 0,
-          top: 286,
-          width: "34%",
-          height: 136,
-          background: "#c7b3e4",
-          clipPath: "polygon(0 100%, 0 32%, 22% 16%, 40% 6%, 58% 24%, 82% 18%, 100% 34%, 100% 100%)",
-          opacity: 0.72,
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: 412,
-          height: 34,
-          background:
-            "linear-gradient(180deg, #49b34d 0%, #49b34d 48%, #37983b 48%, #37983b 100%)",
-          borderTop: "4px solid #83de6b",
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: 446,
-          height: 46,
-          background:
-            "linear-gradient(180deg, #d38a4a 0%, #d38a4a 50%, #b86a35 50%, #b86a35 100%)",
-          borderTop: "4px solid #f5b36c",
-          borderBottom: "4px solid #8a4d28",
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: 446,
-          height: 46,
-          opacity: 0.22,
-          backgroundImage:
-            "linear-gradient(90deg, transparent 0, transparent 10px, #6b3418 10px, #6b3418 12px, transparent 12px, transparent 36px, #6b3418 36px, #6b3418 38px, transparent 38px), linear-gradient(transparent 0, transparent 10px, #6b3418 10px, #6b3418 12px, transparent 12px)",
-          backgroundSize: "48px 24px",
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          left: 70,
-          top: 416,
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 26px)",
-          gap: 3,
-        }}
-      >
-        {["#c97d43", "#c97d43", "#ffd54d", "#c97d43"].map((color, i) => (
-          <div
-            key={`left-block-${i}`}
-            style={{
-              width: 26,
-              height: 26,
-              background: color,
-              border: "3px solid #7a431e",
-              boxShadow: color === "#ffd54d" ? "inset 0 0 0 3px #ffe78a" : "inset 0 0 0 3px #dca06f",
-              position: "relative",
-            }}
-          >
-            {color === "#ffd54d" && (
-              <span
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 14,
-                  fontWeight: 900,
-                  color: "#8a4d28",
-                }}
-              >
-                ?
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <motion.div
-        style={{ position: "absolute", top: 32, left: 238, zIndex: 1, pointerEvents: "none" }}
-        animate={{ y: [0, -4, 0] }}
-        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <PixelDecor pixels={COIN_SPRITE} cellSize={4} />
-      </motion.div>
-      <motion.div
-        style={{ position: "absolute", top: 52, left: 292, zIndex: 1, pointerEvents: "none" }}
-        animate={{ y: [0, -5, 0] }}
-        transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <PixelDecor pixels={COIN_SPRITE} cellSize={3.6} />
-      </motion.div>
-      <motion.div
-        style={{ position: "absolute", top: 46, right: 154, zIndex: 1, pointerEvents: "none" }}
-        animate={{ x: [0, 6, 0], y: [0, -2, 0] }}
-        transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <PixelDecor pixels={LAKITU_SPRITE} cellSize={4} />
-      </motion.div>
-      <motion.div
-        style={{ position: "absolute", top: 102, right: 62, zIndex: 1, pointerEvents: "none" }}
-        animate={{ y: [0, -3, 0] }}
-        transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <PixelDecor pixels={PEACH_SPRITE} cellSize={3.4} />
-      </motion.div>
-      <motion.div
-        style={{ position: "absolute", top: 110, left: 74, zIndex: 1, pointerEvents: "none" }}
-        animate={{ y: [0, -2, 0] }}
-        transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <PixelDecor pixels={BOWSER_SPRITE} cellSize={3.6} />
-      </motion.div>
-      <motion.div
-        style={{ position: "absolute", top: 412, left: 198, zIndex: 1, pointerEvents: "none" }}
-        animate={{ x: [0, 6, 0] }}
-        transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <PixelDecor pixels={GOOMBA_SPRITE} cellSize={4} />
-      </motion.div>
-      <motion.div
-        style={{ position: "absolute", top: 414, right: 204, zIndex: 1, pointerEvents: "none" }}
-        animate={{ x: [0, -5, 0] }}
-        transition={{ duration: 3.1, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <PixelDecor pixels={GOOMBA_SPRITE} cellSize={3.6} />
-      </motion.div>
-      <motion.div
-        style={{ position: "absolute", top: 416, left: 294, zIndex: 1, pointerEvents: "none" }}
-        animate={{ x: [0, 4, 0] }}
-        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <PixelDecor pixels={KOOPA_SPRITE} cellSize={3.8} />
-      </motion.div>
-      <motion.div
-        style={{ position: "absolute", top: 468, right: 98, zIndex: 1, pointerEvents: "none" }}
-        animate={{ y: [0, -5, 0] }}
-        transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <PixelDecor pixels={PIRANHA_SPRITE} cellSize={4} />
-      </motion.div>
-
-      <div
-        style={{
-          position: "absolute",
-          right: 106,
-          top: 404,
-          width: 54,
-          height: 60,
-          background: "#37b24d",
-          border: "4px solid #1f6f31",
-          borderBottom: "none",
-          borderRadius: "18px 18px 0 0",
-          boxShadow: "inset 0 0 0 4px #6edb74",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          right: 98,
-          top: 452,
-          width: 66,
-          height: 18,
-          background: "#37b24d",
-          border: "4px solid #1f6f31",
-          borderRadius: 999,
-          boxShadow: "inset 0 0 0 4px #6edb74",
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          left: 20,
-          right: 20,
-          top: 500,
-          height: 18,
-          background:
-            "repeating-linear-gradient(90deg, #d38a4a 0 34px, #b86a35 34px 38px)",
-          borderTop: "4px solid #8a4d28",
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          top: 18,
-          left: 22,
-          padding: "7px 10px",
-          borderRadius: 999,
-          background: "rgba(255,248,241,0.94)",
-          border: "3px solid #31405f",
-          boxShadow: "0 4px 0 rgba(49,64,95,0.2)",
-          fontSize: 10,
-          fontWeight: 900,
-          color: "#31405f",
-          letterSpacing: "0.08em",
-        }}
-      >
-        PIXEL STAGE {isRunning ? "1-1 RUNNING" : "1-1 READY"}
-      </div>
-
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          padding: "66px 8px 8px",
-          minHeight: 0,
-          flex: 1,
-        }}
-      >
-        <StagePanel>
-          <FlowLines />
-
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 8, alignItems: "start", position: "relative", zIndex: 1 }}>
-            <CompactLogStrip logs={logs} />
+      <div ref={viewportRef} style={{ position: "relative", flex: 1, minHeight: 0, padding: 8 }}>
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            width: BASE_W,
+            height: BASE_H,
+            transform: `translate(-50%, -50%) scale(${stageScale})`,
+            transformOrigin: "center center",
+          }}
+        >
+          <StagePanel>
             <div
               style={{
+                position: "absolute",
+                inset: 12,
+                pointerEvents: "none",
+                backgroundImage:
+                  "linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px)",
+                backgroundSize: "20px 20px",
+                opacity: 0.18,
+              }}
+            />
+            <div style={{ position: "absolute", top: 20, left: 26, width: 96, height: 20, borderRadius: 999, background: "#ffffff", boxShadow: "22px 5px 0 0 #ffffff, 46px 0 0 0 #ffffff" }} />
+            <div style={{ position: "absolute", top: 52, right: 120, width: 72, height: 16, borderRadius: 999, background: "#ffffff", boxShadow: "18px -4px 0 0 #ffffff, 38px 2px 0 0 #ffffff" }} />
+            <div style={{ position: "absolute", top: 68, right: 62, width: 52, height: 12, borderRadius: 999, background: "#ffffff", boxShadow: "14px 0 0 0 #ffffff" }} />
+
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 72,
+                height: 28,
+                background: "linear-gradient(180deg, #49b34d 0%, #49b34d 48%, #37983b 48%, #37983b 100%)",
+                borderTop: "4px solid #83de6b",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 26,
+                height: 46,
+                background: "linear-gradient(180deg, #d38a4a 0%, #d38a4a 50%, #b86a35 50%, #b86a35 100%)",
+                borderTop: "4px solid #f5b36c",
+                borderBottom: "4px solid #8a4d28",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 26,
+                height: 46,
+                opacity: 0.22,
+                backgroundImage:
+                  "linear-gradient(90deg, transparent 0, transparent 10px, #6b3418 10px, #6b3418 12px, transparent 12px, transparent 36px, #6b3418 36px, #6b3418 38px, transparent 38px), linear-gradient(transparent 0, transparent 10px, #6b3418 10px, #6b3418 12px, transparent 12px)",
+                backgroundSize: "48px 24px",
+              }}
+            />
+
+            <div
+              style={{
+                position: "absolute",
+                left: 50,
+                bottom: 92,
+                width: 220,
+                height: 96,
+                background: "#8ed36e",
+                borderRadius: "50% 50% 0 0",
+                boxShadow: "inset 0 -10px 0 #79c25a",
+                opacity: 0.82,
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                right: 44,
+                bottom: 88,
+                width: 248,
+                height: 110,
+                background: "#9ce07f",
+                borderRadius: "55% 55% 0 0",
+                boxShadow: "inset 0 -10px 0 #84cb66",
+                opacity: 0.84,
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                bottom: 112,
+                width: 340,
+                height: 116,
+                background: "#b6a0d5",
+                clipPath: "polygon(0 100%, 0 42%, 16% 20%, 36% 34%, 56% 12%, 78% 28%, 100% 18%, 100% 100%)",
+                opacity: 0.72,
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                right: 0,
+                bottom: 110,
+                width: 360,
+                height: 124,
+                background: "#c7b3e4",
+                clipPath: "polygon(0 100%, 0 32%, 22% 16%, 40% 6%, 58% 24%, 82% 18%, 100% 34%, 100% 100%)",
+                opacity: 0.72,
+              }}
+            />
+
+            <motion.div style={{ position: "absolute", top: 20, left: 250, zIndex: 1, pointerEvents: "none" }} animate={{ y: [0, -4, 0] }} transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}>
+              <PixelDecor pixels={COIN_SPRITE} cellSize={4} />
+            </motion.div>
+            <motion.div style={{ position: "absolute", top: 40, left: 318, zIndex: 1, pointerEvents: "none" }} animate={{ y: [0, -5, 0] }} transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}>
+              <PixelDecor pixels={COIN_SPRITE} cellSize={3.6} />
+            </motion.div>
+            <motion.div style={{ position: "absolute", top: 32, right: 146, zIndex: 1, pointerEvents: "none" }} animate={{ x: [0, 6, 0], y: [0, -2, 0] }} transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}>
+              <PixelDecor pixels={LAKITU_SPRITE} cellSize={4} />
+            </motion.div>
+            <motion.div style={{ position: "absolute", top: 382, left: 118, zIndex: 1, pointerEvents: "none" }} animate={{ x: [0, 6, 0] }} transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}>
+              <PixelDecor pixels={GOOMBA_SPRITE} cellSize={3.8} />
+            </motion.div>
+            <motion.div style={{ position: "absolute", top: 382, right: 126, zIndex: 1, pointerEvents: "none" }} animate={{ x: [0, -5, 0] }} transition={{ duration: 3.1, repeat: Infinity, ease: "easeInOut" }}>
+              <PixelDecor pixels={GOOMBA_SPRITE} cellSize={3.5} />
+            </motion.div>
+            <motion.div style={{ position: "absolute", bottom: 48, right: 84, zIndex: 1, pointerEvents: "none" }} animate={{ y: [0, -5, 0] }} transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut" }}>
+              <PixelDecor pixels={PIRANHA_SPRITE} cellSize={4} />
+            </motion.div>
+
+            <div
+              style={{
+                position: "absolute",
+                top: 14,
+                left: 18,
+                padding: "7px 10px",
+                borderRadius: 999,
+                background: "rgba(255,248,241,0.94)",
+                border: "3px solid #31405f",
+                boxShadow: "0 4px 0 rgba(49,64,95,0.2)",
+                fontSize: 10,
+                fontWeight: 900,
+                color: "#31405f",
+                letterSpacing: "0.08em",
+                zIndex: 2,
+              }}
+            >
+              PIXEL STAGE {isRunning ? "1-1 RUNNING" : "1-1 READY"}
+            </div>
+
+            <div style={{ position: "absolute", top: 62, left: 24, width: 940, zIndex: 2 }}>
+              <CompactLogStrip logs={logs} />
+            </div>
+            <div
+              style={{
+                position: "absolute",
+                top: 76,
+                right: 26,
                 padding: "5px 8px",
                 borderRadius: 999,
                 background: "rgba(255,248,241,0.78)",
@@ -1261,87 +987,80 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
                 color: "#31405f",
                 letterSpacing: "0.08em",
                 whiteSpace: "nowrap",
+                zIndex: 2,
               }}
             >
               AGENT MAP
             </div>
-          </div>
 
-          <div style={{ display: "flex", justifyContent: "center", marginTop: 8, marginBottom: 8, position: "relative", zIndex: 1 }}>
-            <div style={{ width: "min(100%, 220px)" }}>
+            <div style={{ position: "absolute", left: 430, top: 168, width: 260, zIndex: 2 }}>
               <ZoneCard title="CASTLE HQ" subtitle="社長エリア / 最終判断ポイント" accent="#8b5cf6">
                 {topRow.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
                 ))}
               </ZoneCard>
             </div>
-          </div>
 
-          <div
-            style={{
-              marginTop: 4,
-              display: "grid",
-              gridTemplateColumns: "1.45fr 1fr 1fr",
-              gap: 8,
-              position: "relative",
-              zIndex: 1,
-            }}
-          >
-            <ZoneCard title="RESEARCH FIELD" subtitle="情報を集めて司令塔へ持ち帰る" accent="#06b6d4">
-              {zoneAgents.research.map((agent) => (
-                <CharacterUnit key={agent.id} agent={agent} />
-              ))}
-            </ZoneCard>
-            <ZoneCard title="CONTROL TOWER" subtitle="進行管理してCEOへ報告" accent="#3b82f6">
-              {zoneAgents.manager.map((agent) => (
-                <CharacterUnit key={agent.id} agent={agent} />
-              ))}
-            </ZoneCard>
-            <ZoneCard title="REVIEW GATE" subtitle="品質チェックして通す" accent="#22c55e">
-              {zoneAgents.review.map((agent) => (
-                <CharacterUnit key={agent.id} agent={agent} />
-              ))}
-            </ZoneCard>
-          </div>
+            <div style={{ position: "absolute", left: 42, top: 298, width: 330, zIndex: 2 }}>
+              <ZoneCard title="RESEARCH FIELD" subtitle="情報を集めて司令塔へ持ち帰る" accent="#06b6d4">
+                {zoneAgents.research.map((agent) => (
+                  <CharacterUnit key={agent.id} agent={agent} />
+                ))}
+              </ZoneCard>
+            </div>
+            <div style={{ position: "absolute", left: 430, top: 314, width: 250, zIndex: 2 }}>
+              <ZoneCard title="CONTROL TOWER" subtitle="進行管理してCEOへ報告" accent="#3b82f6">
+                {zoneAgents.manager.map((agent) => (
+                  <CharacterUnit key={agent.id} agent={agent} />
+                ))}
+              </ZoneCard>
+            </div>
+            <div style={{ position: "absolute", right: 42, top: 298, width: 280, zIndex: 2 }}>
+              <ZoneCard title="REVIEW GATE" subtitle="品質チェックして通す" accent="#22c55e">
+                {zoneAgents.review.map((agent) => (
+                  <CharacterUnit key={agent.id} agent={agent} />
+                ))}
+              </ZoneCard>
+            </div>
 
-          <div
-            style={{
-              marginTop: 6,
-              display: "grid",
-              gridTemplateColumns: "1.3fr 1fr",
-              gap: 8,
-              position: "relative",
-              zIndex: 1,
-            }}
-          >
-            <ZoneCard title="BUILD ZONE" subtitle="実装して素材を持って戻る" accent="#f97316">
-              {zoneAgents.build.map((agent) => (
-                <CharacterUnit key={agent.id} agent={agent} />
-              ))}
-            </ZoneCard>
-            <ZoneCard title="CREATIVE HOUSE" subtitle="編集とデザインで整える" accent="#ec4899">
-              {zoneAgents.creative.map((agent) => (
-                <CharacterUnit key={agent.id} agent={agent} />
-              ))}
-            </ZoneCard>
-          </div>
-          
-          <div
-            style={{
-              marginTop: 6,
-              position: "relative",
-              zIndex: 1,
-              borderRadius: 18,
-              padding: "4px 6px 6px",
-              background: "rgba(255,248,241,0.55)",
-              border: "1px solid rgba(49,64,95,0.12)",
-              boxShadow: "0 8px 16px rgba(49,64,95,0.06)",
-              backdropFilter: "blur(6px)",
-            }}
-          >
-            <WaitingGame active={isRunning} size="small" variant="embedded" compact />
-          </div>
-        </StagePanel>
+            <div style={{ position: "absolute", left: 124, top: 394, width: 290, zIndex: 2 }}>
+              <ZoneCard title="BUILD ZONE" subtitle="実装して素材を持って戻る" accent="#f97316">
+                {zoneAgents.build.map((agent) => (
+                  <CharacterUnit key={agent.id} agent={agent} />
+                ))}
+              </ZoneCard>
+            </div>
+            <div style={{ position: "absolute", right: 124, top: 394, width: 290, zIndex: 2 }}>
+              <ZoneCard title="CREATIVE HOUSE" subtitle="編集とデザインで整える" accent="#ec4899">
+                {zoneAgents.creative.map((agent) => (
+                  <CharacterUnit key={agent.id} agent={agent} />
+                ))}
+              </ZoneCard>
+            </div>
+
+            <div style={{ position: "absolute", inset: "142px 46px 90px", zIndex: 1 }}>
+              <FlowLines />
+            </div>
+
+            <div
+              style={{
+                position: "absolute",
+                left: 116,
+                right: 116,
+                bottom: 16,
+                zIndex: 2,
+                borderRadius: 18,
+                padding: "4px 6px 6px",
+                background: "rgba(255,248,241,0.42)",
+                border: "1px solid rgba(49,64,95,0.12)",
+                boxShadow: "0 8px 16px rgba(49,64,95,0.06)",
+                backdropFilter: "blur(6px)",
+              }}
+            >
+              <WaitingGame active={isRunning} size="small" variant="embedded" compact />
+            </div>
+          </StagePanel>
+        </div>
       </div>
     </div>
   );

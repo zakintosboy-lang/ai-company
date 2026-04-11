@@ -14,7 +14,6 @@ interface Props {
 const GRAVITY = 0.62;
 const JUMP_POWER = -8.6;
 const PLAYER_X = 36;
-const PLAYER_SIZE = 20;
 
 function BicycleRider({
   playerY,
@@ -108,7 +107,6 @@ export default function WaitingGame({ active, size = "small", variant = "card", 
   const stageHeight = compact ? 94 : large ? 188 : 132;
   const surfaceOffset = compact ? 14 : large ? 22 : 18;
   const scaledPlayerX = compact ? 34 : large ? 68 : PLAYER_X;
-  const scaledPlayerSize = compact ? 18 : large ? 34 : PLAYER_SIZE;
   const playerHitWidth = compact ? 26 : large ? 44 : 30;
   const playerHitHeight = compact ? 14 : large ? 24 : 18;
   const shellWidth = compact ? 16 : large ? 30 : 18;
@@ -267,7 +265,7 @@ export default function WaitingGame({ active, size = "small", variant = "card", 
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [active, gameState, fireballWidth, goombaWidth, blockWidth, large, scaledPlayerSize, scaledPlayerX, shellWidth]);
+  }, [active, gameState, fireballWidth, goombaWidth, blockWidth, large, scaledPlayerX, shellWidth]);
 
   return (
     <div
