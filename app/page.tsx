@@ -867,6 +867,9 @@ export default function Home() {
   const canExport = !!output && !isRunning;
   const progressMeta = getProgressMeta(logs, isRunning, !!output);
   const progressSteps = ["待機", "戦略", "分解", "調査", "生成", "レビュー", "編集", "完了"];
+  const headerAgentSummary = Object.values(agents).length > 0
+    ? `CEO / Manager / Worker ${AGENT_ORDER.filter((id) => id.startsWith("worker-")).length} / Reviewer / Researcher 3 / Editor / Designer`
+    : "Claude・OpenAI・Geminiが分担して、調査レポートから提案・企画メモまで仕上げるAIチーム";
 
   return (
     <div className="app">
@@ -880,17 +883,7 @@ export default function Home() {
               調査レポートを納品するAIチーム
             </div>
             <div className="header-subtitle">
-              {Object.values(agents).length > 0
-                ? Object.values(agents).map(a => (
-                    <span key={a.config.id} style={{ marginRight: 10, whiteSpace: "nowrap" }}>
-                      {a.config.name}
-                      <span style={{ opacity: 0.4, marginLeft: 3, fontSize: 9 }}>
-                        ({a.config.model.displayName} / {PROVIDER_LABEL[a.config.model.provider]})
-                      </span>
-                    </span>
-                  ))
-                : "Claude・OpenAI・Geminiが分担して、調査レポートから提案・企画メモまで仕上げるAIチーム"
-              }
+              {headerAgentSummary}
             </div>
           </div>
         </div>

@@ -16,6 +16,65 @@ const JUMP_POWER = -8.6;
 const PLAYER_X = 36;
 const PLAYER_SIZE = 20;
 
+function BicycleRider({
+  playerY,
+  compact,
+  large,
+}: {
+  playerY: number;
+  compact: boolean;
+  large: boolean;
+}) {
+  const wheel = compact ? 10 : large ? 16 : 12;
+  const width = compact ? 34 : large ? 56 : 40;
+  const height = compact ? 22 : large ? 36 : 26;
+  const frameColor = "#ef4444";
+  const riderColor = "#2563eb";
+  const spinDuration = compact ? 0.45 : 0.32;
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width,
+        height,
+        transform: `translateY(${playerY > 0 ? -1 : 0}px) rotate(${playerY > 0 ? -4 : 0}deg)`,
+        transformOrigin: "50% 100%",
+      }}
+    >
+      {[0, 1].map((index) => (
+        <div
+          key={index}
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: index === 0 ? 0 : width - wheel,
+            width: wheel,
+            height: wheel,
+            borderRadius: "50%",
+            border: "3px solid #31405f",
+            background: "radial-gradient(circle, #f8fafc 0 30%, #64748b 31% 38%, transparent 39%)",
+            animation: `bike-wheel ${spinDuration}s linear infinite`,
+            boxSizing: "border-box",
+          }}
+        />
+      ))}
+
+      <div style={{ position: "absolute", left: wheel * 0.5, bottom: wheel * 0.55, width: width * 0.34, height: 3, background: frameColor, borderRadius: 999, transform: "rotate(16deg)" }} />
+      <div style={{ position: "absolute", left: wheel * 1.3, bottom: wheel * 0.55, width: width * 0.28, height: 3, background: frameColor, borderRadius: 999, transform: "rotate(-22deg)" }} />
+      <div style={{ position: "absolute", left: width * 0.33, bottom: wheel * 0.98, width: width * 0.24, height: 3, background: frameColor, borderRadius: 999, transform: "rotate(60deg)" }} />
+      <div style={{ position: "absolute", left: width * 0.5, bottom: wheel * 1.2, width: width * 0.2, height: 3, background: "#31405f", borderRadius: 999, transform: "rotate(-18deg)" }} />
+      <div style={{ position: "absolute", left: width * 0.22, bottom: wheel * 1.14, width: width * 0.18, height: 3, background: "#31405f", borderRadius: 999, transform: "rotate(12deg)" }} />
+      <div style={{ position: "absolute", left: width * 0.37, bottom: wheel * 1.52, width: compact ? 8 : 10, height: compact ? 8 : 10, borderRadius: "50%", background: "#fde68a", border: "2px solid #31405f" }} />
+      <div style={{ position: "absolute", left: width * 0.38, bottom: wheel * 1.04, width: compact ? 8 : 10, height: compact ? 10 : 14, borderRadius: 6, background: riderColor, border: "2px solid #31405f" }} />
+      <div style={{ position: "absolute", left: width * 0.32, bottom: wheel * 0.88, width: compact ? 8 : 10, height: 3, background: riderColor, borderRadius: 999, transform: "rotate(38deg)" }} />
+      <div style={{ position: "absolute", left: width * 0.44, bottom: wheel * 0.88, width: compact ? 8 : 10, height: 3, background: riderColor, borderRadius: 999, transform: "rotate(-36deg)" }} />
+      <div style={{ position: "absolute", left: width * 0.3, bottom: wheel * 0.6, width: compact ? 8 : 11, height: 3, background: riderColor, borderRadius: 999, transform: "rotate(58deg)" }} />
+      <div style={{ position: "absolute", left: width * 0.5, bottom: wheel * 0.6, width: compact ? 8 : 11, height: 3, background: riderColor, borderRadius: 999, transform: "rotate(-58deg)" }} />
+    </div>
+  );
+}
+
 export default function WaitingGame({ active, size = "small", variant = "card", compact = false }: Props) {
   const [gameState, setGameState] = useState<GameState>("ready");
   const [playerY, setPlayerY] = useState(0);
@@ -50,6 +109,8 @@ export default function WaitingGame({ active, size = "small", variant = "card", 
   const surfaceOffset = compact ? 14 : large ? 22 : 18;
   const scaledPlayerX = compact ? 34 : large ? 68 : PLAYER_X;
   const scaledPlayerSize = compact ? 18 : large ? 34 : PLAYER_SIZE;
+  const playerHitWidth = compact ? 26 : large ? 44 : 30;
+  const playerHitHeight = compact ? 14 : large ? 24 : 18;
   const shellWidth = compact ? 16 : large ? 30 : 18;
   const goombaWidth = compact ? 18 : large ? 32 : 18;
   const blockWidth = compact ? 16 : large ? 28 : 16;
@@ -182,8 +243,8 @@ export default function WaitingGame({ active, size = "small", variant = "card", 
       const currentMetrics = getObstacleMetrics(obstacleTypeRef.current, scoreRef.current);
       const obstacleLeft = nextX;
       const obstacleRight = nextX + currentMetrics.width;
-      const hitX = scaledPlayerX + scaledPlayerSize - 4 >= obstacleLeft && scaledPlayerX + 4 <= obstacleRight;
-      const hitY = playerYRef.current < currentMetrics.height - 2;
+      const hitX = scaledPlayerX + playerHitWidth >= obstacleLeft && scaledPlayerX + 4 <= obstacleRight;
+      const hitY = playerYRef.current < currentMetrics.height - playerHitHeight * 0.18;
 
       if (hitX && hitY) {
         setGameState("gameover");
@@ -299,7 +360,7 @@ export default function WaitingGame({ active, size = "small", variant = "card", 
             opacity: 0.95,
           }}
         />
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: compact ? 16 : large ? 28 : 18, height: compact ? 14 : large ? 26 : 18, background: "linear-gradient(180deg, #4eb752 0%, #37983b 100%)", borderTop: "3px solid #87df70" }} />
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: compact ? 16 : large ? 28 : 18, height: compact ? 8 : large ? 26 : 18, background: compact ? "linear-gradient(180deg, #d1d5db 0%, #9ca3af 100%)" : "linear-gradient(180deg, #4eb752 0%, #37983b 100%)", borderTop: compact ? "3px solid #fef08a" : "3px solid #87df70" }} />
         <div
           style={{
             position: "absolute",
@@ -307,8 +368,8 @@ export default function WaitingGame({ active, size = "small", variant = "card", 
             right: 0,
             bottom: 0,
             height: compact ? 16 : large ? 30 : 20,
-            background: "linear-gradient(180deg, #d38a4a 0%, #b86a35 100%)",
-            borderTop: "3px solid #f5b36c",
+            background: compact ? "linear-gradient(180deg, #475569 0%, #334155 100%)" : "linear-gradient(180deg, #d38a4a 0%, #b86a35 100%)",
+            borderTop: compact ? "3px solid #e2e8f0" : "3px solid #f5b36c",
           }}
         />
         <div
@@ -320,7 +381,9 @@ export default function WaitingGame({ active, size = "small", variant = "card", 
             height: compact ? 16 : large ? 30 : 20,
             opacity: 0.28,
             backgroundImage:
-              "linear-gradient(90deg, transparent 0, transparent 10px, #7b4627 10px, #7b4627 12px, transparent 12px, transparent 34px, #7b4627 34px, #7b4627 36px, transparent 36px)",
+              compact
+                ? "linear-gradient(90deg, transparent 0, transparent 18px, rgba(255,255,255,0.85) 18px, rgba(255,255,255,0.85) 28px, transparent 28px, transparent 46px)"
+                : "linear-gradient(90deg, transparent 0, transparent 10px, #7b4627 10px, #7b4627 12px, transparent 12px, transparent 34px, #7b4627 34px, #7b4627 36px, transparent 36px)",
             backgroundSize: compact ? "34px 16px" : large ? "48px 30px" : "40px 20px",
             backgroundPosition: `${-bgOffset}px 0`,
           }}
@@ -336,15 +399,12 @@ export default function WaitingGame({ active, size = "small", variant = "card", 
             position: "absolute",
             left: scaledPlayerX,
             bottom: surfaceOffset + playerY,
-            width: scaledPlayerSize,
-            height: scaledPlayerSize,
-            borderRadius: 4,
-            background: "linear-gradient(180deg, #ff6e62 0%, #ff9b90 100%)",
-            border: "3px solid #31405f",
-            boxShadow: playerY > 0 ? "0 6px 0 rgba(49,64,95,0.10)" : "0 4px 0 rgba(49,64,95,0.14)",
+            width: compact ? 34 : large ? 56 : 40,
+            height: compact ? 24 : large ? 40 : 28,
+            filter: playerY > 0 ? "drop-shadow(0 5px 0 rgba(49,64,95,0.10))" : "drop-shadow(0 4px 0 rgba(49,64,95,0.14))",
           }}
         >
-          <div style={{ position: "absolute", left: large ? 7 : 4, top: large ? 7 : 4, width: large ? 12 : 8, height: large ? 12 : 8, background: "#fff8f1", borderRadius: 2 }} />
+          <BicycleRider playerY={playerY} compact={compact} large={large} />
         </div>
 
         <div

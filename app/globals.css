@@ -62,11 +62,11 @@ html, body {
 }
 
 .app {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   width: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
   background:
     radial-gradient(circle at 12% 8%, rgba(255,255,255,0.66) 0 60px, transparent 61px),
     radial-gradient(circle at 84% 14%, rgba(255,255,255,0.55) 0 44px, transparent 45px),
@@ -75,10 +75,10 @@ html, body {
 
 /* ── Header ── */
 .header {
-  min-height: 72px;
+  min-height: 64px;
   background: rgba(255, 247, 239, 0.92);
   border-bottom: 4px solid #31405f;
-  padding: 10px 24px;
+  padding: 8px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -109,7 +109,15 @@ html, body {
   color: var(--text-primary);
   text-transform: uppercase;
 }
-.header-subtitle { font-size: 10px; color: var(--text-secondary); letter-spacing: .04em; margin-top: 3px; font-weight: 700; }
+.header-subtitle {
+  font-size: 10px;
+  color: var(--text-secondary);
+  letter-spacing: .04em;
+  margin-top: 3px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: normal;
+}
 .header-brand > div:last-child { min-width: 0; }
 
 .status-badge {
@@ -134,11 +142,12 @@ html, body {
 .main {
   flex: 1;
   display: grid;
-  grid-template-columns: 340px 1fr;
-  height: calc(100vh - 72px);
+  grid-template-columns: 300px 1fr;
+  height: auto;
+  min-height: 0;
   min-width: 0;
-  gap: 14px;
-  padding: 14px;
+  gap: 12px;
+  padding: 12px;
 }
 
 /* ── Left Panel ── */
@@ -147,8 +156,8 @@ html, body {
   border: 4px solid #31405f;
   border-radius: 20px;
   display: flex; flex-direction: column;
-  padding: 20px 18px;
-  gap: 14px;
+  padding: 16px 16px;
+  gap: 12px;
   overflow-y: auto;
   min-width: 0;
   scrollbar-width: thin;
@@ -264,6 +273,7 @@ html, body {
   overflow: hidden;
   position: relative;
   min-width: 0;
+  min-height: 0;
   border: 4px solid #31405f;
   border-radius: 20px;
   box-shadow: 0 10px 0 rgba(49, 64, 95, 0.12);
@@ -294,12 +304,12 @@ html, body {
   display: flex;
   background: rgba(255, 247, 239, 0.96);
   border-bottom: 4px solid #31405f;
-  padding: 0 20px;
+  padding: 0 16px;
   flex-shrink: 0;
   gap: 4px;
 }
 .panel-tab {
-  padding: 12px 18px;
+  padding: 10px 14px;
   font-size: 11px; font-weight: 900;
   letter-spacing: .08em; text-transform: uppercase;
   color: var(--text-muted);
@@ -338,6 +348,8 @@ html, body {
 /* ── Output Panel ── */
 .output-panel { flex: 1; overflow-y: auto; padding: 24px 24px 36px; }
 .output-empty { color: var(--text-secondary); text-align: center; padding: 60px 0; font-size: 13px; font-weight: 700; }
+
+@keyframes bike-wheel { to { transform: rotate(360deg); } }
 
 /* ── Toast ── */
 .toast {
@@ -413,7 +425,7 @@ html, body {
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
-  .main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; min-height: calc(100vh - 72px); padding: 10px; gap: 10px; }
+  .main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; min-height: 0; padding: 10px; gap: 10px; }
   .header {
     padding: 0 14px;
     gap: 10px;

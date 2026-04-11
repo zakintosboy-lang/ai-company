@@ -487,12 +487,12 @@ function getTravelMotion(agent: AgentInfo) {
 function CharacterUnit({ agent }: { agent: AgentInfo }) {
   const cfg = ROLE_CONFIG[agent.role] ?? ROLE_CONFIG.system;
   const active = agent.status === "thinking" || agent.status === "reviewing";
-  const size = agent.role === "ceo" ? 3.5 : 2.9;
+  const size = agent.role === "ceo" ? 3 : 2.35;
   const motionProfile = getTravelMotion(agent);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, minWidth: 64 }}>
-      <div style={{ minHeight: 44, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, minWidth: 54 }}>
+      <div style={{ minHeight: 34, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
         <AnimatePresence mode="wait">
           {active ? (
             <TypingBubble key="typing" cfg={cfg} />
@@ -540,17 +540,17 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
 
       <div
         style={{
-          padding: "4px 8px 4px",
+          padding: "3px 7px 3px",
           borderRadius: 999,
-          border: "2px solid #27324a",
+          border: "1.5px solid #27324a",
           background: cfg.plate,
-          boxShadow: "0 3px 0 rgba(39,50,74,0.2)",
+          boxShadow: "0 2px 0 rgba(39,50,74,0.2)",
           textAlign: "center",
-          minWidth: 64,
+          minWidth: 54,
         }}
       >
-        <div style={{ fontSize: 8, fontWeight: 900, color: cfg.color, letterSpacing: "0.08em" }}>{cfg.jaLabel}</div>
-        <div style={{ fontSize: 7, color: "#4b5563", marginTop: 1, fontWeight: 700 }}>{agent.name}</div>
+        <div style={{ fontSize: 7, fontWeight: 900, color: cfg.color, letterSpacing: "0.08em" }}>{cfg.jaLabel}</div>
+        <div style={{ fontSize: 6.5, color: "#4b5563", marginTop: 1, fontWeight: 700 }}>{agent.name}</div>
       </div>
     </div>
   );
@@ -735,10 +735,10 @@ function ZoneCard({
         position: "relative",
         border: `1.5px solid ${accent}44`,
         borderRadius: 28,
-        padding: "10px 10px 12px",
+        padding: "8px 8px 10px",
         background: "linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(248,252,255,0.58) 100%)",
         boxShadow: "0 10px 20px rgba(49,64,95,0.06)",
-        minHeight: 118,
+        minHeight: 92,
         overflow: "hidden",
         backdropFilter: "blur(6px)",
       }}
@@ -753,11 +753,11 @@ function ZoneCard({
           pointerEvents: "none",
         }}
       />
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: 12, height: "100%" }}>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: 8, height: "100%" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div>
-            <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: "0.08em", color: accent }}>{title}</div>
-            <div style={{ fontSize: 8.5, fontWeight: 700, color: "#51617c", marginTop: 2 }}>{subtitle}</div>
+            <div style={{ fontSize: 9, fontWeight: 900, letterSpacing: "0.08em", color: accent }}>{title}</div>
+            <div style={{ fontSize: 7.5, fontWeight: 700, color: "#51617c", marginTop: 1 }}>{subtitle}</div>
           </div>
           <div
             style={{
@@ -778,7 +778,7 @@ function ZoneCard({
             →
           </div>
         </div>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 8, flexWrap: "wrap", flex: 1 }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 6, flexWrap: "wrap", flex: 1 }}>
           {children}
         </div>
       </div>
@@ -841,13 +841,13 @@ function StagePanel({ children }: { children: React.ReactNode }) {
     <div
       style={{
         position: "relative",
-        minHeight: 440,
+        minHeight: 360,
         borderRadius: 26,
         border: "1.5px solid rgba(49,64,95,0.14)",
         background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)",
         boxShadow: "inset 0 -8px 14px rgba(255,255,255,0.16)",
         overflow: "hidden",
-        padding: "14px 14px 12px",
+        padding: "10px 10px 8px",
       }}
     >
       {children}
@@ -869,12 +869,12 @@ function FlowLines() {
         opacity: 0.75,
       }}
     >
-      <path d="M500 82 C420 122, 338 146, 246 214" stroke="#9f7aea" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
-      <path d="M500 82 C520 128, 534 152, 502 214" stroke="#60a5fa" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
-      <path d="M500 82 C590 130, 694 148, 770 214" stroke="#4ade80" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
-      <path d="M500 228 C448 278, 354 310, 286 356" stroke="#fb923c" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
-      <path d="M500 228 C560 274, 646 308, 714 356" stroke="#f472b6" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
-      <path d="M500 82 C494 190, 494 272, 500 356" stroke="rgba(49,64,95,0.22)" strokeWidth="2" strokeDasharray="6 14" fill="none" strokeLinecap="round" />
+      <path d="M500 88 C418 116, 334 144, 244 196" stroke="#9f7aea" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
+      <path d="M500 88 C518 128, 530 152, 500 196" stroke="#60a5fa" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
+      <path d="M500 88 C588 124, 688 144, 772 196" stroke="#4ade80" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
+      <path d="M500 196 C444 240, 352 266, 286 308" stroke="#fb923c" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
+      <path d="M500 196 C560 236, 648 266, 716 308" stroke="#f472b6" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
+      <path d="M500 88 C494 170, 494 238, 500 306" stroke="rgba(49,64,95,0.22)" strokeWidth="2" strokeDasharray="6 14" fill="none" strokeLinecap="round" />
     </svg>
   );
 }
@@ -1238,8 +1238,8 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           zIndex: 1,
           display: "flex",
           flexDirection: "column",
-          gap: 10,
-          padding: "72px 10px 10px",
+          gap: 8,
+          padding: "66px 8px 8px",
           minHeight: 0,
           flex: 1,
         }}
@@ -1247,16 +1247,16 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         <StagePanel>
           <FlowLines />
 
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 12, alignItems: "start", position: "relative", zIndex: 1 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 8, alignItems: "start", position: "relative", zIndex: 1 }}>
             <CompactLogStrip logs={logs} />
             <div
               style={{
-                padding: "6px 10px",
+                padding: "5px 8px",
                 borderRadius: 999,
                 background: "rgba(255,248,241,0.78)",
                 border: "1.5px solid rgba(49,64,95,0.16)",
                 boxShadow: "0 8px 16px rgba(49,64,95,0.06)",
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: 900,
                 color: "#31405f",
                 letterSpacing: "0.08em",
@@ -1267,8 +1267,8 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
             </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "center", marginTop: 12, marginBottom: 10, position: "relative", zIndex: 1 }}>
-            <div style={{ width: "min(100%, 250px)" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 8, marginBottom: 8, position: "relative", zIndex: 1 }}>
+            <div style={{ width: "min(100%, 220px)" }}>
               <ZoneCard title="CASTLE HQ" subtitle="社長エリア / 最終判断ポイント" accent="#8b5cf6">
                 {topRow.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
@@ -1277,18 +1277,12 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
             </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", position: "relative", zIndex: 1 }}>
-            <RouteBadge color="#06b6d4" label="REPORT ROUTE" />
-            <RouteBadge color="#3b82f6" label="PLAN ROUTE" />
-            <RouteBadge color="#22c55e" label="CHECK ROUTE" />
-          </div>
-
           <div
             style={{
-              marginTop: 10,
+              marginTop: 4,
               display: "grid",
               gridTemplateColumns: "1.45fr 1fr 1fr",
-              gap: 10,
+              gap: 8,
               position: "relative",
               zIndex: 1,
             }}
@@ -1310,18 +1304,12 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
             </ZoneCard>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginTop: 10, position: "relative", zIndex: 1 }}>
-            <RouteBadge color="#f97316" label="BUILD ROUTE" />
-            <RouteBadge color="#ec4899" label="POLISH ROUTE" />
-            <RouteBadge color="#8b5cf6" label="DECISION ROUTE" />
-          </div>
-
           <div
             style={{
-              marginTop: 10,
+              marginTop: 6,
               display: "grid",
               gridTemplateColumns: "1.3fr 1fr",
-              gap: 12,
+              gap: 8,
               position: "relative",
               zIndex: 1,
             }}
@@ -1340,14 +1328,14 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           
           <div
             style={{
-              marginTop: 10,
+              marginTop: 6,
               position: "relative",
               zIndex: 1,
-              borderRadius: 22,
-              padding: "8px 10px 10px",
-              background: "rgba(255,248,241,0.72)",
-              border: "1.5px solid rgba(49,64,95,0.14)",
-              boxShadow: "0 10px 20px rgba(49,64,95,0.08)",
+              borderRadius: 18,
+              padding: "4px 6px 6px",
+              background: "rgba(255,248,241,0.55)",
+              border: "1px solid rgba(49,64,95,0.12)",
+              boxShadow: "0 8px 16px rgba(49,64,95,0.06)",
               backdropFilter: "blur(6px)",
             }}
           >
