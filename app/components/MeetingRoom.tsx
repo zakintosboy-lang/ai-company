@@ -430,99 +430,69 @@ function WorkEffect({ agent }: { agent: AgentInfo }) {
   );
 }
 
+function getTravelBias(agent: AgentInfo) {
+  if (agent.role === "manager") return { x: 18, y: -12, rotate: -3 };
+  if (agent.role === "researcher") {
+    const bias: Record<string, number> = {
+      "researcher-1": 24,
+      "researcher-2": 0,
+      "researcher-3": -24,
+    };
+    const x = bias[agent.id] ?? 0;
+    return { x, y: -16, rotate: x > 0 ? -3 : x < 0 ? 3 : 0 };
+  }
+  if (agent.role === "worker") {
+    const bias: Record<string, number> = {
+      "worker-1": 30,
+      "worker-2": 8,
+      "worker-3": -18,
+    };
+    const x = bias[agent.id] ?? 0;
+    return { x, y: -22, rotate: x > 0 ? -4 : 3 };
+  }
+  if (agent.role === "editor") return { x: -10, y: -16, rotate: 2 };
+  if (agent.role === "designer") return { x: 10, y: -18, rotate: -2 };
+  if (agent.role === "reviewer") return { x: -12, y: -14, rotate: 2 };
+  return { x: 0, y: -10, rotate: 0 };
+}
+
 function getTravelMotion(agent: AgentInfo) {
   if (agent.status !== "thinking" && agent.status !== "reviewing") {
     return {
-      x: [0, 0],
-      y: [0, -1, 0],
-      scale: [1, 1.01, 1],
-      rotate: [0, 0, 0],
+      x: [0, 0, 0, 0],
+      y: [0, -2, -1, 0],
+      scale: [1, 1.01, 1.015, 1],
+      rotate: [0, 0, 0, 0],
     };
   }
 
   if (agent.role === "ceo") {
     return {
-      x: [0, 0, 0],
-      y: [0, -12, 0],
-      scale: [1, 1.08, 1],
-      rotate: [0, -2, 0],
+      x: [0, 3, 0, -3, 0],
+      y: [0, -12, -16, -8, 0],
+      scale: [1, 1.04, 1.08, 1.03, 1],
+      rotate: [0, -2, 0, 2, 0],
     };
   }
 
-  if (agent.role === "manager") {
-    return {
-      x: [0, 18, 8, 0],
-      y: [0, -18, -24, 0],
-      scale: [1, 1.08, 1.04, 1],
-      rotate: [0, -5, -2, 0],
-    };
-  }
-
-  if (agent.role === "researcher") {
-    const byId: Record<string, number> = {
-      "researcher-1": 18,
-      "researcher-2": 0,
-      "researcher-3": -18,
-    };
-    const dx = byId[agent.id] ?? 0;
-    return {
-      x: [0, dx, dx * 0.4, 0],
-      y: [0, -16, -22, 0],
-      scale: [1, 1.06, 1.02, 1],
-      rotate: [0, dx > 0 ? -4 : dx < 0 ? 4 : 0, 0, 0],
-    };
-  }
-
-  if (agent.role === "worker") {
-    const byId: Record<string, number> = {
-      "worker-1": 28,
-      "worker-2": 0,
-      "worker-3": -28,
-    };
-    const dx = byId[agent.id] ?? 0;
-    return {
-      x: [0, dx, dx * 0.35, 0],
-      y: [0, -24, -30, 0],
-      scale: [1, 1.1, 1.04, 1],
-      rotate: [0, dx > 0 ? -6 : dx < 0 ? 6 : 0, 0, 0],
-    };
-  }
-
-  if (agent.role === "editor") {
-    return {
-      x: [0, -14, -8, 0],
-      y: [0, -14, -22, 0],
-      scale: [1, 1.08, 1.04, 1],
-      rotate: [0, 4, 0, 0],
-    };
-  }
-
-  if (agent.role === "designer") {
-    return {
-      x: [0, -4, 6, 0],
-      y: [0, -16, -24, 0],
-      scale: [1, 1.08, 1.04, 1],
-      rotate: [0, -6, 2, 0],
-    };
-  }
-
+  const bias = getTravelBias(agent);
   return {
-    x: [0, -10, -6, 0],
-    y: [0, -18, -20, 0],
-    scale: [1, 1.06, 1.03, 1],
-    rotate: [0, 4, 0, 0],
+    x: [0, bias.x * 0.45, bias.x, bias.x * 0.42, 0],
+    y: [0, bias.y * 0.45, bias.y, bias.y * 0.55, 0],
+    scale: [1, 1.03, 1.08, 1.04, 1],
+    rotate: [0, bias.rotate * 0.4, bias.rotate, bias.rotate * 0.4, 0],
   };
 }
 
 function CharacterUnit({ agent }: { agent: AgentInfo }) {
   const cfg = ROLE_CONFIG[agent.role] ?? ROLE_CONFIG.system;
   const active = agent.status === "thinking" || agent.status === "reviewing";
-  const size = agent.role === "ceo" ? 3.8 : 3.3;
+  const size = agent.role === "ceo" ? 3.5 : 2.9;
   const motionProfile = getTravelMotion(agent);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, minWidth: 70 }}>
-      <div style={{ minHeight: 48, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, minWidth: 64 }}>
+      <div style={{ minHeight: 44, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
         <AnimatePresence mode="wait">
           {active ? (
             <TypingBubble key="typing" cfg={cfg} />
@@ -550,7 +520,12 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
         />
         <motion.div
           animate={motionProfile}
-          transition={{ duration: active ? 1.35 : 2.4, repeat: Infinity, ease: "easeInOut" }}
+          transition={{
+            duration: active ? 2.35 : 3.6,
+            repeat: Infinity,
+            ease: [0.22, 1, 0.36, 1],
+            times: [0, 0.28, 0.54, 0.8, 1],
+          }}
           style={{
             padding: "4px 5px",
             borderRadius: 8,
@@ -571,7 +546,7 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
           background: cfg.plate,
           boxShadow: "0 3px 0 rgba(39,50,74,0.2)",
           textAlign: "center",
-          minWidth: 70,
+          minWidth: 64,
         }}
       >
         <div style={{ fontSize: 8, fontWeight: 900, color: cfg.color, letterSpacing: "0.08em" }}>{cfg.jaLabel}</div>
@@ -610,13 +585,13 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
   return (
     <div
       style={{
-        margin: "0 8px 10px",
         border: "4px solid #31405f",
         borderRadius: 14,
         background: "#f7f1e7",
         boxShadow: "0 8px 0 rgba(49,64,95,0.22)",
         overflow: "hidden",
-        maxHeight: 248,
+        minHeight: 278,
+        height: "100%",
         display: "flex",
         flexDirection: "column",
       }}
@@ -651,7 +626,7 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
         )}
       </div>
 
-      <div ref={scrollRef} style={{ overflowY: "auto", padding: "8px 12px 10px", background: "#fff8f1" }}>
+      <div ref={scrollRef} style={{ overflowY: "auto", padding: "10px 14px 12px", background: "#fff8f1", flex: 1 }}>
         {logs.length === 0 ? (
           <div style={{ padding: "18px 0", textAlign: "center", fontSize: 11, color: "#64748b", fontWeight: 700 }}>
             実行するとここにチームの会話が流れます
@@ -664,10 +639,10 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
                 key={`${log.time}-${i}`}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "52px 72px 1fr",
+                  gridTemplateColumns: "54px 78px 1fr",
                   columnGap: 10,
                   alignItems: "start",
-                  padding: "5px 0",
+                  padding: "6px 0",
                   borderBottom: i === displayed.length - 1 ? "none" : "1px dashed rgba(49,64,95,0.18)",
                 }}
               >
@@ -678,6 +653,73 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
             );
           })
         )}
+      </div>
+    </div>
+  );
+}
+
+function ZoneCard({
+  title,
+  subtitle,
+  accent,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  accent: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        position: "relative",
+        border: "3px solid #31405f",
+        borderRadius: 20,
+        padding: "16px 12px 14px",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.74) 0%, rgba(242,250,255,0.9) 100%)",
+        boxShadow: "0 8px 0 rgba(49,64,95,0.14)",
+        minHeight: 152,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: 8,
+          borderRadius: 14,
+          border: `2px dashed ${accent}`,
+          opacity: 0.34,
+          pointerEvents: "none",
+        }}
+      />
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: 12, height: "100%" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: "0.08em", color: accent }}>{title}</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: "#51617c", marginTop: 2 }}>{subtitle}</div>
+          </div>
+          <div
+            style={{
+              minWidth: 28,
+              height: 28,
+              borderRadius: 999,
+              background: "#fff8f1",
+              border: "3px solid #31405f",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: accent,
+              fontSize: 12,
+              fontWeight: 900,
+              boxShadow: "0 4px 0 rgba(49,64,95,0.14)",
+            }}
+          >
+            →
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 10, flexWrap: "wrap", flex: 1 }}>
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -706,8 +748,14 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
     ["manager", "researcher-1", "researcher-2", "researcher-3", "reviewer"],
     ["worker-1", "worker-2", "worker-3", "editor", "designer"],
   ], getAgent, all);
-
-  const [topRow, middleRow, bottomRow] = lineup;
+  const [topRow] = lineup;
+  const zoneAgents = {
+    research: all.filter((agent) => ["researcher-1", "researcher-2", "researcher-3"].includes(agent.id)),
+    manager: all.filter((agent) => agent.id === "manager"),
+    review: all.filter((agent) => agent.id === "reviewer"),
+    build: all.filter((agent) => ["worker-1", "worker-2", "worker-3"].includes(agent.id)),
+    creative: all.filter((agent) => ["editor", "designer"].includes(agent.id)),
+  };
 
   return (
     <div
@@ -751,7 +799,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           left: 40,
-          bottom: 190,
+          top: 300,
           width: 210,
           height: 112,
           background: "#8ed36e",
@@ -763,7 +811,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           left: 102,
-          bottom: 224,
+          top: 334,
           width: 12,
           height: 12,
           borderRadius: "50%",
@@ -776,7 +824,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           right: 36,
-          bottom: 194,
+          top: 304,
           width: 240,
           height: 126,
           background: "#9ce07f",
@@ -788,7 +836,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           right: 102,
-          bottom: 232,
+          top: 342,
           width: 12,
           height: 12,
           borderRadius: "50%",
@@ -802,7 +850,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           left: 0,
-          bottom: 202,
+          top: 288,
           width: "32%",
           height: 128,
           background: "#b6a0d5",
@@ -814,7 +862,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           right: 0,
-          bottom: 200,
+          top: 286,
           width: "34%",
           height: 136,
           background: "#c7b3e4",
@@ -828,7 +876,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: 158,
+          top: 412,
           height: 34,
           background:
             "linear-gradient(180deg, #49b34d 0%, #49b34d 48%, #37983b 48%, #37983b 100%)",
@@ -841,7 +889,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: 92,
+          top: 446,
           height: 46,
           background:
             "linear-gradient(180deg, #d38a4a 0%, #d38a4a 50%, #b86a35 50%, #b86a35 100%)",
@@ -855,7 +903,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: 92,
+          top: 446,
           height: 46,
           opacity: 0.22,
           backgroundImage:
@@ -868,7 +916,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           left: 70,
-          bottom: 162,
+          top: 416,
           display: "grid",
           gridTemplateColumns: "repeat(4, 26px)",
           gap: 3,
@@ -942,28 +990,28 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         <PixelDecor pixels={BOWSER_SPRITE} cellSize={3.6} />
       </motion.div>
       <motion.div
-        style={{ position: "absolute", bottom: 158, left: 198, zIndex: 1, pointerEvents: "none" }}
+        style={{ position: "absolute", top: 412, left: 198, zIndex: 1, pointerEvents: "none" }}
         animate={{ x: [0, 6, 0] }}
         transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
       >
         <PixelDecor pixels={GOOMBA_SPRITE} cellSize={4} />
       </motion.div>
       <motion.div
-        style={{ position: "absolute", bottom: 160, right: 204, zIndex: 1, pointerEvents: "none" }}
+        style={{ position: "absolute", top: 414, right: 204, zIndex: 1, pointerEvents: "none" }}
         animate={{ x: [0, -5, 0] }}
         transition={{ duration: 3.1, repeat: Infinity, ease: "easeInOut" }}
       >
         <PixelDecor pixels={GOOMBA_SPRITE} cellSize={3.6} />
       </motion.div>
       <motion.div
-        style={{ position: "absolute", bottom: 162, left: 294, zIndex: 1, pointerEvents: "none" }}
+        style={{ position: "absolute", top: 416, left: 294, zIndex: 1, pointerEvents: "none" }}
         animate={{ x: [0, 4, 0] }}
         transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
       >
         <PixelDecor pixels={KOOPA_SPRITE} cellSize={3.8} />
       </motion.div>
       <motion.div
-        style={{ position: "absolute", bottom: 114, right: 98, zIndex: 1, pointerEvents: "none" }}
+        style={{ position: "absolute", top: 468, right: 98, zIndex: 1, pointerEvents: "none" }}
         animate={{ y: [0, -5, 0] }}
         transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut" }}
       >
@@ -974,7 +1022,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           right: 106,
-          bottom: 150,
+          top: 404,
           width: 54,
           height: 60,
           background: "#37b24d",
@@ -988,7 +1036,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           right: 98,
-          bottom: 198,
+          top: 452,
           width: 66,
           height: 18,
           background: "#37b24d",
@@ -1003,7 +1051,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           position: "absolute",
           left: 20,
           right: 20,
-          bottom: 80,
+          top: 500,
           height: 18,
           background:
             "repeating-linear-gradient(90deg, #d38a4a 0 34px, #b86a35 34px 38px)",
@@ -1032,51 +1080,158 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
 
       <div
         style={{
-          flex: 1,
-          display: "grid",
-          gridTemplateRows: "auto auto auto",
-          alignContent: "start",
-          padding: "74px 12px 190px",
           position: "relative",
           zIndex: 1,
-          gap: 10,
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 12 }}>
-          {topRow.map((agent) => (
-            <CharacterUnit key={agent.id} agent={agent} />
-          ))}
-        </div>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 8, flexWrap: "wrap" }}>
-          {middleRow.map((agent) => (
-            <CharacterUnit key={agent.id} agent={agent} />
-          ))}
-        </div>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 8, flexWrap: "wrap" }}>
-          {bottomRow.map((agent) => (
-            <CharacterUnit key={agent.id} agent={agent} />
-          ))}
-        </div>
-      </div>
-
-      <div
-        style={{
-          position: "absolute",
-          left: 14,
-          right: 14,
-          bottom: 114,
-          zIndex: 2,
           display: "flex",
-          justifyContent: "center",
-          pointerEvents: "none",
+          flexDirection: "column",
+          gap: 12,
+          padding: "72px 12px 12px",
+          minHeight: 0,
+          flex: 1,
         }}
       >
-        <div style={{ width: "100%", maxWidth: 560, pointerEvents: "auto" }}>
-          <WaitingGame active={isRunning} size="small" variant="embedded" />
+        <div
+          style={{
+            position: "relative",
+            minHeight: 510,
+            borderRadius: 22,
+            border: "3px solid rgba(49,64,95,0.18)",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)",
+            boxShadow: "inset 0 -10px 16px rgba(255,255,255,0.18)",
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "center", paddingTop: 18 }}>
+            <ZoneCard title="CASTLE HQ" subtitle="社長エリア / 最終判断ポイント" accent="#8b5cf6">
+              {topRow.map((agent) => (
+                <CharacterUnit key={agent.id} agent={agent} />
+              ))}
+            </ZoneCard>
+          </div>
+
+          <div
+            style={{
+              position: "absolute",
+              top: 126,
+              left: "50%",
+              transform: "translateX(-50%)",
+              fontSize: 10,
+              fontWeight: 900,
+              letterSpacing: "0.08em",
+              color: "#31405f",
+              background: "rgba(255,248,241,0.92)",
+              padding: "5px 10px",
+              borderRadius: 999,
+              border: "3px solid #31405f",
+              boxShadow: "0 4px 0 rgba(49,64,95,0.16)",
+            }}
+          >
+            REPORT ROUTE
+          </div>
+
+          <div
+            style={{
+              position: "absolute",
+              left: 20,
+              right: 20,
+              top: 156,
+              display: "grid",
+              gridTemplateColumns: "1.2fr 0.9fr 0.8fr",
+              gap: 12,
+            }}
+          >
+            <ZoneCard title="RESEARCH FIELD" subtitle="情報を集めて司令塔へ持ち帰る" accent="#06b6d4">
+              {zoneAgents.research.map((agent) => (
+                <CharacterUnit key={agent.id} agent={agent} />
+              ))}
+            </ZoneCard>
+            <ZoneCard title="CONTROL TOWER" subtitle="進行管理してCEOへ報告" accent="#3b82f6">
+              {zoneAgents.manager.map((agent) => (
+                <CharacterUnit key={agent.id} agent={agent} />
+              ))}
+            </ZoneCard>
+            <ZoneCard title="REVIEW GATE" subtitle="品質チェックして通す" accent="#22c55e">
+              {zoneAgents.review.map((agent) => (
+                <CharacterUnit key={agent.id} agent={agent} />
+              ))}
+            </ZoneCard>
+          </div>
+
+          <div
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: 344,
+              transform: "translateX(-50%)",
+              fontSize: 10,
+              fontWeight: 900,
+              letterSpacing: "0.08em",
+              color: "#31405f",
+              background: "rgba(255,248,241,0.92)",
+              padding: "5px 10px",
+              borderRadius: 999,
+              border: "3px solid #31405f",
+              boxShadow: "0 4px 0 rgba(49,64,95,0.16)",
+            }}
+          >
+            TASK ROUTE
+          </div>
+
+          <div
+            style={{
+              position: "absolute",
+              left: 40,
+              right: 40,
+              top: 376,
+              display: "grid",
+              gridTemplateColumns: "1.3fr 1fr",
+              gap: 16,
+            }}
+          >
+            <ZoneCard title="BUILD ZONE" subtitle="実装して素材を持って戻る" accent="#f97316">
+              {zoneAgents.build.map((agent) => (
+                <CharacterUnit key={agent.id} agent={agent} />
+              ))}
+            </ZoneCard>
+            <ZoneCard title="CREATIVE HOUSE" subtitle="編集とデザインで整える" accent="#ec4899">
+              {zoneAgents.creative.map((agent) => (
+                <CharacterUnit key={agent.id} agent={agent} />
+              ))}
+            </ZoneCard>
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(260px, 320px) minmax(0, 1fr)",
+            gap: 12,
+            alignItems: "stretch",
+            minHeight: 286,
+          }}
+        >
+          <div
+            style={{
+              border: "4px solid #31405f",
+              borderRadius: 16,
+              background: "linear-gradient(180deg, #fff8f1 0%, #f7efe2 100%)",
+              boxShadow: "0 8px 0 rgba(49,64,95,0.18)",
+              padding: 10,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            <div style={{ fontSize: 10, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.08em" }}>WAITING GAME</div>
+            <div style={{ fontSize: 11, lineHeight: 1.5, color: "#51617c", fontWeight: 700 }}>
+              会議室の下ステージで待機中に遊べます。`Space` でジャンプして甲羅やクリボーをよけます。
+            </div>
+            <WaitingGame active={isRunning} size="small" variant="embedded" />
+          </div>
+
+          <ConversationStream logs={logs} />
         </div>
       </div>
-
-      <ConversationStream logs={logs} />
     </div>
   );
 }
