@@ -617,7 +617,6 @@ export default function Home() {
   const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [avgDurationSeconds, setAvgDurationSeconds] = useState(52);
-  const logBottomRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // 起動時に最後の保存結果を自動復元
@@ -679,7 +678,6 @@ export default function Home() {
     if (message.includes("一次モデルが混雑中のため")) {
       showToast(message);
     }
-    setTimeout(() => logBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
 
   // ── Save ──────────────────────────────────────────────────

@@ -22,6 +22,7 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
   const [obstacleX, setObstacleX] = useState(260);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
+  const [bgOffset, setBgOffset] = useState(0);
   const rafRef = useRef<number | null>(null);
   const scoreCarryRef = useRef(0);
   const playerYRef = useRef(0);
@@ -29,6 +30,7 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
   const obstacleXRef = useRef(260);
   const scoreRef = useRef(0);
   const bestScoreRef = useRef(0);
+  const bgOffsetRef = useRef(0);
 
   useEffect(() => {
     try {
@@ -76,12 +78,14 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
     setObstacleX(260);
     setScore(0);
     setObstacleType(nextType);
+    setBgOffset(0);
     playerYRef.current = 0;
     velocityYRef.current = 0;
     obstacleXRef.current = 260;
     scoreRef.current = 0;
     scoreCarryRef.current = 0;
     obstacleTypeRef.current = nextType;
+    bgOffsetRef.current = 0;
   };
 
   const jump = () => {
@@ -110,12 +114,14 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
       setObstacleX(260);
       setScore(0);
       setObstacleType("shell");
+      setBgOffset(0);
       playerYRef.current = 0;
       velocityYRef.current = 0;
       obstacleXRef.current = 260;
       scoreRef.current = 0;
       scoreCarryRef.current = 0;
       obstacleTypeRef.current = "shell";
+      bgOffsetRef.current = 0;
       return;
     }
     resetGame();
@@ -153,6 +159,8 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
       setVelocityY(groundedVelocity);
 
       const speed = (4.8 + Math.min(scoreRef.current, 20) * 0.12) * delta;
+      bgOffsetRef.current = (bgOffsetRef.current + speed) % 10000;
+      setBgOffset(bgOffsetRef.current);
       let nextX = obstacleXRef.current - speed;
 
       const metrics = getObstacleMetrics(obstacleTypeRef.current, scoreRef.current);
@@ -261,10 +269,59 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
           boxShadow: "inset 0 -8px 0 rgba(69, 120, 42, 0.12)",
         }}
       >
-        <div style={{ position: "absolute", top: large ? 22 : 14, left: large ? 58 : 34, width: 42 * cloudScale, height: 12 * cloudScale, borderRadius: 999, background: "#fff", boxShadow: `${18 * cloudScale}px 0 0 #fff, ${9 * cloudScale}px ${-6 * cloudScale}px 0 #fff` }} />
-        <div style={{ position: "absolute", top: large ? 38 : 24, right: large ? 72 : 40, width: 32 * cloudScale, height: 10 * cloudScale, borderRadius: 999, background: "#fff", boxShadow: `${16 * cloudScale}px 0 0 #fff` }} />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            opacity: 0.55,
+            backgroundImage:
+              "radial-gradient(circle at 20px 20px, #ffffff 0 14px, transparent 15px), radial-gradient(circle at 44px 20px, #ffffff 0 12px, transparent 13px), radial-gradient(circle at 32px 10px, #ffffff 0 10px, transparent 11px)",
+            backgroundSize: `${Math.round(96 * cloudScale)}px ${Math.round(44 * cloudScale)}px`,
+            backgroundPosition: `${-bgOffset * 0.18}px ${large ? 18 : 10}px`,
+            backgroundRepeat: "repeat-x",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: large ? 54 : 36,
+            height: large ? 48 : 30,
+            backgroundImage:
+              "radial-gradient(circle at 40px 48px, #86cf66 0 34px, transparent 35px), radial-gradient(circle at 110px 48px, #78c55a 0 26px, transparent 27px)",
+            backgroundSize: large ? "210px 60px" : "140px 42px",
+            backgroundPosition: `${-bgOffset * 0.35}px 0`,
+            backgroundRepeat: "repeat-x",
+            opacity: 0.95,
+          }}
+        />
         <div style={{ position: "absolute", left: 0, right: 0, bottom: large ? 28 : 18, height: large ? 26 : 18, background: "linear-gradient(180deg, #4eb752 0%, #37983b 100%)", borderTop: "3px solid #87df70" }} />
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: large ? 30 : 20, background: "linear-gradient(180deg, #d38a4a 0%, #b86a35 100%)", borderTop: "3px solid #f5b36c" }} />
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: large ? 30 : 20,
+            background: "linear-gradient(180deg, #d38a4a 0%, #b86a35 100%)",
+            borderTop: "3px solid #f5b36c",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: large ? 30 : 20,
+            opacity: 0.28,
+            backgroundImage:
+              "linear-gradient(90deg, transparent 0, transparent 10px, #7b4627 10px, #7b4627 12px, transparent 12px, transparent 34px, #7b4627 34px, #7b4627 36px, transparent 36px)",
+            backgroundSize: large ? "48px 30px" : "40px 20px",
+            backgroundPosition: `${-bgOffset}px 0`,
+          }}
+        />
         {large && <div style={{ position: "absolute", left: 180, bottom: 58, width: 46, height: 86, borderRadius: "16px 16px 0 0", background: "#35b34f", border: "4px solid #31405f", boxShadow: "inset 0 0 0 4px #71dd78" }} />}
         {large && <div style={{ position: "absolute", left: 174, bottom: 128, width: 58, height: 24, borderRadius: 999, background: "#35b34f", border: "4px solid #31405f", boxShadow: "inset 0 0 0 4px #71dd78" }} />}
         {large && <div style={{ position: "absolute", right: 120, bottom: 54, width: 32, height: 32, background: "#ffd558", border: "4px solid #31405f", boxShadow: "inset 0 0 0 4px #ffe188" }} />}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import PixelCharacter from "./PixelCharacter";
 import WaitingGame from "./WaitingGame";
@@ -305,12 +305,7 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
 }
 
 function ConversationStream({ logs }: { logs: LogEntry[] }) {
-  const bottomRef = useRef<HTMLDivElement>(null);
   const [showAll, setShowAll] = useState(false);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [logs.length]);
 
   const displayed = showAll ? logs : logs.slice(-8);
 
@@ -385,7 +380,6 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
             );
           })
         )}
-        <div ref={bottomRef} />
       </div>
     </div>
   );
