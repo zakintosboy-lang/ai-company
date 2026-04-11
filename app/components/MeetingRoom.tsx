@@ -156,6 +156,105 @@ function PixelDecor({ pixels, cellSize }: { pixels: PixelGrid; cellSize: number 
   );
 }
 
+function PixelBadgeIcon({ pixels, cellSize = 2 }: { pixels: PixelGrid; cellSize?: number }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", imageRendering: "pixelated", flexShrink: 0 }}>
+      {pixels.map((row, y) => (
+        <div key={y} style={{ display: "flex" }}>
+          {row.map((color, x) => (
+            <div key={x} style={{ width: cellSize, height: cellSize, background: color ?? "transparent" }} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const BADGE_PALETTE = {
+  ".": null,
+  K: "#23324f",
+  Y: "#ffd558",
+  B: "#3b82f6",
+  O: "#f97316",
+  G: "#22c55e",
+  C: "#06b6d4",
+  P: "#ec4899",
+  L: "#84cc16",
+  W: "#ffffff",
+};
+
+const CROWN_ICON = spriteFromRows([
+  ".Y.Y.",
+  "YYYYY",
+  "YKYKY",
+  ".YYY.",
+  "..K..",
+], BADGE_PALETTE);
+
+const WAND_ICON = spriteFromRows([
+  "...Y.",
+  "..YYY",
+  "YKYKY",
+  "..YYY",
+  "...K.",
+], BADGE_PALETTE);
+
+const HAMMER_ICON = spriteFromRows([
+  ".OOO.",
+  ".OOK.",
+  "..OK.",
+  ".KK..",
+  ".K...",
+], BADGE_PALETTE);
+
+const CHECK_ICON = spriteFromRows([
+  "....G",
+  "...GG",
+  ".GGG.",
+  "GG...",
+  "G....",
+], BADGE_PALETTE);
+
+const SEARCH_ICON = spriteFromRows([
+  ".CCC.",
+  "CKWKC",
+  "CKKKC",
+  ".CCC.",
+  "...K.",
+], BADGE_PALETTE);
+
+const PEN_ICON = spriteFromRows([
+  "...P.",
+  "..PP.",
+  ".PPK.",
+  "PPK..",
+  ".K...",
+], BADGE_PALETTE);
+
+const DESIGN_ICON = spriteFromRows([
+  "P...P",
+  ".P.P.",
+  "..P..",
+  ".P.P.",
+  "P...P",
+], BADGE_PALETTE);
+
+const EDIT_ICON = spriteFromRows([
+  "..LL.",
+  ".LLLK",
+  "LLLK.",
+  ".KK..",
+  "..K..",
+], BADGE_PALETTE);
+
+const SYSTEM_ICON = spriteFromRows([
+  ".BBB.",
+  "BKWKB",
+  "BKWKB",
+  "BKWKB",
+  ".BBB.",
+], BADGE_PALETTE);
+
 function SpeechBubble({ message, cfg }: { message: string; cfg: (typeof ROLE_CONFIG)[AgentRole] }) {
   return (
     <motion.div
@@ -241,14 +340,61 @@ function TypingBubble({ cfg }: { cfg: (typeof ROLE_CONFIG)[AgentRole] }) {
   );
 }
 
+function ActivityBadge({ agent }: { agent: AgentInfo }) {
+  const isActive = agent.status === "thinking" || agent.status === "reviewing";
+  if (!isActive) return null;
+
+  const byRole: Record<AgentRole, { icon: PixelGrid; label: string; color: string }> = {
+    ceo: { icon: CROWN_ICON, label: "指示中", color: "#8b5cf6" },
+    manager: { icon: WAND_ICON, label: "采配中", color: "#3b82f6" },
+    worker: { icon: HAMMER_ICON, label: "作業中", color: "#f97316" },
+    reviewer: { icon: CHECK_ICON, label: "確認中", color: "#22c55e" },
+    researcher: { icon: SEARCH_ICON, label: "調査中", color: "#06b6d4" },
+    designer: { icon: DESIGN_ICON, label: "設計中", color: "#ec4899" },
+    editor: { icon: EDIT_ICON, label: "編集中", color: "#84cc16" },
+    system: { icon: SYSTEM_ICON, label: "処理中", color: "#64748b" },
+  };
+  const meta = byRole[agent.role] ?? byRole.system;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 4, scale: 0.9 }}
+      animate={{ opacity: [0.7, 1, 0.7], y: [0, -4, 0], scale: [0.96, 1.04, 0.96] }}
+      transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+      style={{
+        position: "absolute",
+        top: -8,
+        right: -8,
+        display: "flex",
+        alignItems: "center",
+        gap: 4,
+        padding: "4px 6px",
+        borderRadius: 999,
+        border: "2px solid #27324a",
+        background: "#fffaf3",
+        boxShadow: "0 3px 0 rgba(39,50,74,0.16)",
+        fontSize: 8,
+        fontWeight: 900,
+        color: meta.color,
+        letterSpacing: "0.04em",
+        whiteSpace: "nowrap",
+        pointerEvents: "none",
+      }}
+    >
+      <PixelBadgeIcon pixels={meta.icon} />
+      <span>{meta.label}</span>
+    </motion.div>
+  );
+}
+
 function CharacterUnit({ agent }: { agent: AgentInfo }) {
   const cfg = ROLE_CONFIG[agent.role] ?? ROLE_CONFIG.system;
   const active = agent.status === "thinking" || agent.status === "reviewing";
-  const size = agent.role === "ceo" ? 4.4 : 4;
+  const size = agent.role === "ceo" ? 3.8 : 3.3;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, minWidth: 86 }}>
-      <div style={{ minHeight: 66, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, minWidth: 70 }}>
+      <div style={{ minHeight: 48, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
         <AnimatePresence mode="wait">
           {active ? (
             <TypingBubble key="typing" cfg={cfg} />
@@ -258,15 +404,16 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
         </AnimatePresence>
       </div>
 
-      <div style={{ position: "relative", paddingBottom: 8 }}>
+      <div style={{ position: "relative", paddingBottom: 6 }}>
+        <ActivityBadge agent={agent} />
         <div
           style={{
             position: "absolute",
             left: "50%",
             bottom: 0,
             transform: "translateX(-50%)",
-            width: 64,
-            height: 12,
+            width: 46,
+            height: 9,
             borderRadius: 999,
             background: "rgba(55,65,81,0.18)",
             filter: "blur(2px)",
@@ -276,10 +423,10 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
           animate={active ? { y: [0, -4, 0] } : { y: [0, -1, 0] }}
           transition={{ duration: active ? 0.7 : 2.4, repeat: Infinity, ease: "easeInOut" }}
           style={{
-            padding: "6px 8px",
-            borderRadius: 10,
+            padding: "4px 5px",
+            borderRadius: 8,
             background: "rgba(255,255,255,0.16)",
-            boxShadow: "inset 0 0 0 3px rgba(255,255,255,0.28)",
+            boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.28)",
           }}
         >
           <PixelCharacter role={agent.role} status={agent.status} agentId={agent.id} size={size} />
@@ -288,17 +435,17 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
 
       <div
         style={{
-          padding: "6px 10px 5px",
+          padding: "4px 8px 4px",
           borderRadius: 999,
-          border: "3px solid #27324a",
+          border: "2px solid #27324a",
           background: cfg.plate,
-          boxShadow: "0 4px 0 rgba(39,50,74,0.2)",
+          boxShadow: "0 3px 0 rgba(39,50,74,0.2)",
           textAlign: "center",
-          minWidth: 82,
+          minWidth: 70,
         }}
       >
-        <div style={{ fontSize: 9, fontWeight: 900, color: cfg.color, letterSpacing: "0.08em" }}>{cfg.jaLabel}</div>
-        <div style={{ fontSize: 8, color: "#4b5563", marginTop: 2, fontWeight: 700 }}>{agent.name}</div>
+        <div style={{ fontSize: 8, fontWeight: 900, color: cfg.color, letterSpacing: "0.08em" }}>{cfg.jaLabel}</div>
+        <div style={{ fontSize: 7, color: "#4b5563", marginTop: 1, fontWeight: 700 }}>{agent.name}</div>
       </div>
     </div>
   );
@@ -325,7 +472,7 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
         background: "#f7f1e7",
         boxShadow: "0 8px 0 rgba(49,64,95,0.22)",
         overflow: "hidden",
-        maxHeight: 214,
+        maxHeight: 198,
         display: "flex",
         flexDirection: "column",
       }}
@@ -335,7 +482,7 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          padding: "8px 12px",
+          padding: "7px 10px",
           background: "linear-gradient(180deg, #f8bfd4 0%, #ee95ba 100%)",
           borderBottom: "4px solid #31405f",
         }}
@@ -360,7 +507,7 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
         )}
       </div>
 
-      <div ref={scrollRef} style={{ overflowY: "auto", padding: "8px 10px 10px", background: "#fff8f1" }}>
+      <div ref={scrollRef} style={{ overflowY: "auto", padding: "6px 8px 8px", background: "#fff8f1" }}>
         {logs.length === 0 ? (
           <div style={{ padding: "18px 0", textAlign: "center", fontSize: 11, color: "#64748b", fontWeight: 700 }}>
             実行するとここにチームの会話が流れます
@@ -373,7 +520,7 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
                 key={`${log.time}-${i}`}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "48px 56px 1fr",
+                  gridTemplateColumns: "44px 52px 1fr",
                   gap: 6,
                   alignItems: "start",
                   padding: "4px 0",
@@ -753,8 +900,8 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           display: "flex",
           alignItems: "flex-end",
           justifyContent: "center",
-          gap: 16,
-          padding: "96px 24px 286px",
+          gap: 10,
+          padding: "86px 18px 248px",
           position: "relative",
           zIndex: 1,
           flexWrap: "wrap",
@@ -768,16 +915,16 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
       <div
         style={{
           position: "absolute",
-          left: 18,
-          right: 18,
-          bottom: 196,
+          left: 14,
+          right: 14,
+          bottom: 176,
           zIndex: 2,
           display: "flex",
           justifyContent: "center",
           pointerEvents: "none",
         }}
       >
-        <div style={{ width: "100%", maxWidth: 780, pointerEvents: "auto" }}>
+        <div style={{ width: "100%", maxWidth: 760, pointerEvents: "auto" }}>
           <WaitingGame active={isRunning} size="large" variant="embedded" />
         </div>
       </div>

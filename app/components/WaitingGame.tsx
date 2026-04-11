@@ -45,8 +45,8 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
   }, []);
 
   const large = size === "large";
-  const stageHeight = large ? 228 : 132;
-  const surfaceOffset = large ? 28 : 18;
+  const stageHeight = large ? 188 : 132;
+  const surfaceOffset = large ? 22 : 18;
   const scaledPlayerX = large ? 68 : PLAYER_X;
   const scaledPlayerSize = large ? 34 : PLAYER_SIZE;
   const shellWidth = large ? 30 : 18;
