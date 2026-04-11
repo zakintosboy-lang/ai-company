@@ -658,6 +658,66 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
   );
 }
 
+function CompactLogStrip({ logs }: { logs: LogEntry[] }) {
+  const recent = logs.slice(-3);
+
+  return (
+    <div
+      style={{
+        borderRadius: 18,
+        background: "rgba(255,248,241,0.8)",
+        border: "1.5px solid rgba(49,64,95,0.16)",
+        boxShadow: "0 8px 18px rgba(49,64,95,0.08)",
+        backdropFilter: "blur(8px)",
+        padding: "10px 12px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+        <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: "0.08em", color: "#31405f" }}>LIVE LOG</span>
+        <span style={{ fontSize: 10, fontWeight: 800, color: "#64748b" }}>{logs.length}件</span>
+      </div>
+      {recent.length === 0 ? (
+        <div style={{ fontSize: 11, color: "#64748b", fontWeight: 700 }}>ここに最新の会話が3行まで表示されます</div>
+      ) : (
+        <div style={{ display: "grid", gap: 6 }}>
+          {recent.map((log, index) => {
+            const cfg = ROLE_CONFIG[log.role] ?? ROLE_CONFIG.system;
+            return (
+              <div
+                key={`${log.time}-${index}`}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "48px 62px 1fr",
+                  gap: 8,
+                  alignItems: "start",
+                  fontSize: 10.5,
+                  lineHeight: 1.45,
+                }}
+              >
+                <span style={{ color: "#64748b", fontWeight: 800 }}>{log.time}</span>
+                <span style={{ color: cfg.color, fontWeight: 900 }}>{cfg.jaLabel}</span>
+                <span
+                  style={{
+                    color: "#334155",
+                    fontWeight: 700,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 1,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {log.message}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ZoneCard({
   title,
   subtitle,
@@ -673,22 +733,23 @@ function ZoneCard({
     <div
       style={{
         position: "relative",
-        border: "3px solid #31405f",
-        borderRadius: 20,
-        padding: "16px 12px 14px",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.74) 0%, rgba(242,250,255,0.9) 100%)",
-        boxShadow: "0 8px 0 rgba(49,64,95,0.14)",
-        minHeight: 152,
+        border: `1.5px solid ${accent}44`,
+        borderRadius: 28,
+        padding: "10px 10px 12px",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(248,252,255,0.58) 100%)",
+        boxShadow: "0 10px 20px rgba(49,64,95,0.06)",
+        minHeight: 118,
         overflow: "hidden",
+        backdropFilter: "blur(6px)",
       }}
     >
       <div
         style={{
           position: "absolute",
           inset: 8,
-          borderRadius: 14,
-          border: `2px dashed ${accent}`,
-          opacity: 0.34,
+          borderRadius: 22,
+          border: `1px dashed ${accent}55`,
+          opacity: 0.45,
           pointerEvents: "none",
         }}
       />
@@ -696,28 +757,28 @@ function ZoneCard({
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div>
             <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: "0.08em", color: accent }}>{title}</div>
-            <div style={{ fontSize: 9, fontWeight: 700, color: "#51617c", marginTop: 2 }}>{subtitle}</div>
+            <div style={{ fontSize: 8.5, fontWeight: 700, color: "#51617c", marginTop: 2 }}>{subtitle}</div>
           </div>
           <div
             style={{
-              minWidth: 28,
-              height: 28,
+              minWidth: 22,
+              height: 22,
               borderRadius: 999,
-              background: "#fff8f1",
-              border: "3px solid #31405f",
+              background: "rgba(255,248,241,0.88)",
+              border: `1.5px solid ${accent}55`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: accent,
-              fontSize: 12,
+              fontSize: 10,
               fontWeight: 900,
-              boxShadow: "0 4px 0 rgba(49,64,95,0.14)",
+              boxShadow: "0 4px 10px rgba(49,64,95,0.06)",
             }}
           >
             →
           </div>
         </div>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 10, flexWrap: "wrap", flex: 1 }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 8, flexWrap: "wrap", flex: 1 }}>
           {children}
         </div>
       </div>
@@ -731,16 +792,17 @@ function RouteBadge({ color, label }: { color: string; label: string }) {
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 8,
-        padding: "6px 10px",
+        gap: 7,
+        padding: "4px 8px",
         borderRadius: 999,
-        background: "rgba(255,248,241,0.92)",
-        border: "3px solid #31405f",
-        boxShadow: "0 4px 0 rgba(49,64,95,0.12)",
-        fontSize: 10,
+        background: "rgba(255,248,241,0.72)",
+        border: `1.5px solid ${color}55`,
+        boxShadow: "0 6px 14px rgba(49,64,95,0.08)",
+        fontSize: 9,
         fontWeight: 900,
         color,
         letterSpacing: "0.08em",
+        backdropFilter: "blur(6px)",
       }}
     >
       <div
@@ -757,7 +819,7 @@ function RouteBadge({ color, label }: { color: string; label: string }) {
       <motion.span
         animate={{ x: [0, 3, 0] }}
         transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-        style={{ color: "#31405f" }}
+        style={{ color: "rgba(49,64,95,0.7)" }}
       >
         →
       </motion.span>
@@ -779,17 +841,41 @@ function StagePanel({ children }: { children: React.ReactNode }) {
     <div
       style={{
         position: "relative",
-        minHeight: 520,
-        borderRadius: 22,
-        border: "3px solid rgba(49,64,95,0.18)",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 100%)",
-        boxShadow: "inset 0 -10px 16px rgba(255,255,255,0.18)",
+        minHeight: 440,
+        borderRadius: 26,
+        border: "1.5px solid rgba(49,64,95,0.14)",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)",
+        boxShadow: "inset 0 -8px 14px rgba(255,255,255,0.16)",
         overflow: "hidden",
-        padding: "18px 18px 16px",
+        padding: "14px 14px 12px",
       }}
     >
       {children}
     </div>
+  );
+}
+
+function FlowLines() {
+  return (
+    <svg
+      viewBox="0 0 1000 430"
+      preserveAspectRatio="none"
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        pointerEvents: "none",
+        opacity: 0.75,
+      }}
+    >
+      <path d="M500 82 C420 122, 338 146, 246 214" stroke="#9f7aea" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
+      <path d="M500 82 C520 128, 534 152, 502 214" stroke="#60a5fa" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
+      <path d="M500 82 C590 130, 694 148, 770 214" stroke="#4ade80" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
+      <path d="M500 228 C448 278, 354 310, 286 356" stroke="#fb923c" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
+      <path d="M500 228 C560 274, 646 308, 714 356" stroke="#f472b6" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
+      <path d="M500 82 C494 190, 494 272, 500 356" stroke="rgba(49,64,95,0.22)" strokeWidth="2" strokeDasharray="6 14" fill="none" strokeLinecap="round" />
+    </svg>
   );
 }
 
@@ -1152,15 +1238,37 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           zIndex: 1,
           display: "flex",
           flexDirection: "column",
-          gap: 12,
-          padding: "72px 12px 12px",
+          gap: 10,
+          padding: "72px 10px 10px",
           minHeight: 0,
           flex: 1,
         }}
       >
         <StagePanel>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
-            <div style={{ width: "min(100%, 290px)" }}>
+          <FlowLines />
+
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 12, alignItems: "start", position: "relative", zIndex: 1 }}>
+            <CompactLogStrip logs={logs} />
+            <div
+              style={{
+                padding: "6px 10px",
+                borderRadius: 999,
+                background: "rgba(255,248,241,0.78)",
+                border: "1.5px solid rgba(49,64,95,0.16)",
+                boxShadow: "0 8px 16px rgba(49,64,95,0.06)",
+                fontSize: 10,
+                fontWeight: 900,
+                color: "#31405f",
+                letterSpacing: "0.08em",
+                whiteSpace: "nowrap",
+              }}
+            >
+              AGENT MAP
+            </div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 12, marginBottom: 10, position: "relative", zIndex: 1 }}>
+            <div style={{ width: "min(100%, 250px)" }}>
               <ZoneCard title="CASTLE HQ" subtitle="社長エリア / 最終判断ポイント" accent="#8b5cf6">
                 {topRow.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
@@ -1169,7 +1277,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
             </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", position: "relative", zIndex: 1 }}>
             <RouteBadge color="#06b6d4" label="REPORT ROUTE" />
             <RouteBadge color="#3b82f6" label="PLAN ROUTE" />
             <RouteBadge color="#22c55e" label="CHECK ROUTE" />
@@ -1177,10 +1285,12 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
 
           <div
             style={{
-              marginTop: 14,
+              marginTop: 10,
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: 12,
+              gridTemplateColumns: "1.45fr 1fr 1fr",
+              gap: 10,
+              position: "relative",
+              zIndex: 1,
             }}
           >
             <ZoneCard title="RESEARCH FIELD" subtitle="情報を集めて司令塔へ持ち帰る" accent="#06b6d4">
@@ -1200,7 +1310,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
             </ZoneCard>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginTop: 10, position: "relative", zIndex: 1 }}>
             <RouteBadge color="#f97316" label="BUILD ROUTE" />
             <RouteBadge color="#ec4899" label="POLISH ROUTE" />
             <RouteBadge color="#8b5cf6" label="DECISION ROUTE" />
@@ -1208,10 +1318,12 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
 
           <div
             style={{
-              marginTop: 14,
+              marginTop: 10,
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-              gap: 16,
+              gridTemplateColumns: "1.3fr 1fr",
+              gap: 12,
+              position: "relative",
+              zIndex: 1,
             }}
           >
             <ZoneCard title="BUILD ZONE" subtitle="実装して素材を持って戻る" accent="#f97316">
@@ -1225,38 +1337,23 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
               ))}
             </ZoneCard>
           </div>
-        </StagePanel>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(260px, 320px) minmax(0, 1fr)",
-            gap: 12,
-            alignItems: "stretch",
-            minHeight: 286,
-          }}
-        >
+          
           <div
             style={{
-              border: "4px solid #31405f",
-              borderRadius: 16,
-              background: "linear-gradient(180deg, #fff8f1 0%, #f7efe2 100%)",
-              boxShadow: "0 8px 0 rgba(49,64,95,0.18)",
-              padding: 10,
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
+              marginTop: 10,
+              position: "relative",
+              zIndex: 1,
+              borderRadius: 22,
+              padding: "8px 10px 10px",
+              background: "rgba(255,248,241,0.72)",
+              border: "1.5px solid rgba(49,64,95,0.14)",
+              boxShadow: "0 10px 20px rgba(49,64,95,0.08)",
+              backdropFilter: "blur(6px)",
             }}
           >
-            <div style={{ fontSize: 10, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.08em" }}>WAITING GAME</div>
-            <div style={{ fontSize: 11, lineHeight: 1.5, color: "#51617c", fontWeight: 700 }}>
-              会議室の下ステージで待機中に遊べます。`Space` でジャンプして甲羅やクリボーをよけます。
-            </div>
-            <WaitingGame active={isRunning} size="small" variant="embedded" />
+            <WaitingGame active={isRunning} size="small" variant="embedded" compact />
           </div>
-
-          <ConversationStream logs={logs} />
-        </div>
+        </StagePanel>
       </div>
     </div>
   );

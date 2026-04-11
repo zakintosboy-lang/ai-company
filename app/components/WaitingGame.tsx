@@ -8,6 +8,7 @@ interface Props {
   active: boolean;
   size?: "small" | "large";
   variant?: "card" | "embedded";
+  compact?: boolean;
 }
 
 const GRAVITY = 0.62;
@@ -15,7 +16,7 @@ const JUMP_POWER = -8.6;
 const PLAYER_X = 36;
 const PLAYER_SIZE = 20;
 
-export default function WaitingGame({ active, size = "small", variant = "card" }: Props) {
+export default function WaitingGame({ active, size = "small", variant = "card", compact = false }: Props) {
   const [gameState, setGameState] = useState<GameState>("ready");
   const [playerY, setPlayerY] = useState(0);
   const [velocityY, setVelocityY] = useState(0);
@@ -45,14 +46,14 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
   }, []);
 
   const large = size === "large";
-  const stageHeight = large ? 188 : 132;
-  const surfaceOffset = large ? 22 : 18;
-  const scaledPlayerX = large ? 68 : PLAYER_X;
-  const scaledPlayerSize = large ? 34 : PLAYER_SIZE;
-  const shellWidth = large ? 30 : 18;
-  const goombaWidth = large ? 32 : 18;
-  const blockWidth = large ? 28 : 16;
-  const fireballWidth = large ? 22 : 14;
+  const stageHeight = compact ? 94 : large ? 188 : 132;
+  const surfaceOffset = compact ? 14 : large ? 22 : 18;
+  const scaledPlayerX = compact ? 34 : large ? 68 : PLAYER_X;
+  const scaledPlayerSize = compact ? 18 : large ? 34 : PLAYER_SIZE;
+  const shellWidth = compact ? 16 : large ? 30 : 18;
+  const goombaWidth = compact ? 18 : large ? 32 : 18;
+  const blockWidth = compact ? 16 : large ? 28 : 16;
+  const fireballWidth = compact ? 12 : large ? 22 : 14;
   const cloudScale = large ? 1.7 : 1;
   const embedded = variant === "embedded";
   const [obstacleType, setObstacleType] = useState<"shell" | "goomba" | "block" | "fireball">("shell");
@@ -214,47 +215,49 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
         borderRadius: large ? 24 : 18,
         background: embedded ? "transparent" : "linear-gradient(180deg, #e4f8ff 0%, #fdf8ef 100%)",
         boxShadow: embedded ? "none" : "0 6px 0 rgba(49,64,95,0.08)",
-        padding: embedded ? 0 : large ? 18 : 12,
+        padding: embedded ? 0 : compact ? 0 : large ? 18 : 12,
         width: "100%",
         maxWidth: large ? 760 : "none",
         borderColor: embedded ? "transparent" : "rgba(49, 64, 95, 0.16)",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: large ? 12 : 8, gap: 12, paddingInline: embedded ? 10 : 0 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: compact ? 6 : large ? 12 : 8, gap: 12, paddingInline: embedded ? 2 : 0 }}>
         <div>
-          <div style={{ fontSize: large ? 13 : 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+          <div style={{ fontSize: compact ? 9 : large ? 13 : 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.08em", textTransform: "uppercase" }}>
             Waiting Game
           </div>
-          <div style={{ fontSize: large ? 14 : 12, color: "#51617c", fontWeight: 700 }}>
+          <div style={{ fontSize: compact ? 10 : large ? 14 : 12, color: "#51617c", fontWeight: 700 }}>
             `Space` でジャンプ
           </div>
         </div>
-        <div style={{ textAlign: "right", fontSize: large ? 14 : 11, fontWeight: 900, color: "#23324f" }}>
+        <div style={{ textAlign: "right", fontSize: compact ? 10 : large ? 14 : 11, fontWeight: 900, color: "#23324f" }}>
           <div>Score {score}</div>
           <div style={{ color: "#f97316" }}>Best {bestScore}</div>
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={jump}
-        style={{
-          width: "100%",
-          marginBottom: 10,
-          border: "3px solid #31405f",
-          borderRadius: large ? 14 : 12,
-          background: active ? "#fff8f1" : "#f6f2ea",
-          color: "#23324f",
-          padding: large ? "10px 12px" : "8px 10px",
-          fontSize: large ? 14 : 12,
-          fontWeight: 900,
-          cursor: active ? "pointer" : "not-allowed",
-          boxShadow: "0 4px 0 rgba(49,64,95,0.08)",
-        }}
-        disabled={!active}
-      >
-        {gameState === "gameover" ? "もう一回遊ぶ" : "ジャンプする"}
-      </button>
+      {!compact && (
+        <button
+          type="button"
+          onClick={jump}
+          style={{
+            width: "100%",
+            marginBottom: 10,
+            border: "3px solid #31405f",
+            borderRadius: large ? 14 : 12,
+            background: active ? "#fff8f1" : "#f6f2ea",
+            color: "#23324f",
+            padding: large ? "10px 12px" : "8px 10px",
+            fontSize: large ? 14 : 12,
+            fontWeight: 900,
+            cursor: active ? "pointer" : "not-allowed",
+            boxShadow: "0 4px 0 rgba(49,64,95,0.08)",
+          }}
+          disabled={!active}
+        >
+          {gameState === "gameover" ? "もう一回遊ぶ" : "ジャンプする"}
+        </button>
+      )}
 
       <div
         style={{
@@ -266,7 +269,7 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
           background: embedded
             ? "linear-gradient(180deg, rgba(122,216,255,0.72) 0%, rgba(199,241,255,0.72) 58%, rgba(217,240,191,0.72) 58%, rgba(217,240,191,0.72) 100%)"
             : "linear-gradient(180deg, #7ad8ff 0%, #c7f1ff 58%, #d9f0bf 58%, #d9f0bf 100%)",
-          boxShadow: "inset 0 -8px 0 rgba(69, 120, 42, 0.12)",
+          boxShadow: compact ? "inset 0 -6px 0 rgba(69, 120, 42, 0.12)" : "inset 0 -8px 0 rgba(69, 120, 42, 0.12)",
         }}
       >
         <div
@@ -277,7 +280,7 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
             backgroundImage:
               "radial-gradient(circle at 20px 20px, #ffffff 0 14px, transparent 15px), radial-gradient(circle at 44px 20px, #ffffff 0 12px, transparent 13px), radial-gradient(circle at 32px 10px, #ffffff 0 10px, transparent 11px)",
             backgroundSize: `${Math.round(96 * cloudScale)}px ${Math.round(44 * cloudScale)}px`,
-            backgroundPosition: `${-bgOffset * 0.18}px ${large ? 18 : 10}px`,
+            backgroundPosition: `${-bgOffset * 0.18}px ${compact ? 8 : large ? 18 : 10}px`,
             backgroundRepeat: "repeat-x",
           }}
         />
@@ -286,24 +289,24 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
             position: "absolute",
             left: 0,
             right: 0,
-            bottom: large ? 54 : 36,
-            height: large ? 48 : 30,
+            bottom: compact ? 28 : large ? 54 : 36,
+            height: compact ? 22 : large ? 48 : 30,
             backgroundImage:
               "radial-gradient(circle at 40px 48px, #86cf66 0 34px, transparent 35px), radial-gradient(circle at 110px 48px, #78c55a 0 26px, transparent 27px)",
-            backgroundSize: large ? "210px 60px" : "140px 42px",
+            backgroundSize: compact ? "120px 30px" : large ? "210px 60px" : "140px 42px",
             backgroundPosition: `${-bgOffset * 0.35}px 0`,
             backgroundRepeat: "repeat-x",
             opacity: 0.95,
           }}
         />
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: large ? 28 : 18, height: large ? 26 : 18, background: "linear-gradient(180deg, #4eb752 0%, #37983b 100%)", borderTop: "3px solid #87df70" }} />
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: compact ? 16 : large ? 28 : 18, height: compact ? 14 : large ? 26 : 18, background: "linear-gradient(180deg, #4eb752 0%, #37983b 100%)", borderTop: "3px solid #87df70" }} />
         <div
           style={{
             position: "absolute",
             left: 0,
             right: 0,
             bottom: 0,
-            height: large ? 30 : 20,
+            height: compact ? 16 : large ? 30 : 20,
             background: "linear-gradient(180deg, #d38a4a 0%, #b86a35 100%)",
             borderTop: "3px solid #f5b36c",
           }}
@@ -314,11 +317,11 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
             left: 0,
             right: 0,
             bottom: 0,
-            height: large ? 30 : 20,
+            height: compact ? 16 : large ? 30 : 20,
             opacity: 0.28,
             backgroundImage:
               "linear-gradient(90deg, transparent 0, transparent 10px, #7b4627 10px, #7b4627 12px, transparent 12px, transparent 34px, #7b4627 34px, #7b4627 36px, transparent 36px)",
-            backgroundSize: large ? "48px 30px" : "40px 20px",
+            backgroundSize: compact ? "34px 16px" : large ? "48px 30px" : "40px 20px",
             backgroundPosition: `${-bgOffset}px 0`,
           }}
         />
@@ -351,7 +354,7 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
             <div
               style={{
                 width: shellWidth,
-                height: large ? 26 : 18,
+                height: compact ? 16 : large ? 26 : 18,
                 borderRadius: "999px 999px 8px 8px",
                 background: "linear-gradient(180deg, #46c85c 0%, #2fa84f 100%)",
                 border: "3px solid #31405f",
@@ -363,7 +366,7 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
             <div
               style={{
                 width: goombaWidth,
-                height: large ? 28 : 20,
+                height: compact ? 18 : large ? 28 : 20,
                 borderRadius: "10px 10px 8px 8px",
                 background: "linear-gradient(180deg, #a16a3d 0%, #7a4e2b 100%)",
                 border: "3px solid #31405f",
@@ -375,7 +378,7 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
             <div
               style={{
                 width: blockWidth,
-                height: large ? 30 : 22,
+                height: compact ? 16 : large ? 30 : 22,
                 background: "#d38a4a",
                 border: "3px solid #31405f",
                 boxShadow: "inset 0 0 0 3px #e8a66f",
@@ -387,7 +390,7 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
             <div
               style={{
                 width: fireballWidth,
-                height: large ? 20 : 14,
+                height: compact ? 12 : large ? 20 : 14,
                 borderRadius: "50%",
                 background: "radial-gradient(circle at 35% 35%, #ffe188 0%, #ff9f43 45%, #e2552f 100%)",
                 border: "3px solid #31405f",
@@ -398,21 +401,21 @@ export default function WaitingGame({ active, size = "small", variant = "card" }
         </div>
 
         {!active && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,248,241,0.68)", fontSize: large ? 14 : 12, fontWeight: 900, color: "#51617c" }}>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,248,241,0.68)", fontSize: compact ? 10 : large ? 14 : 12, fontWeight: 900, color: "#51617c" }}>
             実行中だけ遊べます
           </div>
         )}
 
         {active && gameState === "ready" && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: large ? 16 : 12, fontWeight: 900, color: "#23324f" }}>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: compact ? 10 : large ? 16 : 12, fontWeight: 900, color: "#23324f" }}>
             Spaceでスタート
           </div>
         )}
 
         {active && gameState === "gameover" && (
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(255,248,241,0.45)", color: "#23324f" }}>
-            <div style={{ fontSize: large ? 18 : 13, fontWeight: 900, marginBottom: 4 }}>Game Over</div>
-            <div style={{ fontSize: large ? 13 : 11, fontWeight: 800 }}>Spaceでもう一回</div>
+            <div style={{ fontSize: compact ? 11 : large ? 18 : 13, fontWeight: 900, marginBottom: 4 }}>Game Over</div>
+            <div style={{ fontSize: compact ? 9 : large ? 13 : 11, fontWeight: 800 }}>Spaceでもう一回</div>
           </div>
         )}
       </div>

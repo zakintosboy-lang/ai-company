@@ -149,7 +149,8 @@ type Tab = "logs" | "output";
 
 type ProgressMeta = {
   label: string;
-  progress: number;
+  step: number;
+  total: number;
 };
 
 // ── ヘルパー ──────────────────────────────────────────────────
@@ -181,18 +182,18 @@ function formatSeconds(totalSeconds: number) {
 }
 
 function getProgressMeta(logs: LogEntry[], isRunning: boolean, hasOutput: boolean): ProgressMeta {
-  if (hasOutput) return { label: "完了", progress: 1 };
-  if (!isRunning) return { label: "待機中", progress: 0 };
+  if (hasOutput) return { label: "完了", step: 7, total: 7 };
+  if (!isRunning) return { label: "待機中", step: 0, total: 7 };
 
   const joined = logs.map((log) => log.message).join("\n");
-  if (joined.includes("【Phase 6】")) return { label: "デザイン仕上げ", progress: 0.9 };
-  if (joined.includes("【Editor】")) return { label: "文章調整", progress: 0.82 };
-  if (joined.includes("【Phase 5】")) return { label: "品質レビュー", progress: 0.7 };
-  if (joined.includes("【Phase 4】")) return { label: "コンテンツ生成", progress: 0.56 };
-  if (joined.includes("【Phase 3】")) return { label: "最新情報を調査中", progress: 0.34 };
-  if (joined.includes("【Phase 2】")) return { label: "タスク分解中", progress: 0.18 };
-  if (joined.includes("【Phase 1】")) return { label: "戦略立案中", progress: 0.08 };
-  return { label: "準備中", progress: 0.04 };
+  if (joined.includes("【Phase 6】")) return { label: "デザイン仕上げ", step: 7, total: 7 };
+  if (joined.includes("【Editor】")) return { label: "文章調整", step: 6, total: 7 };
+  if (joined.includes("【Phase 5】")) return { label: "品質レビュー", step: 5, total: 7 };
+  if (joined.includes("【Phase 4】")) return { label: "コンテンツ生成", step: 4, total: 7 };
+  if (joined.includes("【Phase 3】")) return { label: "最新情報を調査中", step: 3, total: 7 };
+  if (joined.includes("【Phase 2】")) return { label: "タスク分解中", step: 2, total: 7 };
+  if (joined.includes("【Phase 1】")) return { label: "戦略立案中", step: 1, total: 7 };
+  return { label: "準備中", step: 0, total: 7 };
 }
 
 // ── 構造化出力 → プレーンテキスト変換 ─────────────────────────
@@ -865,9 +866,7 @@ export default function Home() {
     .filter(id => agents[id]?.status === "thinking" || agents[id]?.status === "reviewing").length;
   const canExport = !!output && !isRunning;
   const progressMeta = getProgressMeta(logs, isRunning, !!output);
-  const estimatedTotalSeconds = Math.max(avgDurationSeconds, 35);
-  const inferredProgress = isRunning ? Math.max(progressMeta.progress, Math.min(elapsedSeconds / estimatedTotalSeconds, 0.96)) : progressMeta.progress;
-  const remainingSeconds = isRunning ? Math.max(0, estimatedTotalSeconds * (1 - inferredProgress)) : 0;
+  const progressSteps = ["待機", "戦略", "分解", "調査", "生成", "レビュー", "編集", "完了"];
 
   return (
     <div className="app">
@@ -904,15 +903,15 @@ export default function Home() {
       <div
         style={{
           margin: "14px 14px 0",
-          border: "4px solid #31405f",
+          border: "3px solid #31405f",
           borderRadius: 20,
           background: "linear-gradient(90deg, #fff8f1 0%, #eef9ff 100%)",
           boxShadow: "0 8px 0 rgba(49,64,95,0.10)",
-          padding: isMobileView ? "10px 12px" : "12px 16px",
+          padding: isMobileView ? "10px 12px" : "10px 14px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 16,
+          gap: 12,
           flexWrap: "wrap",
         }}
       >
@@ -925,39 +924,37 @@ export default function Home() {
           </div>
         </div>
 
-        <div style={{ flex: 1, minWidth: isMobileView ? "100%" : 260 }}>
-          <div
-            style={{
-              height: 18,
-              borderRadius: 999,
-              border: "3px solid #31405f",
-              background: "#fff8f1",
-              overflow: "hidden",
-              boxShadow: "inset 0 2px 0 rgba(49,64,95,0.08)",
-              marginBottom: 6,
-            }}
-          >
-            <div
-              style={{
-                width: `${Math.max(4, inferredProgress * 100)}%`,
-                height: "100%",
-                background: "linear-gradient(90deg, #7f57f1 0%, #ff7b72 55%, #ffd558 100%)",
-                transition: "width 300ms ease",
-              }}
-            />
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 11, color: "#51617c", fontWeight: 800 }}>
-            <span>{isRunning ? `${Math.round(inferredProgress * 100)}% 完了見込み` : "待機中"}</span>
-            <span>{isRunning ? `残り約${formatSeconds(remainingSeconds)}` : `平均${formatSeconds(estimatedTotalSeconds)}`}</span>
-          </div>
+        <div style={{ flex: 1, minWidth: isMobileView ? "100%" : 320, display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {progressSteps.map((step, index) => {
+            const active = index === progressMeta.step;
+            const done = index < progressMeta.step;
+            return (
+              <div
+                key={step}
+                style={{
+                  padding: "6px 9px",
+                  borderRadius: 999,
+                  border: active ? "2px solid #7f57f1" : "2px solid rgba(49,64,95,0.12)",
+                  background: done ? "rgba(127,87,241,0.12)" : active ? "#f4ecff" : "#fff8f1",
+                  color: done || active ? "#7f57f1" : "#64748b",
+                  fontSize: 10,
+                  fontWeight: 900,
+                  letterSpacing: "0.06em",
+                  boxShadow: active ? "0 4px 10px rgba(127,87,241,0.10)" : "none",
+                }}
+              >
+                {step}
+              </div>
+            );
+          })}
         </div>
 
-        <div style={{ textAlign: isMobileView ? "left" : "right", minWidth: 140 }}>
+        <div style={{ textAlign: isMobileView ? "left" : "right", minWidth: 150 }}>
           <div style={{ fontSize: 12, fontWeight: 900, color: "#51617c" }}>
             経過 {isRunning ? formatSeconds(elapsedSeconds) : "0秒"}
           </div>
           <div style={{ fontSize: 11, fontWeight: 800, color: "#f97316", marginTop: 2 }}>
-            目安は過去の実行時間から推定
+            平均 {formatSeconds(Math.max(avgDurationSeconds, 35))}
           </div>
         </div>
       </div>
