@@ -616,7 +616,7 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
         background: "#f7f1e7",
         boxShadow: "0 8px 0 rgba(49,64,95,0.22)",
         overflow: "hidden",
-        maxHeight: 182,
+        maxHeight: 248,
         display: "flex",
         flexDirection: "column",
       }}
@@ -651,7 +651,7 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
         )}
       </div>
 
-      <div ref={scrollRef} style={{ overflowY: "auto", padding: "5px 8px 7px", background: "#fff8f1" }}>
+      <div ref={scrollRef} style={{ overflowY: "auto", padding: "8px 12px 10px", background: "#fff8f1" }}>
         {logs.length === 0 ? (
           <div style={{ padding: "18px 0", textAlign: "center", fontSize: 11, color: "#64748b", fontWeight: 700 }}>
             実行するとここにチームの会話が流れます
@@ -664,16 +664,16 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
                 key={`${log.time}-${i}`}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "44px 52px 1fr",
-                  gap: 6,
+                  gridTemplateColumns: "52px 72px 1fr",
+                  columnGap: 10,
                   alignItems: "start",
-                  padding: "4px 0",
+                  padding: "5px 0",
                   borderBottom: i === displayed.length - 1 ? "none" : "1px dashed rgba(49,64,95,0.18)",
                 }}
               >
-                <span style={{ fontSize: 9, color: "#64748b", fontWeight: 800 }}>{log.time}</span>
-                <span style={{ fontSize: 9, color: cfg.color, fontWeight: 900 }}>{cfg.jaLabel}</span>
-                <span style={{ fontSize: 10.5, color: "#334155", lineHeight: 1.55, fontWeight: 700 }}>{log.message}</span>
+                <span style={{ fontSize: 9, color: "#64748b", fontWeight: 800, whiteSpace: "nowrap" }}>{log.time}</span>
+                <span style={{ fontSize: 9, color: cfg.color, fontWeight: 900, whiteSpace: "nowrap" }}>{cfg.jaLabel}</span>
+                <span style={{ fontSize: 10.5, color: "#334155", lineHeight: 1.6, fontWeight: 700, wordBreak: "break-word" }}>{log.message}</span>
               </div>
             );
           })
