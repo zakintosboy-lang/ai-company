@@ -1140,8 +1140,6 @@ export default function Home() {
             </div>
           </div>
 
-          <WaitingGame active={isRunning} />
-
           <div className={`export-section ${canExport ? "visible" : ""}`}>
             <div className="panel-section-label">エクスポート</div>
             <div className="export-buttons">
@@ -1169,20 +1167,34 @@ export default function Home() {
 
           {/* Meeting Room */}
           {activeTab === "logs" && (
-            <div style={{ flex: 1, overflow: "hidden" }}>
-              <MeetingRoom
-                logs={logs}
-                agents={Object.values(agents).map(c => ({
-                  id: c.config.id,
-                  role: c.config.role,
-                  name: c.config.name,
-                  status: c.status,
-                  lastMessage: c.lastMessage,
-                  model: c.config.model.displayName,
-                }))}
-                isRunning={isRunning}
-                output={!!output}
-              />
+            <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              {isRunning && (
+                <div
+                  style={{
+                    padding: isMobileView ? "10px" : "16px 16px 0",
+                    display: "flex",
+                    justifyContent: "center",
+                    background: "rgba(255,255,255,0.18)",
+                  }}
+                >
+                  <WaitingGame active={isRunning} size="large" />
+                </div>
+              )}
+              <div style={{ flex: 1, overflow: "hidden", paddingTop: isRunning ? 12 : 0 }}>
+                <MeetingRoom
+                  logs={logs}
+                  agents={Object.values(agents).map(c => ({
+                    id: c.config.id,
+                    role: c.config.role,
+                    name: c.config.name,
+                    status: c.status,
+                    lastMessage: c.lastMessage,
+                    model: c.config.model.displayName,
+                  }))}
+                  isRunning={isRunning}
+                  output={!!output}
+                />
+              </div>
             </div>
           )}
 

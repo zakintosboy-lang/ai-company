@@ -80,7 +80,8 @@ export async function formatOutput(
       ],
     });
 
-    const text = response.content[0].type === "text" ? response.content[0].text : "";
+    const firstBlock = response.content[0];
+    const text = firstBlock?.type === "text" ? firstBlock.text : "";
     const cleaned = text.replace(/^```(?:json)?\s*/m, "").replace(/\s*```$/m, "").trim();
     const match = cleaned.match(/\{[\s\S]*\}/);
 

@@ -28,14 +28,15 @@ const STAGE_META: Record<OutputStage, { label: string; title: string; icon: stri
 };
 
 function classifySectionStage(section: OutputSection): OutputStage {
-  const haystack = `${section.title} ${section.content ?? ""} ${(section.items ?? []).join(" ")}`.toLowerCase();
+  if (!section) return "research";
+  const haystack = `${section.title ?? ""} ${section.content ?? ""} ${(section.items ?? []).join(" ")}`.toLowerCase();
   if (STAGE_META.recommendation.keywords.some(k => haystack.includes(k))) return "recommendation";
   if (section.type === "steps" || STAGE_META.proposal.keywords.some(k => haystack.includes(k))) return "proposal";
   return "research";
 }
 
 function buildStructuredSections(sections: OutputSection[]) {
-  const staged = sections.map((section, originalIndex) => ({
+  const staged = (sections ?? []).filter(Boolean).map((section, originalIndex) => ({
     section, stage: classifySectionStage(section), originalIndex,
   }));
   staged.sort((a, b) => {

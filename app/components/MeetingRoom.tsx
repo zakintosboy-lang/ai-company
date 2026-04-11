@@ -87,6 +87,53 @@ const LAKITU_SPRITE = spriteFromRows([
   ".CCCCCCCC.",
 ], DECOR_PALETTE);
 
+const KOOPA_SPRITE = spriteFromRows([
+  "..GGYYGG..",
+  ".GYYYYYYG.",
+  ".GYWKKWYG.",
+  ".GYYYYYYG.",
+  "..GYYYYG..",
+  "..SSYYSS..",
+  ".NNGGGGNN.",
+  "..NN..NN..",
+], DECOR_PALETTE);
+
+const PEACH_SPRITE = spriteFromRows([
+  "...YYYY...",
+  "..YYSSYY..",
+  ".YYSSSSYY.",
+  ".YYWSSWYY.",
+  "..YYSSYY..",
+  "...PPPP...",
+  "..PPPPPP..",
+  "..SS..SS..",
+], DECOR_PALETTE);
+
+const PIRANHA_SPRITE = spriteFromRows([
+  "...RRR....",
+  "..RWWWR...",
+  ".RWWKWWR..",
+  ".RWWWWW...",
+  "..RWWW....",
+  "...GG.....",
+  "...GG.....",
+  "...GG.....",
+], {
+  ...DECOR_PALETTE,
+  R: "#df5548",
+});
+
+const BOWSER_SPRITE = spriteFromRows([
+  "..GGYYYYGG..",
+  ".GGYYYYYYGG.",
+  ".GYWKKKKWYG.",
+  ".GYYYYYYYYG.",
+  "..GYYMMYYG..",
+  ".NNGGGGGGNN.",
+  ".NNNGGGGNNN.",
+  "..NN....NN..",
+], DECOR_PALETTE);
+
 function PixelDecor({ pixels, cellSize }: { pixels: PixelGrid; cellSize: number }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", imageRendering: "pixelated" }}>
@@ -596,6 +643,20 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         <PixelDecor pixels={LAKITU_SPRITE} cellSize={4} />
       </motion.div>
       <motion.div
+        style={{ position: "absolute", top: 118, right: 76, zIndex: 1, pointerEvents: "none" }}
+        animate={{ y: [0, -3, 0] }}
+        transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <PixelDecor pixels={PEACH_SPRITE} cellSize={3.4} />
+      </motion.div>
+      <motion.div
+        style={{ position: "absolute", top: 126, left: 92, zIndex: 1, pointerEvents: "none" }}
+        animate={{ y: [0, -2, 0] }}
+        transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <PixelDecor pixels={BOWSER_SPRITE} cellSize={3.6} />
+      </motion.div>
+      <motion.div
         style={{ position: "absolute", bottom: 182, left: 220, zIndex: 1, pointerEvents: "none" }}
         animate={{ x: [0, 6, 0] }}
         transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
@@ -608,6 +669,20 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         transition={{ duration: 3.1, repeat: Infinity, ease: "easeInOut" }}
       >
         <PixelDecor pixels={GOOMBA_SPRITE} cellSize={3.6} />
+      </motion.div>
+      <motion.div
+        style={{ position: "absolute", bottom: 188, left: 324, zIndex: 1, pointerEvents: "none" }}
+        animate={{ x: [0, 4, 0] }}
+        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <PixelDecor pixels={KOOPA_SPRITE} cellSize={3.8} />
+      </motion.div>
+      <motion.div
+        style={{ position: "absolute", bottom: 154, right: 108, zIndex: 1, pointerEvents: "none" }}
+        animate={{ y: [0, -5, 0] }}
+        transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <PixelDecor pixels={PIRANHA_SPRITE} cellSize={4} />
       </motion.div>
 
       <div

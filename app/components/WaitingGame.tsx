@@ -6,6 +6,7 @@ type GameState = "ready" | "playing" | "gameover";
 
 interface Props {
   active: boolean;
+  size?: "small" | "large";
 }
 
 const GRAVITY = 0.62;
@@ -15,7 +16,7 @@ const PLAYER_X = 36;
 const PLAYER_SIZE = 20;
 const OBSTACLE_WIDTH = 14;
 
-export default function WaitingGame({ active }: Props) {
+export default function WaitingGame({ active, size = "small" }: Props) {
   const [gameState, setGameState] = useState<GameState>("ready");
   const [playerY, setPlayerY] = useState(0);
   const [velocityY, setVelocityY] = useState(0);
@@ -43,6 +44,13 @@ export default function WaitingGame({ active }: Props) {
   }, []);
 
   const obstacleHeight = useMemo(() => 22 + (score % 3) * 6, [score]);
+  const large = size === "large";
+  const stageHeight = large ? 228 : 132;
+  const scaledGroundY = large ? 170 : GROUND_Y;
+  const scaledPlayerX = large ? 68 : PLAYER_X;
+  const scaledPlayerSize = large ? 34 : PLAYER_SIZE;
+  const scaledObstacleWidth = large ? 24 : OBSTACLE_WIDTH;
+  const cloudScale = large ? 1.7 : 1;
 
   const resetGame = () => {
     setGameState(active ? "playing" : "ready");
@@ -126,7 +134,7 @@ export default function WaitingGame({ active }: Props) {
       const speed = (4.8 + Math.min(scoreRef.current, 20) * 0.12) * delta;
       let nextX = obstacleXRef.current - speed;
 
-      if (nextX < -OBSTACLE_WIDTH) {
+      if (nextX < -scaledObstacleWidth) {
         nextX = 260 + Math.random() * 90;
         scoreCarryRef.current += 1;
         scoreRef.current = scoreCarryRef.current;
@@ -137,13 +145,13 @@ export default function WaitingGame({ active }: Props) {
       setObstacleX(nextX);
 
       const currentObstacleHeight = 22 + (scoreRef.current % 3) * 6;
-      const playerBottom = GROUND_Y - playerYRef.current;
-      const playerTop = playerBottom - PLAYER_SIZE;
+      const playerBottom = scaledGroundY - playerYRef.current;
+      const playerTop = playerBottom - scaledPlayerSize;
       const obstacleLeft = nextX;
-      const obstacleRight = nextX + OBSTACLE_WIDTH;
-      const obstacleTop = GROUND_Y - currentObstacleHeight;
-      const hitX = PLAYER_X + PLAYER_SIZE - 4 >= obstacleLeft && PLAYER_X + 4 <= obstacleRight;
-      const hitY = playerBottom >= obstacleTop && playerTop <= GROUND_Y;
+      const obstacleRight = nextX + scaledObstacleWidth;
+      const obstacleTop = scaledGroundY - currentObstacleHeight;
+      const hitX = scaledPlayerX + scaledPlayerSize - 4 >= obstacleLeft && scaledPlayerX + 4 <= obstacleRight;
+      const hitY = playerBottom >= obstacleTop && playerTop <= scaledGroundY;
 
       if (hitX && hitY) {
         setGameState("gameover");
@@ -166,28 +174,30 @@ export default function WaitingGame({ active }: Props) {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [active, gameState]);
+  }, [active, gameState, scaledGroundY, scaledObstacleWidth, scaledPlayerSize, scaledPlayerX]);
 
   return (
     <div
       style={{
         border: "3px solid rgba(49, 64, 95, 0.16)",
-        borderRadius: 18,
+        borderRadius: large ? 24 : 18,
         background: "linear-gradient(180deg, #e4f8ff 0%, #fdf8ef 100%)",
         boxShadow: "0 6px 0 rgba(49,64,95,0.08)",
-        padding: 12,
+        padding: large ? 18 : 12,
+        width: "100%",
+        maxWidth: large ? 760 : "none",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: large ? 12 : 8, gap: 12 }}>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+          <div style={{ fontSize: large ? 13 : 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.08em", textTransform: "uppercase" }}>
             Waiting Game
           </div>
-          <div style={{ fontSize: 12, color: "#51617c", fontWeight: 700 }}>
+          <div style={{ fontSize: large ? 14 : 12, color: "#51617c", fontWeight: 700 }}>
             `Space` でジャンプ
           </div>
         </div>
-        <div style={{ textAlign: "right", fontSize: 11, fontWeight: 900, color: "#23324f" }}>
+        <div style={{ textAlign: "right", fontSize: large ? 14 : 11, fontWeight: 900, color: "#23324f" }}>
           <div>Score {score}</div>
           <div style={{ color: "#f97316" }}>Best {bestScore}</div>
         </div>
@@ -200,11 +210,11 @@ export default function WaitingGame({ active }: Props) {
           width: "100%",
           marginBottom: 10,
           border: "3px solid #31405f",
-          borderRadius: 12,
+          borderRadius: large ? 14 : 12,
           background: active ? "#fff8f1" : "#f6f2ea",
           color: "#23324f",
-          padding: "8px 10px",
-          fontSize: 12,
+          padding: large ? "10px 12px" : "8px 10px",
+          fontSize: large ? 14 : 12,
           fontWeight: 900,
           cursor: active ? "pointer" : "not-allowed",
           boxShadow: "0 4px 0 rgba(49,64,95,0.08)",
@@ -217,41 +227,46 @@ export default function WaitingGame({ active }: Props) {
       <div
         style={{
           position: "relative",
-          height: 132,
+          height: stageHeight,
           overflow: "hidden",
-          borderRadius: 14,
+          borderRadius: large ? 18 : 14,
           border: "3px solid #31405f",
           background: "linear-gradient(180deg, #7ad8ff 0%, #c7f1ff 58%, #d9f0bf 58%, #d9f0bf 100%)",
           boxShadow: "inset 0 -8px 0 rgba(69, 120, 42, 0.12)",
         }}
       >
-        <div style={{ position: "absolute", top: 14, left: 34, width: 42, height: 12, borderRadius: 999, background: "#fff", boxShadow: "18px 0 0 #fff, 9px -6px 0 #fff" }} />
-        <div style={{ position: "absolute", top: 24, right: 40, width: 32, height: 10, borderRadius: 999, background: "#fff", boxShadow: "16px 0 0 #fff" }} />
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 18, height: 18, background: "linear-gradient(180deg, #4eb752 0%, #37983b 100%)", borderTop: "3px solid #87df70" }} />
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 20, background: "linear-gradient(180deg, #d38a4a 0%, #b86a35 100%)", borderTop: "3px solid #f5b36c" }} />
+        <div style={{ position: "absolute", top: large ? 22 : 14, left: large ? 58 : 34, width: 42 * cloudScale, height: 12 * cloudScale, borderRadius: 999, background: "#fff", boxShadow: `${18 * cloudScale}px 0 0 #fff, ${9 * cloudScale}px ${-6 * cloudScale}px 0 #fff` }} />
+        <div style={{ position: "absolute", top: large ? 38 : 24, right: large ? 72 : 40, width: 32 * cloudScale, height: 10 * cloudScale, borderRadius: 999, background: "#fff", boxShadow: `${16 * cloudScale}px 0 0 #fff` }} />
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: large ? 28 : 18, height: large ? 26 : 18, background: "linear-gradient(180deg, #4eb752 0%, #37983b 100%)", borderTop: "3px solid #87df70" }} />
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: large ? 30 : 20, background: "linear-gradient(180deg, #d38a4a 0%, #b86a35 100%)", borderTop: "3px solid #f5b36c" }} />
+        {large && <div style={{ position: "absolute", left: 180, bottom: 58, width: 46, height: 86, borderRadius: "16px 16px 0 0", background: "#35b34f", border: "4px solid #31405f", boxShadow: "inset 0 0 0 4px #71dd78" }} />}
+        {large && <div style={{ position: "absolute", left: 174, bottom: 128, width: 58, height: 24, borderRadius: 999, background: "#35b34f", border: "4px solid #31405f", boxShadow: "inset 0 0 0 4px #71dd78" }} />}
+        {large && <div style={{ position: "absolute", right: 120, bottom: 54, width: 32, height: 32, background: "#ffd558", border: "4px solid #31405f", boxShadow: "inset 0 0 0 4px #ffe188" }} />}
+        {large && <div style={{ position: "absolute", right: 86, bottom: 54, width: 32, height: 32, background: "#d38a4a", border: "4px solid #31405f", boxShadow: "inset 0 0 0 4px #e0a36d" }} />}
+        {large && <div style={{ position: "absolute", right: 154, bottom: 54, width: 32, height: 32, background: "#d38a4a", border: "4px solid #31405f", boxShadow: "inset 0 0 0 4px #e0a36d" }} />}
 
         <div
           style={{
             position: "absolute",
-            left: PLAYER_X,
-            bottom: GROUND_Y - playerY - PLAYER_SIZE,
-            width: PLAYER_SIZE,
-            height: PLAYER_SIZE,
+            left: scaledPlayerX,
+            bottom: scaledGroundY - playerY - scaledPlayerSize,
+            width: scaledPlayerSize,
+            height: scaledPlayerSize,
             borderRadius: 4,
             background: "linear-gradient(180deg, #ff6e62 0%, #ff9b90 100%)",
             border: "3px solid #31405f",
             boxShadow: playerY > 0 ? "0 6px 0 rgba(49,64,95,0.10)" : "0 4px 0 rgba(49,64,95,0.14)",
           }}
         >
-          <div style={{ position: "absolute", left: 4, top: 4, width: 8, height: 8, background: "#fff8f1", borderRadius: 2 }} />
+          <div style={{ position: "absolute", left: large ? 7 : 4, top: large ? 7 : 4, width: large ? 12 : 8, height: large ? 12 : 8, background: "#fff8f1", borderRadius: 2 }} />
         </div>
 
         <div
           style={{
             position: "absolute",
             left: obstacleX,
-            bottom: GROUND_Y - obstacleHeight,
-            width: OBSTACLE_WIDTH,
+            bottom: scaledGroundY - obstacleHeight,
+            width: scaledObstacleWidth,
             height: obstacleHeight,
             borderRadius: "6px 6px 0 0",
             background: "linear-gradient(180deg, #7bd95d 0%, #2fa84f 100%)",
@@ -261,21 +276,21 @@ export default function WaitingGame({ active }: Props) {
         />
 
         {!active && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,248,241,0.68)", fontSize: 12, fontWeight: 900, color: "#51617c" }}>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,248,241,0.68)", fontSize: large ? 14 : 12, fontWeight: 900, color: "#51617c" }}>
             実行中だけ遊べます
           </div>
         )}
 
         {active && gameState === "ready" && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: "#23324f" }}>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: large ? 16 : 12, fontWeight: 900, color: "#23324f" }}>
             Spaceでスタート
           </div>
         )}
 
         {active && gameState === "gameover" && (
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(255,248,241,0.45)", color: "#23324f" }}>
-            <div style={{ fontSize: 13, fontWeight: 900, marginBottom: 4 }}>Game Over</div>
-            <div style={{ fontSize: 11, fontWeight: 800 }}>Spaceでもう一回</div>
+            <div style={{ fontSize: large ? 18 : 13, fontWeight: 900, marginBottom: 4 }}>Game Over</div>
+            <div style={{ fontSize: large ? 13 : 11, fontWeight: 800 }}>Spaceでもう一回</div>
           </div>
         )}
       </div>
