@@ -387,10 +387,138 @@ function ActivityBadge({ agent }: { agent: AgentInfo }) {
   );
 }
 
+function WorkEffect({ agent }: { agent: AgentInfo }) {
+  const active = agent.status === "thinking" || agent.status === "reviewing";
+  if (!active) return null;
+
+  const effectByRole: Record<AgentRole, { items: string[]; color: string }> = {
+    ceo: { items: ["!", "!", "!"], color: "#8b5cf6" },
+    manager: { items: [">", ">", ">"], color: "#3b82f6" },
+    worker: { items: ["*", "*", "*"], color: "#f97316" },
+    reviewer: { items: ["?", "?", "?"], color: "#22c55e" },
+    researcher: { items: ["~", "~", "~"], color: "#06b6d4" },
+    designer: { items: ["+", "+", "+"], color: "#ec4899" },
+    editor: { items: ["/", "/", "/"], color: "#84cc16" },
+    system: { items: [".", ".", "."], color: "#64748b" },
+  };
+  const meta = effectByRole[agent.role] ?? effectByRole.system;
+
+  return (
+    <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+      {meta.items.map((item, index) => {
+        const left = index === 0 ? -10 : index === 1 ? 50 : 104;
+        return (
+          <motion.div
+            key={`${agent.id}-${item}-${index}`}
+            style={{
+              position: "absolute",
+              top: index === 1 ? -6 : 4,
+              left: `${left}%`,
+              fontSize: 10,
+              fontWeight: 900,
+              color: meta.color,
+              textShadow: "0 1px 0 rgba(255,255,255,0.65)",
+            }}
+            animate={{ y: [0, -7, -11], opacity: [0, 1, 0], scale: [0.8, 1, 1.06] }}
+            transition={{ duration: 1.3, repeat: Infinity, delay: index * 0.18, ease: "easeOut" }}
+          >
+            {item}
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+}
+
+function getTravelMotion(agent: AgentInfo) {
+  if (agent.status !== "thinking" && agent.status !== "reviewing") {
+    return {
+      x: [0, 0],
+      y: [0, -1, 0],
+      scale: [1, 1.01, 1],
+      rotate: [0, 0, 0],
+    };
+  }
+
+  if (agent.role === "ceo") {
+    return {
+      x: [0, 0, 0],
+      y: [0, -12, 0],
+      scale: [1, 1.08, 1],
+      rotate: [0, -2, 0],
+    };
+  }
+
+  if (agent.role === "manager") {
+    return {
+      x: [0, 18, 8, 0],
+      y: [0, -18, -24, 0],
+      scale: [1, 1.08, 1.04, 1],
+      rotate: [0, -5, -2, 0],
+    };
+  }
+
+  if (agent.role === "researcher") {
+    const byId: Record<string, number> = {
+      "researcher-1": 18,
+      "researcher-2": 0,
+      "researcher-3": -18,
+    };
+    const dx = byId[agent.id] ?? 0;
+    return {
+      x: [0, dx, dx * 0.4, 0],
+      y: [0, -16, -22, 0],
+      scale: [1, 1.06, 1.02, 1],
+      rotate: [0, dx > 0 ? -4 : dx < 0 ? 4 : 0, 0, 0],
+    };
+  }
+
+  if (agent.role === "worker") {
+    const byId: Record<string, number> = {
+      "worker-1": 28,
+      "worker-2": 0,
+      "worker-3": -28,
+    };
+    const dx = byId[agent.id] ?? 0;
+    return {
+      x: [0, dx, dx * 0.35, 0],
+      y: [0, -24, -30, 0],
+      scale: [1, 1.1, 1.04, 1],
+      rotate: [0, dx > 0 ? -6 : dx < 0 ? 6 : 0, 0, 0],
+    };
+  }
+
+  if (agent.role === "editor") {
+    return {
+      x: [0, -14, -8, 0],
+      y: [0, -14, -22, 0],
+      scale: [1, 1.08, 1.04, 1],
+      rotate: [0, 4, 0, 0],
+    };
+  }
+
+  if (agent.role === "designer") {
+    return {
+      x: [0, -4, 6, 0],
+      y: [0, -16, -24, 0],
+      scale: [1, 1.08, 1.04, 1],
+      rotate: [0, -6, 2, 0],
+    };
+  }
+
+  return {
+    x: [0, -10, -6, 0],
+    y: [0, -18, -20, 0],
+    scale: [1, 1.06, 1.03, 1],
+    rotate: [0, 4, 0, 0],
+  };
+}
+
 function CharacterUnit({ agent }: { agent: AgentInfo }) {
   const cfg = ROLE_CONFIG[agent.role] ?? ROLE_CONFIG.system;
   const active = agent.status === "thinking" || agent.status === "reviewing";
   const size = agent.role === "ceo" ? 3.8 : 3.3;
+  const motionProfile = getTravelMotion(agent);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, minWidth: 70 }}>
@@ -406,6 +534,7 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
 
       <div style={{ position: "relative", paddingBottom: 6 }}>
         <ActivityBadge agent={agent} />
+        <WorkEffect agent={agent} />
         <div
           style={{
             position: "absolute",
@@ -420,13 +549,14 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
           }}
         />
         <motion.div
-          animate={active ? { y: [0, -4, 0] } : { y: [0, -1, 0] }}
-          transition={{ duration: active ? 0.7 : 2.4, repeat: Infinity, ease: "easeInOut" }}
+          animate={motionProfile}
+          transition={{ duration: active ? 1.35 : 2.4, repeat: Infinity, ease: "easeInOut" }}
           style={{
             padding: "4px 5px",
             borderRadius: 8,
             background: "rgba(255,255,255,0.16)",
             boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.28)",
+            zIndex: active ? 3 : 1,
           }}
         >
           <PixelCharacter role={agent.role} status={agent.status} agentId={agent.id} size={size} />
@@ -451,6 +581,20 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
   );
 }
 
+function lineupOrFallback(
+  rows: string[][],
+  getAgent: (id: string) => AgentInfo | undefined,
+  fallback: AgentInfo[]
+): AgentInfo[][] {
+  const mapped = rows.map((row) => row.map((id) => getAgent(id)).filter(Boolean) as AgentInfo[]);
+  if (mapped.some((row) => row.length > 0)) return mapped;
+  return [
+    fallback.filter((agent) => agent.id === "ceo"),
+    fallback.filter((agent) => ["manager", "researcher-1", "researcher-2", "researcher-3", "reviewer"].includes(agent.id)),
+    fallback.filter((agent) => ["worker-1", "worker-2", "worker-3", "editor", "designer"].includes(agent.id)),
+  ];
+}
+
 function ConversationStream({ logs }: { logs: LogEntry[] }) {
   const [showAll, setShowAll] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -472,7 +616,7 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
         background: "#f7f1e7",
         boxShadow: "0 8px 0 rgba(49,64,95,0.22)",
         overflow: "hidden",
-        maxHeight: 198,
+        maxHeight: 182,
         display: "flex",
         flexDirection: "column",
       }}
@@ -507,7 +651,7 @@ function ConversationStream({ logs }: { logs: LogEntry[] }) {
         )}
       </div>
 
-      <div ref={scrollRef} style={{ overflowY: "auto", padding: "6px 8px 8px", background: "#fff8f1" }}>
+      <div ref={scrollRef} style={{ overflowY: "auto", padding: "5px 8px 7px", background: "#fff8f1" }}>
         {logs.length === 0 ? (
           <div style={{ padding: "18px 0", textAlign: "center", fontSize: 11, color: "#64748b", fontWeight: 700 }}>
             実行するとここにチームの会話が流れます
@@ -557,21 +701,13 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         { id: "designer", role: "designer", name: "Designer", status: "idle" as AgentStatus },
       ];
 
-  const lineup = [
-    getAgent("ceo"),
-    getAgent("manager"),
-    getAgent("researcher-1"),
-    getAgent("researcher-2"),
-    getAgent("researcher-3"),
-    getAgent("worker-1"),
-    getAgent("worker-2"),
-    getAgent("worker-3"),
-    getAgent("editor"),
-    getAgent("designer"),
-    getAgent("reviewer"),
-  ].filter(Boolean) as AgentInfo[];
+  const lineup = lineupOrFallback([
+    ["ceo"],
+    ["manager", "researcher-1", "researcher-2", "researcher-3", "reviewer"],
+    ["worker-1", "worker-2", "worker-3", "editor", "designer"],
+  ], getAgent, all);
 
-  const cast = lineup.length > 0 ? lineup : all;
+  const [topRow, middleRow, bottomRow] = lineup;
 
   return (
     <div
@@ -607,15 +743,15 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         }}
       />
 
-      <div style={{ position: "absolute", top: 40, left: 48, width: 108, height: 24, borderRadius: 999, background: "#ffffff", boxShadow: "26px 6px 0 0 #ffffff, 54px 0 0 0 #ffffff" }} />
-      <div style={{ position: "absolute", top: 78, right: 120, width: 82, height: 18, borderRadius: 999, background: "#ffffff", boxShadow: "22px -4px 0 0 #ffffff, 46px 2px 0 0 #ffffff" }} />
-      <div style={{ position: "absolute", top: 98, right: 54, width: 58, height: 14, borderRadius: 999, background: "#ffffff", boxShadow: "16px 0 0 0 #ffffff" }} />
+      <div style={{ position: "absolute", top: 32, left: 42, width: 96, height: 20, borderRadius: 999, background: "#ffffff", boxShadow: "22px 5px 0 0 #ffffff, 46px 0 0 0 #ffffff" }} />
+      <div style={{ position: "absolute", top: 66, right: 118, width: 72, height: 16, borderRadius: 999, background: "#ffffff", boxShadow: "18px -4px 0 0 #ffffff, 38px 2px 0 0 #ffffff" }} />
+      <div style={{ position: "absolute", top: 84, right: 58, width: 52, height: 12, borderRadius: 999, background: "#ffffff", boxShadow: "14px 0 0 0 #ffffff" }} />
 
       <div
         style={{
           position: "absolute",
           left: 40,
-          bottom: 208,
+          bottom: 190,
           width: 210,
           height: 112,
           background: "#8ed36e",
@@ -627,7 +763,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           left: 102,
-          bottom: 248,
+          bottom: 224,
           width: 12,
           height: 12,
           borderRadius: "50%",
@@ -640,7 +776,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           right: 36,
-          bottom: 212,
+          bottom: 194,
           width: 240,
           height: 126,
           background: "#9ce07f",
@@ -652,7 +788,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           right: 102,
-          bottom: 258,
+          bottom: 232,
           width: 12,
           height: 12,
           borderRadius: "50%",
@@ -666,7 +802,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           left: 0,
-          bottom: 222,
+          bottom: 202,
           width: "32%",
           height: 128,
           background: "#b6a0d5",
@@ -678,7 +814,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           right: 0,
-          bottom: 220,
+          bottom: 200,
           width: "34%",
           height: 136,
           background: "#c7b3e4",
@@ -692,8 +828,8 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: 180,
-          height: 40,
+          bottom: 158,
+          height: 34,
           background:
             "linear-gradient(180deg, #49b34d 0%, #49b34d 48%, #37983b 48%, #37983b 100%)",
           borderTop: "4px solid #83de6b",
@@ -705,8 +841,8 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: 132,
-          height: 52,
+          bottom: 92,
+          height: 46,
           background:
             "linear-gradient(180deg, #d38a4a 0%, #d38a4a 50%, #b86a35 50%, #b86a35 100%)",
           borderTop: "4px solid #f5b36c",
@@ -719,8 +855,8 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: 132,
-          height: 52,
+          bottom: 92,
+          height: 46,
           opacity: 0.22,
           backgroundImage:
             "linear-gradient(90deg, transparent 0, transparent 10px, #6b3418 10px, #6b3418 12px, transparent 12px, transparent 36px, #6b3418 36px, #6b3418 38px, transparent 38px), linear-gradient(transparent 0, transparent 10px, #6b3418 10px, #6b3418 12px, transparent 12px)",
@@ -731,8 +867,8 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
       <div
         style={{
           position: "absolute",
-          left: 84,
-          bottom: 184,
+          left: 70,
+          bottom: 162,
           display: "grid",
           gridTemplateColumns: "repeat(4, 26px)",
           gap: 3,
@@ -771,63 +907,63 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
       </div>
 
       <motion.div
-        style={{ position: "absolute", top: 38, left: 260, zIndex: 1, pointerEvents: "none" }}
+        style={{ position: "absolute", top: 32, left: 238, zIndex: 1, pointerEvents: "none" }}
         animate={{ y: [0, -4, 0] }}
         transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
       >
         <PixelDecor pixels={COIN_SPRITE} cellSize={4} />
       </motion.div>
       <motion.div
-        style={{ position: "absolute", top: 62, left: 324, zIndex: 1, pointerEvents: "none" }}
+        style={{ position: "absolute", top: 52, left: 292, zIndex: 1, pointerEvents: "none" }}
         animate={{ y: [0, -5, 0] }}
         transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
       >
         <PixelDecor pixels={COIN_SPRITE} cellSize={3.6} />
       </motion.div>
       <motion.div
-        style={{ position: "absolute", top: 54, right: 180, zIndex: 1, pointerEvents: "none" }}
+        style={{ position: "absolute", top: 46, right: 154, zIndex: 1, pointerEvents: "none" }}
         animate={{ x: [0, 6, 0], y: [0, -2, 0] }}
         transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
       >
         <PixelDecor pixels={LAKITU_SPRITE} cellSize={4} />
       </motion.div>
       <motion.div
-        style={{ position: "absolute", top: 118, right: 76, zIndex: 1, pointerEvents: "none" }}
+        style={{ position: "absolute", top: 102, right: 62, zIndex: 1, pointerEvents: "none" }}
         animate={{ y: [0, -3, 0] }}
         transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
       >
         <PixelDecor pixels={PEACH_SPRITE} cellSize={3.4} />
       </motion.div>
       <motion.div
-        style={{ position: "absolute", top: 126, left: 92, zIndex: 1, pointerEvents: "none" }}
+        style={{ position: "absolute", top: 110, left: 74, zIndex: 1, pointerEvents: "none" }}
         animate={{ y: [0, -2, 0] }}
         transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
       >
         <PixelDecor pixels={BOWSER_SPRITE} cellSize={3.6} />
       </motion.div>
       <motion.div
-        style={{ position: "absolute", bottom: 182, left: 220, zIndex: 1, pointerEvents: "none" }}
+        style={{ position: "absolute", bottom: 158, left: 198, zIndex: 1, pointerEvents: "none" }}
         animate={{ x: [0, 6, 0] }}
         transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
       >
         <PixelDecor pixels={GOOMBA_SPRITE} cellSize={4} />
       </motion.div>
       <motion.div
-        style={{ position: "absolute", bottom: 184, right: 228, zIndex: 1, pointerEvents: "none" }}
+        style={{ position: "absolute", bottom: 160, right: 204, zIndex: 1, pointerEvents: "none" }}
         animate={{ x: [0, -5, 0] }}
         transition={{ duration: 3.1, repeat: Infinity, ease: "easeInOut" }}
       >
         <PixelDecor pixels={GOOMBA_SPRITE} cellSize={3.6} />
       </motion.div>
       <motion.div
-        style={{ position: "absolute", bottom: 188, left: 324, zIndex: 1, pointerEvents: "none" }}
+        style={{ position: "absolute", bottom: 162, left: 294, zIndex: 1, pointerEvents: "none" }}
         animate={{ x: [0, 4, 0] }}
         transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
       >
         <PixelDecor pixels={KOOPA_SPRITE} cellSize={3.8} />
       </motion.div>
       <motion.div
-        style={{ position: "absolute", bottom: 154, right: 108, zIndex: 1, pointerEvents: "none" }}
+        style={{ position: "absolute", bottom: 114, right: 98, zIndex: 1, pointerEvents: "none" }}
         animate={{ y: [0, -5, 0] }}
         transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut" }}
       >
@@ -838,9 +974,9 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         style={{
           position: "absolute",
           right: 106,
-          bottom: 184,
+          bottom: 150,
           width: 54,
-          height: 76,
+          height: 60,
           background: "#37b24d",
           border: "4px solid #1f6f31",
           borderBottom: "none",
@@ -851,10 +987,10 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
       <div
         style={{
           position: "absolute",
-          right: 96,
-          bottom: 244,
-          width: 74,
-          height: 22,
+          right: 98,
+          bottom: 198,
+          width: 66,
+          height: 18,
           background: "#37b24d",
           border: "4px solid #1f6f31",
           borderRadius: 999,
@@ -867,7 +1003,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           position: "absolute",
           left: 20,
           right: 20,
-          bottom: 116,
+          bottom: 80,
           height: 18,
           background:
             "repeating-linear-gradient(90deg, #d38a4a 0 34px, #b86a35 34px 38px)",
@@ -897,19 +1033,30 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
       <div
         style={{
           flex: 1,
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "center",
-          gap: 10,
-          padding: "86px 18px 248px",
+          display: "grid",
+          gridTemplateRows: "auto auto auto",
+          alignContent: "start",
+          padding: "74px 12px 190px",
           position: "relative",
           zIndex: 1,
-          flexWrap: "wrap",
+          gap: 10,
         }}
       >
-        {cast.map((agent) => (
-          <CharacterUnit key={agent.id} agent={agent} />
-        ))}
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 12 }}>
+          {topRow.map((agent) => (
+            <CharacterUnit key={agent.id} agent={agent} />
+          ))}
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 8, flexWrap: "wrap" }}>
+          {middleRow.map((agent) => (
+            <CharacterUnit key={agent.id} agent={agent} />
+          ))}
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 8, flexWrap: "wrap" }}>
+          {bottomRow.map((agent) => (
+            <CharacterUnit key={agent.id} agent={agent} />
+          ))}
+        </div>
       </div>
 
       <div
@@ -917,15 +1064,15 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           position: "absolute",
           left: 14,
           right: 14,
-          bottom: 176,
+          bottom: 114,
           zIndex: 2,
           display: "flex",
           justifyContent: "center",
           pointerEvents: "none",
         }}
       >
-        <div style={{ width: "100%", maxWidth: 760, pointerEvents: "auto" }}>
-          <WaitingGame active={isRunning} size="large" variant="embedded" />
+        <div style={{ width: "100%", maxWidth: 560, pointerEvents: "auto" }}>
+          <WaitingGame active={isRunning} size="small" variant="embedded" />
         </div>
       </div>
 
