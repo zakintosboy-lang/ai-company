@@ -838,19 +838,20 @@ export default function Home() {
           <div
             style={{
               padding: "14px 15px",
-              borderRadius: 16,
-              border: "1px solid rgba(255,255,255,0.08)",
-              background: "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))",
+              borderRadius: 18,
+              border: "3px solid rgba(49, 64, 95, 0.16)",
+              background: "linear-gradient(180deg, #fff9f1 0%, #fff2f7 100%)",
+              boxShadow: "0 6px 0 rgba(49,64,95,0.08)",
               marginBottom: 14,
             }}
           >
-            <div style={{ fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", opacity: 0.56, marginBottom: 8 }}>
+            <div style={{ fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", color: "#7f57f1", fontWeight: 900, marginBottom: 8 }}>
               Research Flow
             </div>
-            <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.5, marginBottom: 10 }}>
+            <div style={{ fontSize: 15, fontWeight: 900, lineHeight: 1.5, marginBottom: 10, color: "#23324f" }}>
               市場調査レポートを作り、そこからおすすめ案と企画メモまでまとめます。
             </div>
-            <div style={{ fontSize: 13, lineHeight: 1.8, opacity: 0.72 }}>
+            <div style={{ fontSize: 13, lineHeight: 1.8, color: "#51617c", fontWeight: 700 }}>
               1. 調査して比較レポートに整理する
               <br />
               2. おすすめ案を出す
@@ -886,14 +887,15 @@ export default function Home() {
                         type="button"
                         onClick={() => setVisibleSamples(pickSamples(sampleGenre))}
                         style={{
-                          border: "1px solid rgba(28,24,20,0.08)",
-                          background: "rgba(255,255,255,0.5)",
+                          border: "3px solid rgba(49, 64, 95, 0.12)",
+                          background: "#fff8f1",
                           borderRadius: 999,
                           padding: "5px 10px",
                           fontSize: 11,
-                          fontWeight: 700,
+                          fontWeight: 900,
                           cursor: "pointer",
                           color: "var(--text-secondary)",
+                          boxShadow: "0 4px 0 rgba(49,64,95,0.06)",
                         }}
                       >
                         シャッフル
@@ -909,17 +911,18 @@ export default function Home() {
                             type="button"
                             onClick={() => setSampleGenre(genre)}
                             style={{
-                              border: active ? `1px solid ${meta.border}` : "1px solid rgba(28,24,20,0.08)",
-                              background: active ? meta.bg : "rgba(255,255,255,0.45)",
+                              border: active ? `3px solid ${meta.border}` : "3px solid rgba(49, 64, 95, 0.12)",
+                              background: active ? meta.bg : "#fff8f1",
                               borderRadius: 999,
                               padding: "6px 11px",
                               fontSize: 11,
-                              fontWeight: 700,
+                              fontWeight: 900,
                               cursor: "pointer",
                               color: active ? meta.color : "inherit",
                               display: "inline-flex",
                               alignItems: "center",
                               gap: 6,
+                              boxShadow: "0 4px 0 rgba(49,64,95,0.06)",
                             }}
                           >
                             <span style={{ fontSize: 11, lineHeight: 1 }}>{meta.icon}</span>
@@ -940,12 +943,13 @@ export default function Home() {
                             style={{
                               textAlign: "left",
                               padding: "12px 13px",
-                              borderRadius: 14,
-                              border: selected ? `1px solid ${meta.border}` : "1px solid rgba(28,24,20,0.08)",
-                              background: selected ? meta.bg : "rgba(255,255,255,0.35)",
+                              borderRadius: 16,
+                              border: selected ? `3px solid ${meta.border}` : "3px solid rgba(49, 64, 95, 0.12)",
+                              background: selected ? meta.bg : "#fff8f1",
                               color: "inherit",
                               cursor: "pointer",
                               transition: "all 160ms ease",
+                              boxShadow: "0 5px 0 rgba(49,64,95,0.06)",
                             }}
                           >
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
