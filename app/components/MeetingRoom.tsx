@@ -300,7 +300,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        background: "linear-gradient(180deg, #99def5 0%, #bcecff 42%, #dff6ff 43%, #b8d8b0 43%, #7e9a72 62%, #72616e 62%, #72616e 100%)",
+        background: "linear-gradient(180deg, #77d6ff 0%, #8fe2ff 38%, #d8f5ff 39%, #d8f5ff 100%)",
         position: "relative",
       }}
     >
@@ -322,37 +322,88 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           pointerEvents: "none",
           backgroundImage:
             "linear-gradient(rgba(255,255,255,0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.14) 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
-          opacity: 0.2,
+          backgroundSize: "20px 20px",
+          opacity: 0.16,
         }}
       />
 
-      <div style={{ position: "absolute", top: 46, left: 56, width: 96, height: 26, borderRadius: 999, background: "rgba(255,255,255,0.8)", filter: "blur(1px)" }} />
-      <div style={{ position: "absolute", top: 74, right: 110, width: 74, height: 18, borderRadius: 999, background: "rgba(255,255,255,0.78)", filter: "blur(1px)" }} />
-      <div style={{ position: "absolute", top: 84, right: 58, width: 54, height: 14, borderRadius: 999, background: "rgba(255,255,255,0.72)", filter: "blur(1px)" }} />
+      <div style={{ position: "absolute", top: 40, left: 48, width: 108, height: 24, borderRadius: 999, background: "#ffffff", boxShadow: "26px 6px 0 0 #ffffff, 54px 0 0 0 #ffffff" }} />
+      <div style={{ position: "absolute", top: 78, right: 120, width: 82, height: 18, borderRadius: 999, background: "#ffffff", boxShadow: "22px -4px 0 0 #ffffff, 46px 2px 0 0 #ffffff" }} />
+      <div style={{ position: "absolute", top: 98, right: 54, width: 58, height: 14, borderRadius: 999, background: "#ffffff", boxShadow: "16px 0 0 0 #ffffff" }} />
+
+      <div
+        style={{
+          position: "absolute",
+          left: 40,
+          bottom: 208,
+          width: 210,
+          height: 112,
+          background: "#8ed36e",
+          borderRadius: "50% 50% 0 0",
+          boxShadow: "inset 0 -10px 0 #79c25a",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          left: 102,
+          bottom: 248,
+          width: 12,
+          height: 12,
+          borderRadius: "50%",
+          background: "#ffffff",
+          boxShadow: "34px 0 0 #ffffff, 72px 0 0 #ffffff",
+          opacity: 0.75,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          right: 36,
+          bottom: 212,
+          width: 240,
+          height: 126,
+          background: "#9ce07f",
+          borderRadius: "55% 55% 0 0",
+          boxShadow: "inset 0 -10px 0 #84cb66",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          right: 102,
+          bottom: 258,
+          width: 12,
+          height: 12,
+          borderRadius: "50%",
+          background: "#ffffff",
+          boxShadow: "38px 0 0 #ffffff, 80px 0 0 #ffffff",
+          opacity: 0.75,
+        }}
+      />
 
       <div
         style={{
           position: "absolute",
           left: 0,
-          bottom: 204,
+          bottom: 222,
+          width: "32%",
+          height: 128,
+          background: "#b6a0d5",
+          clipPath: "polygon(0 100%, 0 42%, 16% 20%, 36% 34%, 56% 12%, 78% 28%, 100% 18%, 100% 100%)",
+          opacity: 0.72,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          right: 0,
+          bottom: 220,
           width: "34%",
-          height: 170,
-          background: "#9a8ea1",
-          clipPath: "polygon(0 100%, 0 38%, 18% 12%, 34% 34%, 56% 8%, 78% 40%, 100% 18%, 100% 100%)",
-          opacity: 0.92,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          right: 0,
-          bottom: 202,
-          width: "36%",
-          height: 180,
-          background: "#c8b3be",
-          clipPath: "polygon(0 100%, 0 26%, 20% 14%, 36% 4%, 58% 28%, 84% 14%, 100% 40%, 100% 100%)",
-          opacity: 0.96,
+          height: 136,
+          background: "#c7b3e4",
+          clipPath: "polygon(0 100%, 0 32%, 22% 16%, 40% 6%, 58% 24%, 82% 18%, 100% 34%, 100% 100%)",
+          opacity: 0.72,
         }}
       />
 
@@ -361,11 +412,11 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: 186,
-          height: 36,
+          bottom: 180,
+          height: 40,
           background:
-            "linear-gradient(180deg, #5b7d4f 0%, #5b7d4f 45%, #6f9363 45%, #6f9363 100%)",
-          borderTop: "4px solid #66895c",
+            "linear-gradient(180deg, #49b34d 0%, #49b34d 48%, #37983b 48%, #37983b 100%)",
+          borderTop: "4px solid #83de6b",
         }}
       />
 
@@ -374,12 +425,109 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: 150,
-          height: 42,
+          bottom: 132,
+          height: 52,
           background:
-            "linear-gradient(180deg, #6f6170 0%, #6f6170 45%, #655765 45%, #655765 100%)",
-          borderTop: "4px solid #d8c9d6",
-          borderBottom: "4px solid #564b56",
+            "linear-gradient(180deg, #d38a4a 0%, #d38a4a 50%, #b86a35 50%, #b86a35 100%)",
+          borderTop: "4px solid #f5b36c",
+          borderBottom: "4px solid #8a4d28",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 132,
+          height: 52,
+          opacity: 0.22,
+          backgroundImage:
+            "linear-gradient(90deg, transparent 0, transparent 10px, #6b3418 10px, #6b3418 12px, transparent 12px, transparent 36px, #6b3418 36px, #6b3418 38px, transparent 38px), linear-gradient(transparent 0, transparent 10px, #6b3418 10px, #6b3418 12px, transparent 12px)",
+          backgroundSize: "48px 24px",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          left: 84,
+          bottom: 184,
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 26px)",
+          gap: 3,
+        }}
+      >
+        {["#c97d43", "#c97d43", "#ffd54d", "#c97d43"].map((color, i) => (
+          <div
+            key={`left-block-${i}`}
+            style={{
+              width: 26,
+              height: 26,
+              background: color,
+              border: "3px solid #7a431e",
+              boxShadow: color === "#ffd54d" ? "inset 0 0 0 3px #ffe78a" : "inset 0 0 0 3px #dca06f",
+              position: "relative",
+            }}
+          >
+            {color === "#ffd54d" && (
+              <span
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 14,
+                  fontWeight: 900,
+                  color: "#8a4d28",
+                }}
+              >
+                ?
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          right: 106,
+          bottom: 184,
+          width: 54,
+          height: 76,
+          background: "#37b24d",
+          border: "4px solid #1f6f31",
+          borderBottom: "none",
+          borderRadius: "18px 18px 0 0",
+          boxShadow: "inset 0 0 0 4px #6edb74",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          right: 96,
+          bottom: 244,
+          width: 74,
+          height: 22,
+          background: "#37b24d",
+          border: "4px solid #1f6f31",
+          borderRadius: 999,
+          boxShadow: "inset 0 0 0 4px #6edb74",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          left: 20,
+          right: 20,
+          bottom: 116,
+          height: 18,
+          background:
+            "repeating-linear-gradient(90deg, #d38a4a 0 34px, #b86a35 34px 38px)",
+          borderTop: "4px solid #8a4d28",
         }}
       />
 
@@ -390,7 +538,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           left: 22,
           padding: "7px 10px",
           borderRadius: 999,
-          background: "rgba(255,248,241,0.88)",
+          background: "rgba(255,248,241,0.94)",
           border: "3px solid #31405f",
           boxShadow: "0 4px 0 rgba(49,64,95,0.2)",
           fontSize: 10,
@@ -399,7 +547,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           letterSpacing: "0.08em",
         }}
       >
-        PIXEL MEETING ROOM {isRunning ? "ON AIR" : "READY"}
+        PIXEL STAGE {isRunning ? "1-1 RUNNING" : "1-1 READY"}
       </div>
 
       <div
@@ -409,7 +557,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
           alignItems: "flex-end",
           justifyContent: "center",
           gap: 16,
-          padding: "96px 24px 170px",
+          padding: "96px 24px 154px",
           position: "relative",
           zIndex: 1,
           flexWrap: "wrap",
