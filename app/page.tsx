@@ -1160,22 +1160,20 @@ export default function Home() {
 
           {/* Meeting Room */}
           {activeTab === "logs" && (
-            <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-              <div style={{ flex: 1, overflow: "hidden" }}>
-                <MeetingRoom
-                  logs={logs}
-                  agents={Object.values(agents).map(c => ({
-                    id: c.config.id,
-                    role: c.config.role,
-                    name: c.config.name,
-                    status: c.status,
-                    lastMessage: c.lastMessage,
-                    model: c.config.model.displayName,
-                  }))}
-                  isRunning={isRunning}
-                  output={!!output}
-                />
-              </div>
+            <div style={{ flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              <MeetingRoom
+                logs={logs}
+                agents={Object.values(agents).map(c => ({
+                  id: c.config.id,
+                  role: c.config.role,
+                  name: c.config.name,
+                  status: c.status,
+                  lastMessage: c.lastMessage,
+                  model: c.config.model.displayName,
+                }))}
+                isRunning={isRunning}
+                output={!!output}
+              />
             </div>
           )}
 
