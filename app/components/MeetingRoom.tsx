@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import PixelCharacter from "./PixelCharacter";
 import WaitingGame from "./WaitingGame";
 
@@ -702,6 +703,8 @@ function StagePanel({ children }: { children: React.ReactNode }) {
     <div
       style={{
         position: "relative",
+        width: "100%",
+        height: "100%",
         minHeight: 360,
         borderRadius: 26,
         border: "1.5px solid rgba(49,64,95,0.14)",
@@ -743,6 +746,31 @@ function FlowLines() {
 export default function MeetingRoom({ logs, agents, isRunning }: Props) {
   const BASE_W = 1120;
   const BASE_H = 540;
+  const stageViewportRef = useRef<HTMLDivElement | null>(null);
+  const [stageScale, setStageScale] = useState(1);
+
+  useEffect(() => {
+    const node = stageViewportRef.current;
+    if (!node) return;
+
+    const updateScale = () => {
+      const { width, height } = node.getBoundingClientRect();
+      if (!width || !height) return;
+
+      const nextScale = Math.min(width / BASE_W, height / BASE_H, 1);
+      setStageScale((prev) => (Math.abs(prev - nextScale) < 0.01 ? prev : nextScale));
+    };
+
+    updateScale();
+
+    const observer = new ResizeObserver(() => updateScale());
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, []);
+
+  const scaledWidth = Math.round(BASE_W * stageScale);
+  const scaledHeight = Math.round(BASE_H * stageScale);
   const getAgent = (id: string) => agents.find((a) => a.id === id);
   const all: AgentInfo[] = agents.length > 0
     ? agents
@@ -797,6 +825,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
       />
 
       <div
+        ref={stageViewportRef}
         style={{
           position: "relative",
           flex: 1,
@@ -811,64 +840,76 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
         <div
           style={{
             position: "relative",
-            width: "100%",
+            width: scaledWidth,
+            height: scaledHeight,
             maxWidth: "100%",
             maxHeight: "100%",
-            aspectRatio: `${BASE_W} / ${BASE_H}`,
+            flexShrink: 0,
           }}
         >
-          <StagePanel>
-            <div
-              style={{
-                position: "absolute",
-                inset: 12,
-                pointerEvents: "none",
-                backgroundImage:
-                  "linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px)",
-                backgroundSize: "20px 20px",
-                opacity: 0.18,
-              }}
-            />
-            <div style={{ position: "absolute", top: 20, left: 26, width: 96, height: 20, borderRadius: 999, background: "#ffffff", boxShadow: "22px 5px 0 0 #ffffff, 46px 0 0 0 #ffffff" }} />
-            <div style={{ position: "absolute", top: 52, right: 120, width: 72, height: 16, borderRadius: 999, background: "#ffffff", boxShadow: "18px -4px 0 0 #ffffff, 38px 2px 0 0 #ffffff" }} />
-            <div style={{ position: "absolute", top: 68, right: 62, width: 52, height: 12, borderRadius: 999, background: "#ffffff", boxShadow: "14px 0 0 0 #ffffff" }} />
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: BASE_W,
+              height: BASE_H,
+              transform: `scale(${stageScale})`,
+              transformOrigin: "top left",
+            }}
+          >
+            <StagePanel>
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 12,
+                  pointerEvents: "none",
+                  backgroundImage:
+                    "linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px)",
+                  backgroundSize: "20px 20px",
+                  opacity: 0.18,
+                }}
+              />
+              <div style={{ position: "absolute", top: 20, left: 26, width: 96, height: 20, borderRadius: 999, background: "#ffffff", boxShadow: "22px 5px 0 0 #ffffff, 46px 0 0 0 #ffffff" }} />
+              <div style={{ position: "absolute", top: 52, right: 120, width: 72, height: 16, borderRadius: 999, background: "#ffffff", boxShadow: "18px -4px 0 0 #ffffff, 38px 2px 0 0 #ffffff" }} />
+              <div style={{ position: "absolute", top: 68, right: 62, width: 52, height: 12, borderRadius: 999, background: "#ffffff", boxShadow: "14px 0 0 0 #ffffff" }} />
 
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                right: 0,
-                bottom: 72,
-                height: 28,
-                background: "linear-gradient(180deg, #49b34d 0%, #49b34d 48%, #37983b 48%, #37983b 100%)",
-                borderTop: "4px solid #83de6b",
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                right: 0,
-                bottom: 26,
-                height: 46,
-                background: "linear-gradient(180deg, #d38a4a 0%, #d38a4a 50%, #b86a35 50%, #b86a35 100%)",
-                borderTop: "4px solid #f5b36c",
-                borderBottom: "4px solid #8a4d28",
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                right: 0,
-                bottom: 26,
-                height: 46,
-                opacity: 0.22,
-                backgroundImage:
-                  "linear-gradient(90deg, transparent 0, transparent 10px, #6b3418 10px, #6b3418 12px, transparent 12px, transparent 36px, #6b3418 36px, #6b3418 38px, transparent 38px), linear-gradient(transparent 0, transparent 10px, #6b3418 10px, #6b3418 12px, transparent 12px)",
-                backgroundSize: "48px 24px",
-              }}
-            />
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 72,
+                  height: 28,
+                  background: "linear-gradient(180deg, #49b34d 0%, #49b34d 48%, #37983b 48%, #37983b 100%)",
+                  borderTop: "4px solid #83de6b",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 26,
+                  height: 46,
+                  background: "linear-gradient(180deg, #d38a4a 0%, #d38a4a 50%, #b86a35 50%, #b86a35 100%)",
+                  borderTop: "4px solid #f5b36c",
+                  borderBottom: "4px solid #8a4d28",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 26,
+                  height: 46,
+                  opacity: 0.22,
+                  backgroundImage:
+                    "linear-gradient(90deg, transparent 0, transparent 10px, #6b3418 10px, #6b3418 12px, transparent 12px, transparent 36px, #6b3418 36px, #6b3418 38px, transparent 38px), linear-gradient(transparent 0, transparent 10px, #6b3418 10px, #6b3418 12px, transparent 12px)",
+                  backgroundSize: "48px 24px",
+                }}
+              />
 
             <div
               style={{
@@ -1033,24 +1074,25 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
               <FlowLines />
             </div>
 
-            <div
-              style={{
-                position: "absolute",
-                left: 116,
-                right: 116,
-                bottom: 16,
-                zIndex: 2,
-                borderRadius: 18,
-                padding: "4px 6px 6px",
-                background: "rgba(255,248,241,0.42)",
-                border: "1px solid rgba(49,64,95,0.12)",
-                boxShadow: "0 8px 16px rgba(49,64,95,0.06)",
-                backdropFilter: "blur(6px)",
-              }}
-            >
-              <WaitingGame active={isRunning} size="small" variant="embedded" compact />
-            </div>
-          </StagePanel>
+              <div
+                style={{
+                  position: "absolute",
+                  left: 116,
+                  right: 116,
+                  bottom: 16,
+                  zIndex: 2,
+                  borderRadius: 18,
+                  padding: "4px 6px 6px",
+                  background: "rgba(255,248,241,0.42)",
+                  border: "1px solid rgba(49,64,95,0.12)",
+                  boxShadow: "0 8px 16px rgba(49,64,95,0.06)",
+                  backdropFilter: "blur(6px)",
+                }}
+              >
+                <WaitingGame active={isRunning} size="small" variant="embedded" compact />
+              </div>
+            </StagePanel>
+          </div>
         </div>
       </div>
     </div>
