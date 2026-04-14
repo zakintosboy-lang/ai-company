@@ -23,7 +23,7 @@ const DECISION_SYSTEM = `あなたはAI Companyの「CEO」です。最終判断
 4. ビジネス・倫理的観点から問題がないか
 
 必ず以下のJSON形式のみで返してください（説明文は不要）:
-承認: {"approved": true, "feedback": "承認理由", "finalAnswer": "最終回答テキスト（完全な内容）"}
+承認: {"approved": true, "feedback": "承認理由"}
 差し戻し: {"approved": false, "feedback": "具体的な改善要求（何をどう直すか）"}`;
 
 /**
@@ -71,10 +71,12 @@ export async function makeFinalDecision(
 ): Promise<CEODecision> {
   agent.log("最終判断を開始します...");
 
+  const condensedResult = compactForDecision(aggregatedResult);
+
   const text = await agent.think(
     DECISION_SYSTEM,
-    `ユーザーの指示:\n${instruction}\n\n集約された回答:\n${aggregatedResult}\n\nこの回答を判断してください。`,
-    2048
+    `ユーザーの指示:\n${instruction}\n\n集約された回答:\n${condensedResult}\n\nこの回答を判断してください。承認時は completed answer の再出力は不要です。`,
+    768
   );
 
   try {
@@ -93,4 +95,14 @@ export async function makeFinalDecision(
   agent.log("承認します。回答を確定しました");
   agent.setDone("承認完了");
   return { approved: true, feedback: "承認", finalAnswer: aggregatedResult };
+}
+
+function compactForDecision(text: string, maxChars = 7000) {
+  if (text.length <= maxChars) return text;
+
+  const head = text.slice(0, Math.floor(maxChars * 0.68));
+  const tail = text.slice(-Math.floor(maxChars * 0.24));
+  const omitted = Math.max(0, text.length - head.length - tail.length);
+
+  return `${head}\n\n...[中略 ${omitted}文字]...\n\n${tail}`;
 }
