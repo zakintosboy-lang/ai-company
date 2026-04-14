@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { runCompany } from "@/agents/index";
 import { AGENT_CONFIGS } from "@/agents/config";
-import type { AgentLog, AgentStateUpdate } from "@/agents/types";
+import type { AgentLog, AgentStateUpdate, LivePreview } from "@/agents/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -33,7 +33,9 @@ export async function POST(request: NextRequest) {
           (log: AgentLog) =>
             send({ type: "log", role: log.role, message: log.message }),
           (update: AgentStateUpdate) =>
-            send({ type: "agent_update", ...update })
+            send({ type: "agent_update", ...update }),
+          (preview: LivePreview) =>
+            send({ type: "preview", data: preview })
         );
         send({ type: "complete", data: result });
       } catch (err) {

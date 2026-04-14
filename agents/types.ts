@@ -58,6 +58,25 @@ export interface CEODecision {
 
 export type LogCallback = (log: AgentLog) => void;
 export type StateCallback = (update: AgentStateUpdate) => void;
+export type LivePreviewBlockStatus = "pending" | "draft" | "approved" | "merged";
+
+export interface LivePreviewBlock {
+  id: string;
+  title: string;
+  role: AgentRole;
+  status: LivePreviewBlockStatus;
+  content: string;
+}
+
+export interface LivePreview {
+  title: string;
+  summary: string;
+  progressLabel: string;
+  updatedAt: string;
+  blocks: LivePreviewBlock[];
+}
+
+export type PreviewCallback = (preview: LivePreview) => void;
 
 // ── 構造化出力 ─────────────────────────────────────────────────
 export type QuestionType     = "企画" | "情報整理" | "比較" | "提案" | "ガイド";

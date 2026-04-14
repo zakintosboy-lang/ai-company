@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { usePersistedInstruction } from "./hooks/usePersistedInstruction";
 import { AGENT_CONFIGS } from "@/agents/config";
 import type {
+  LivePreview,
   StructuredOutput,
   OutputSection,
   HighlightVariant,
 } from "@/agents/types";
 import DeliverableTabs from "./components/DeliverableTabs";
+import LiveDraftPreview from "./components/LiveDraftPreview";
 import MeetingRoom from "./components/MeetingRoom";
 import WaitingGame from "./components/WaitingGame";
 
@@ -616,6 +618,7 @@ export default function Home() {
   const [agents, setAgents]   = useState<Record<string, AgentCard>>(() => createInitialAgents());
   const [logs, setLogs]       = useState<LogEntry[]>([]);
   const [output, setOutput]   = useState<StructuredOutput | null>(null);
+  const [livePreview, setLivePreview] = useState<LivePreview | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [runCount, setRunCount]   = useState<number>(0);
   const [toast, setToast]         = useState<string | null>(null);
@@ -768,7 +771,7 @@ export default function Home() {
     setRunStartedAt(startedAt);
     setElapsedSeconds(0);
     setIsRunning(true);
-    setLogs([]); setOutput(null); setAgents(createInitialAgents());
+    setLogs([]); setOutput(null); setLivePreview(null); setAgents(createInitialAgents());
     addLog("system", "実行開始...");
 
     try {
@@ -805,6 +808,8 @@ export default function Home() {
             });
           } else if (parsed.type === "log") {
             addLog((parsed.role ?? "system") as AgentRole, parsed.message ?? "");
+          } else if (parsed.type === "preview") {
+            setLivePreview(parsed.data as LivePreview);
           } else if (parsed.type === "complete") {
             const structured = parsed.data as StructuredOutput;
             setOutput(structured);
@@ -1091,21 +1096,26 @@ export default function Home() {
                   {output
                     ? "プレビューとエクスポートの準備ができています"
                     : isRunning
-                      ? "調査結果をまとめて成果物に変換しています"
+                      ? "成果物のドラフトがリアルタイムで育っています"
                       : "ここに完成したレポートと提案メモが表示されます"}
                 </div>
               </div>
               <div className="deliverable-highlight-copy">
                 {output
                   ? "下のビュー切替で、標準表示・経営向け要約・提案書・スライドを確認できます。"
-                  : "AI エージェントの進行は中央ステージと右のライブレールで追跡できます。"}
+                  : isRunning
+                    ? "Researcher・Worker・Manager の途中成果を、完成前の納品プレビューとしてここに順番に反映します。"
+                    : "AI エージェントの進行は中央ステージと右のライブレールで追跡できます。"}
               </div>
             </div>
             <div className="workspace-deliverable-body">
-              {!output
-                ? <div className="output-empty">生成が始まるとここに成果物プレビューが育っていき、完成後は強い存在感で確認できます。</div>
-                : <DeliverableTabs data={output} />
-              }
+              {output ? (
+                <DeliverableTabs data={output} />
+              ) : isRunning && livePreview ? (
+                <LiveDraftPreview preview={livePreview} />
+              ) : (
+                <div className="output-empty">生成が始まるとここに成果物プレビューが育っていき、完成後は強い存在感で確認できます。</div>
+              )}
             </div>
           </section>
         </section>

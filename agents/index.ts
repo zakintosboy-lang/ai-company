@@ -1,4 +1,4 @@
-import type { LogCallback, StateCallback, StructuredOutput } from "./types";
+import type { AgentRole, LivePreview, LogCallback, PreviewCallback, StateCallback, StructuredOutput, Task } from "./types";
 import { AGENT_CONFIGS, WORKER_IDS } from "./config";
 import { Agent } from "./agent";
 import { decomposeTasks, aggregateResults } from "./manager";
@@ -32,7 +32,8 @@ const RESEARCH_ANGLES = [
 export async function runCompany(
   instruction: string,
   onLog: LogCallback,
-  onState: StateCallback
+  onState: StateCallback,
+  onPreview?: PreviewCallback
 ): Promise<StructuredOutput> {
   // エージェントインスタンスを生成
   const agentMap: Record<string, Agent> = {};
@@ -57,6 +58,16 @@ export async function runCompany(
   // ── Phase 2: Manager 構造設計 ─────────────────────────────────
   onLog({ role: "system", message: "【Phase 2】進行役がタスクを分解します" });
   const tasks = await decomposeTasks(manager, instruction);
+  const previewDrafts = new Map<string, string>();
+  onPreview?.(
+    buildLivePreview({
+      instruction,
+      progressLabel: "下書き枠を準備中",
+      summary: "担当ごとの成果物プレビューを準備しました。リサーチ完了後に本文が入り始めます。",
+      tasks,
+      drafts: previewDrafts,
+    })
+  );
   manager.setWaiting("Researcherの調査待ち...");
 
   // 未使用 Worker を待機
@@ -84,6 +95,16 @@ export async function runCompany(
     researcher.setDone(`リサーチ完了: ${RESEARCH_ANGLES[index] ?? "最新情報の整理"}`);
   });
   const researchResult = mergeResearchResults(researchResults);
+  onPreview?.(
+    buildLivePreview({
+      instruction,
+      progressLabel: "調査メモを反映",
+      summary: "Researcher の材料がそろいました。これから各 Worker のドラフトが順番に育っていきます。",
+      tasks,
+      drafts: previewDrafts,
+      researchResult,
+    })
+  );
 
   // リサーチ結果をコンテキストとしてWorkerに渡す（トークン超過防止のため要約のみ）
   const researchContext = `
@@ -126,6 +147,17 @@ ${researchResult.summary.slice(0, 2000)}
 
           if (reviewResult.approved) {
             worker.setDone("承認済み");
+            previewDrafts.set(task.id, workerOutput.output);
+            onPreview?.(
+              buildLivePreview({
+                instruction,
+                progressLabel: `${previewDrafts.size}/${tasks.length} ブロック反映`,
+                summary: `${worker.config.name} の成果物をプレビューに追加しました。`,
+                tasks,
+                drafts: previewDrafts,
+                researchResult,
+              })
+            );
             return { task, output: workerOutput.output };
           }
           feedback = reviewResult.feedback;
@@ -134,6 +166,17 @@ ${researchResult.summary.slice(0, 2000)}
         worker.log(`最終実行 [${task.id}]: レビューサイクル上限到達`);
         const finalOutput = await executeTask(worker, enrichedTask, feedback);
         worker.setDone("完了");
+        previewDrafts.set(task.id, finalOutput.output);
+        onPreview?.(
+          buildLivePreview({
+            instruction,
+            progressLabel: `${previewDrafts.size}/${tasks.length} ブロック反映`,
+            summary: `${worker.config.name} の最終ドラフトをプレビューに追加しました。`,
+            tasks,
+            drafts: previewDrafts,
+            researchResult,
+          })
+        );
         return { task, output: finalOutput.output };
       })
     );
@@ -142,6 +185,17 @@ ${researchResult.summary.slice(0, 2000)}
 
     // Manager 集約
     const aggregated = await aggregateResults(manager, ceoCycleInstruction, results);
+    onPreview?.(
+      buildLivePreview({
+        instruction,
+        progressLabel: "統合ドラフト作成",
+        summary: "各 Worker の成果物をまとめ、納品直前のドラフトとして表示しています。",
+        tasks,
+        drafts: previewDrafts,
+        researchResult,
+        aggregate: aggregated,
+      })
+    );
     manager.setDone("集約完了");
 
     // まずは集約結果をそのまま最終判断へ回し、必要なときだけ編集を挟む
@@ -154,6 +208,17 @@ ${researchResult.summary.slice(0, 2000)}
         editor,
         aggregated,
         `${ceoCycleInstruction}\n\n[CEOの改善要求]: ${decision.feedback}`
+      );
+      onPreview?.(
+        buildLivePreview({
+          instruction,
+          progressLabel: "編集で磨き込み中",
+          summary: "CEO の指摘を反映して、統合ドラフトをさらに整えています。",
+          tasks,
+          drafts: previewDrafts,
+          researchResult,
+          aggregate: candidateAnswer,
+        })
       );
       decision = await makeFinalDecision(ceo, ceoCycleInstruction, candidateAnswer);
     }
@@ -254,4 +319,96 @@ function mergeResearchResults(results: ResearchResult[]): ResearchResult {
     usedKnowledgeFallback,
     angle: "統合リサーチ",
   };
+}
+
+function buildLivePreview({
+  instruction,
+  progressLabel,
+  summary,
+  tasks,
+  drafts,
+  researchResult,
+  aggregate,
+}: {
+  instruction: string;
+  progressLabel: string;
+  summary: string;
+  tasks: Task[];
+  drafts: Map<string, string>;
+  researchResult?: ResearchResult;
+  aggregate?: string;
+}): LivePreview {
+  const blocks: LivePreview["blocks"] = [];
+
+  if (researchResult?.summary?.trim()) {
+    blocks.push({
+      id: "research-summary",
+      title: "リサーチメモ",
+      role: "researcher",
+      status: "merged",
+      content: shrinkPreviewText(researchResult.summary, 360),
+    });
+  }
+
+  for (const task of tasks) {
+    const draft = drafts.get(task.id);
+    blocks.push({
+      id: task.id,
+      title: taskPreviewTitle(task),
+      role: "worker",
+      status: draft ? "approved" : "pending",
+      content: draft
+        ? shrinkPreviewText(draft, 520)
+        : "この担当の成果物を生成中です。完成したブロックからここに順番に表示されます。",
+    });
+  }
+
+  if (aggregate?.trim()) {
+    blocks.push({
+      id: "aggregate-draft",
+      title: "統合ドラフト",
+      role: "manager",
+      status: "merged",
+      content: shrinkPreviewText(aggregate, 900),
+    });
+  }
+
+  return {
+    title: shrinkTitle(instruction),
+    summary,
+    progressLabel,
+    updatedAt: new Date().toISOString(),
+    blocks,
+  };
+}
+
+function taskPreviewTitle(task: Task) {
+  const firstLine = task.description
+    .split("\n")
+    .map((line) => line.trim())
+    .find(Boolean);
+
+  if (!firstLine) return task.id;
+
+  return firstLine
+    .replace(/^[-*・\d.\s]+/, "")
+    .replace(/[。.!?].*$/, "")
+    .trim()
+    .slice(0, 36) || task.id;
+}
+
+function shrinkTitle(text: string, max = 36) {
+  const compact = text.replace(/\s+/g, " ").trim();
+  if (!compact) return "AI チームのライブプレビュー";
+  return compact.length > max ? `${compact.slice(0, max - 1)}…` : compact;
+}
+
+function shrinkPreviewText(text: string, max = 480) {
+  const compact = text
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  if (compact.length <= max) return compact;
+  return `${compact.slice(0, max - 1).trim()}…`;
 }
