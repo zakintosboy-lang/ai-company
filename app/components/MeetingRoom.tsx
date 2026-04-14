@@ -1,15 +1,26 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useMemo } from "react";
 import PixelCharacter from "./PixelCharacter";
-import WaitingGame from "./WaitingGame";
 
 type AgentRole = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "designer" | "editor" | "system";
 type AgentStatus = "idle" | "thinking" | "reviewing" | "done" | "waiting";
 
-interface LogEntry { time: string; role: AgentRole; message: string; }
-interface AgentInfo { id: string; role: AgentRole; name: string; status: AgentStatus; lastMessage?: string; model?: string; }
+interface LogEntry {
+  time: string;
+  role: AgentRole;
+  message: string;
+}
+
+interface AgentInfo {
+  id: string;
+  role: AgentRole;
+  name: string;
+  status: AgentStatus;
+  lastMessage?: string;
+  model?: string;
+}
 
 interface Props {
   logs: LogEntry[];
@@ -18,628 +29,240 @@ interface Props {
   output: boolean;
 }
 
-type PixelGrid = (string | null)[][];
-
-const ROLE_CONFIG: Record<AgentRole, {
-  jaLabel: string;
+const ROLE_META: Record<AgentRole, {
+  label: string;
   color: string;
-  bubbleBg: string;
-  bubbleBorder: string;
-  plate: string;
+  soft: string;
+  strong: string;
+  badge: string;
 }> = {
-  ceo:        { jaLabel: "CEO", color: "#8b5cf6", bubbleBg: "#fff5fb", bubbleBorder: "#8b5cf6", plate: "#f0ddff" },
-  manager:    { jaLabel: "進行役", color: "#3b82f6", bubbleBg: "#f2f8ff", bubbleBorder: "#3b82f6", plate: "#dbeafe" },
-  worker:     { jaLabel: "実行担当", color: "#f97316", bubbleBg: "#fff5eb", bubbleBorder: "#f97316", plate: "#fed7aa" },
-  reviewer:   { jaLabel: "チェック", color: "#22c55e", bubbleBg: "#effef4", bubbleBorder: "#22c55e", plate: "#bbf7d0" },
-  researcher: { jaLabel: "調査担当", color: "#06b6d4", bubbleBg: "#eefcff", bubbleBorder: "#06b6d4", plate: "#bae6fd" },
-  designer:   { jaLabel: "デザイン", color: "#ec4899", bubbleBg: "#fff1f8", bubbleBorder: "#ec4899", plate: "#fbcfe8" },
-  editor:     { jaLabel: "編集者", color: "#84cc16", bubbleBg: "#f8ffe7", bubbleBorder: "#84cc16", plate: "#d9f99d" },
-  system:     { jaLabel: "システム", color: "#64748b", bubbleBg: "#f8fafc", bubbleBorder: "#94a3b8", plate: "#e2e8f0" },
+  ceo: { label: "CEO", color: "#8b5cf6", soft: "#f3e8ff", strong: "#6d28d9", badge: "HQ" },
+  manager: { label: "Manager", color: "#2563eb", soft: "#dbeafe", strong: "#1d4ed8", badge: "OPS" },
+  worker: { label: "Worker", color: "#f97316", soft: "#ffedd5", strong: "#ea580c", badge: "BUILD" },
+  reviewer: { label: "Reviewer", color: "#16a34a", soft: "#dcfce7", strong: "#15803d", badge: "CHECK" },
+  researcher: { label: "Researcher", color: "#0891b2", soft: "#cffafe", strong: "#0e7490", badge: "SEARCH" },
+  designer: { label: "Designer", color: "#ec4899", soft: "#fce7f3", strong: "#db2777", badge: "DESIGN" },
+  editor: { label: "Editor", color: "#84cc16", soft: "#ecfccb", strong: "#65a30d", badge: "EDIT" },
+  system: { label: "System", color: "#64748b", soft: "#e2e8f0", strong: "#475569", badge: "SYS" },
 };
 
-function spriteFromRows(rows: string[], palette: Record<string, string | null>): PixelGrid {
-  return rows.map((row) => row.split("").map((cell) => palette[cell] ?? null));
-}
-
-const DECOR_PALETTE = {
-  ".": null,
-  K: "#1d2438",
-  W: "#ffffff",
-  G: "#2fa84f",
-  H: "#237d3a",
-  Y: "#ffd558",
-  O: "#d7a82b",
-  N: "#8f5c36",
-  M: "#5d391f",
-  C: "#edf2ff",
-  A: "#cfd6ea",
+const STATUS_META: Record<AgentStatus, { label: string; color: string; bg: string; glow: string }> = {
+  idle: { label: "待機中", color: "#64748b", bg: "#f8fafc", glow: "rgba(100,116,139,0.12)" },
+  thinking: { label: "作業中", color: "#7c3aed", bg: "#f5f3ff", glow: "rgba(124,58,237,0.18)" },
+  reviewing: { label: "レビュー中", color: "#16a34a", bg: "#f0fdf4", glow: "rgba(22,163,74,0.18)" },
+  done: { label: "完了", color: "#0891b2", bg: "#ecfeff", glow: "rgba(8,145,178,0.16)" },
+  waiting: { label: "待機列", color: "#d97706", bg: "#fffbeb", glow: "rgba(217,119,6,0.18)" },
 };
 
-const COIN_SPRITE = spriteFromRows([
-  "..YYYY..",
-  ".YYOOYY.",
-  "YYOOOOYY",
-  "YYOOOOYY",
-  "YYOOOOYY",
-  "YYOOOOYY",
-  ".YYOOYY.",
-  "..YYYY..",
-], DECOR_PALETTE);
+const DEFAULT_AGENTS: AgentInfo[] = [
+  { id: "ceo", role: "ceo", name: "CEO", status: "idle" },
+  { id: "manager", role: "manager", name: "Manager", status: "idle" },
+  { id: "worker-1", role: "worker", name: "Worker Lead", status: "idle" },
+  { id: "worker-2", role: "worker", name: "Worker Core", status: "idle" },
+  { id: "worker-3", role: "worker", name: "Worker Quality", status: "idle" },
+  { id: "reviewer", role: "reviewer", name: "Reviewer", status: "idle" },
+  { id: "researcher-1", role: "researcher", name: "Researcher News", status: "idle" },
+  { id: "researcher-2", role: "researcher", name: "Researcher Compare", status: "idle" },
+  { id: "researcher-3", role: "researcher", name: "Researcher Source", status: "idle" },
+  { id: "editor", role: "editor", name: "Editor", status: "idle" },
+  { id: "designer", role: "designer", name: "Designer", status: "idle" },
+];
 
-const GOOMBA_SPRITE = spriteFromRows([
-  "...NNNN...",
-  "..NNNNNN..",
-  ".NNWNNWNN.",
-  ".NNKNNKNN.",
-  ".NNNNNNNN.",
-  "..NMMMMN..",
-  "..SS..SS..",
-  ".SSS..SSS.",
-], DECOR_PALETTE);
+function getStageLabel(logs: LogEntry[], isRunning: boolean, output: boolean) {
+  if (output) return "Deliverables Ready";
+  if (!isRunning) return "Standby";
 
-const LAKITU_SPRITE = spriteFromRows([
-  "...GGGG...",
-  "..GGYYGG..",
-  "..GYWWYG..",
-  "..GYKKYG..",
-  "...WSSW...",
-  ".CCCCCCCC.",
-  "CCCAAACCCC",
-  ".CCCCCCCC.",
-], DECOR_PALETTE);
-
-const KOOPA_SPRITE = spriteFromRows([
-  "..GGYYGG..",
-  ".GYYYYYYG.",
-  ".GYWKKWYG.",
-  ".GYYYYYYG.",
-  "..GYYYYG..",
-  "..SSYYSS..",
-  ".NNGGGGNN.",
-  "..NN..NN..",
-], DECOR_PALETTE);
-
-const PEACH_SPRITE = spriteFromRows([
-  "...YYYY...",
-  "..YYSSYY..",
-  ".YYSSSSYY.",
-  ".YYWSSWYY.",
-  "..YYSSYY..",
-  "...PPPP...",
-  "..PPPPPP..",
-  "..SS..SS..",
-], DECOR_PALETTE);
-
-const PIRANHA_SPRITE = spriteFromRows([
-  "...RRR....",
-  "..RWWWR...",
-  ".RWWKWWR..",
-  ".RWWWWW...",
-  "..RWWW....",
-  "...GG.....",
-  "...GG.....",
-  "...GG.....",
-], {
-  ...DECOR_PALETTE,
-  R: "#df5548",
-});
-
-const BOWSER_SPRITE = spriteFromRows([
-  "..GGYYYYGG..",
-  ".GGYYYYYYGG.",
-  ".GYWKKKKWYG.",
-  ".GYYYYYYYYG.",
-  "..GYYMMYYG..",
-  ".NNGGGGGGNN.",
-  ".NNNGGGGNNN.",
-  "..NN....NN..",
-], DECOR_PALETTE);
-
-function PixelDecor({ pixels, cellSize }: { pixels: PixelGrid; cellSize: number }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", imageRendering: "pixelated" }}>
-      {pixels.map((row, y) => (
-        <div key={y} style={{ display: "flex" }}>
-          {row.map((color, x) => (
-            <div
-              key={x}
-              style={{
-                width: cellSize,
-                height: cellSize,
-                background: color ?? "transparent",
-              }}
-            />
-          ))}
-        </div>
-      ))}
-    </div>
-  );
+  const joined = logs.map((log) => log.message).join("\n");
+  if (joined.includes("【Phase 6】")) return "Designing";
+  if (joined.includes("【Editor】")) return "Editing";
+  if (joined.includes("【Phase 5】")) return "Reviewing";
+  if (joined.includes("【Phase 4】")) return "Building";
+  if (joined.includes("【Phase 3】")) return "Researching";
+  if (joined.includes("【Phase 2】")) return "Planning";
+  if (joined.includes("【Phase 1】")) return "Strategy";
+  return "Booting";
 }
 
-function PixelBadgeIcon({ pixels, cellSize = 2 }: { pixels: PixelGrid; cellSize?: number }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", imageRendering: "pixelated", flexShrink: 0 }}>
-      {pixels.map((row, y) => (
-        <div key={y} style={{ display: "flex" }}>
-          {row.map((color, x) => (
-            <div key={x} style={{ width: cellSize, height: cellSize, background: color ?? "transparent" }} />
-          ))}
-        </div>
-      ))}
-    </div>
-  );
+function getHeroCopy(logs: LogEntry[], isRunning: boolean, output: boolean) {
+  if (output) return "AI チームが成果物を仕上げました。下の Deliverables で確認できます。";
+  if (!isRunning) return "指示を入力すると、各エージェントが分担して調査・制作・レビューを進めます。";
+
+  const latest = [...logs].reverse().find((log) => log.role !== "system");
+  if (latest?.message) return latest.message;
+  return "エージェントたちが役割ごとに連携しながら成果物を制作しています。";
 }
 
-const BADGE_PALETTE = {
-  ".": null,
-  K: "#23324f",
-  Y: "#ffd558",
-  B: "#3b82f6",
-  O: "#f97316",
-  G: "#22c55e",
-  C: "#06b6d4",
-  P: "#ec4899",
-  L: "#84cc16",
-  W: "#ffffff",
-};
+function normalizeBubbleMessage(agent: AgentInfo) {
+  if (agent.lastMessage?.trim()) return agent.lastMessage.trim();
+  if (agent.status === "thinking") return "担当タスクを進めています";
+  if (agent.status === "reviewing") return "レビュー観点を整理しています";
+  if (agent.status === "waiting") return "次の依頼を待っています";
+  if (agent.status === "done") return "この担当範囲は完了しました";
+  return "スタンバイ中";
+}
 
-const CROWN_ICON = spriteFromRows([
-  ".Y.Y.",
-  "YYYYY",
-  "YKYKY",
-  ".YYY.",
-  "..K..",
-], BADGE_PALETTE);
+function AgentBubble({ agent }: { agent: AgentInfo }) {
+  const roleMeta = ROLE_META[agent.role] ?? ROLE_META.system;
+  const statusMeta = STATUS_META[agent.status] ?? STATUS_META.idle;
+  const isActive = agent.status === "thinking" || agent.status === "reviewing";
 
-const WAND_ICON = spriteFromRows([
-  "...Y.",
-  "..YYY",
-  "YKYKY",
-  "..YYY",
-  "...K.",
-], BADGE_PALETTE);
-
-const HAMMER_ICON = spriteFromRows([
-  ".OOO.",
-  ".OOK.",
-  "..OK.",
-  ".KK..",
-  ".K...",
-], BADGE_PALETTE);
-
-const CHECK_ICON = spriteFromRows([
-  "....G",
-  "...GG",
-  ".GGG.",
-  "GG...",
-  "G....",
-], BADGE_PALETTE);
-
-const SEARCH_ICON = spriteFromRows([
-  ".CCC.",
-  "CKWKC",
-  "CKKKC",
-  ".CCC.",
-  "...K.",
-], BADGE_PALETTE);
-
-const PEN_ICON = spriteFromRows([
-  "...P.",
-  "..PP.",
-  ".PPK.",
-  "PPK..",
-  ".K...",
-], BADGE_PALETTE);
-
-const DESIGN_ICON = spriteFromRows([
-  "P...P",
-  ".P.P.",
-  "..P..",
-  ".P.P.",
-  "P...P",
-], BADGE_PALETTE);
-
-const EDIT_ICON = spriteFromRows([
-  "..LL.",
-  ".LLLK",
-  "LLLK.",
-  ".KK..",
-  "..K..",
-], BADGE_PALETTE);
-
-const SYSTEM_ICON = spriteFromRows([
-  ".BBB.",
-  "BKWKB",
-  "BKWKB",
-  "BKWKB",
-  ".BBB.",
-], BADGE_PALETTE);
-
-function SpeechBubble({ message, cfg }: { message: string; cfg: (typeof ROLE_CONFIG)[AgentRole] }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 6, scale: 0.92 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 3, scale: 0.92 }}
-      transition={{ duration: 0.22 }}
-      style={{
-        position: "relative",
-        maxWidth: 120,
-        minHeight: 34,
-        padding: "5px 8px",
-        border: `2px solid ${cfg.bubbleBorder}`,
-        borderRadius: 7,
-        background: cfg.bubbleBg,
-        boxShadow: "0 3px 0 rgba(31,41,55,0.14)",
-        imageRendering: "pixelated",
-      }}
-    >
-      <div
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={`${agent.id}-${normalizeBubbleMessage(agent)}`}
+        initial={{ opacity: 0, y: 8, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 8, scale: 0.96 }}
+        transition={{ duration: 0.2 }}
         style={{
-          fontSize: 9,
-          lineHeight: 1.4,
-          color: "#243042",
-          fontWeight: 700,
-          letterSpacing: "0.02em",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          overflow: "hidden",
-          wordBreak: "break-word",
+          maxWidth: 220,
+          minHeight: 84,
+          padding: "12px 14px",
+          borderRadius: 18,
+          border: `2px solid ${roleMeta.color}55`,
+          background: "#fffdfa",
+          boxShadow: isActive ? `0 14px 28px ${statusMeta.glow}` : "0 10px 22px rgba(15,23,42,0.08)",
+          position: "relative",
         }}
       >
-        {message}
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          bottom: -9,
-          transform: "translateX(-50%)",
-          width: 14,
-          height: 9,
-          background: cfg.bubbleBg,
-          clipPath: "polygon(50% 100%, 0 0, 100% 0)",
-          borderLeft: `2px solid ${cfg.bubbleBorder}`,
-          borderRight: `2px solid ${cfg.bubbleBorder}`,
-          borderBottom: `2px solid ${cfg.bubbleBorder}`,
-        }}
-      />
-    </motion.div>
-  );
-}
-
-function TypingBubble({ cfg }: { cfg: (typeof ROLE_CONFIG)[AgentRole] }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 6 }}
-      style={{
-        minWidth: 52,
-        minHeight: 30,
-        padding: "7px 10px",
-        border: `2px solid ${cfg.bubbleBorder}`,
-        borderRadius: 7,
-        background: cfg.bubbleBg,
-        display: "flex",
-        justifyContent: "center",
-        gap: 4,
-        boxShadow: "0 3px 0 rgba(31,41,55,0.14)",
-      }}
-    >
-      {[0, 1, 2].map((i) => (
-        <motion.div
-          key={i}
-          style={{ width: 7, height: 7, borderRadius: 2, background: cfg.bubbleBorder }}
-          animate={{ opacity: [0.35, 1, 0.35], y: [0, -2, 0] }}
-          transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.12 }}
-        />
-      ))}
-    </motion.div>
-  );
-}
-
-function ActivityBadge({ agent }: { agent: AgentInfo }) {
-  const isActive = agent.status === "thinking" || agent.status === "reviewing";
-  if (!isActive) return null;
-
-  const byRole: Record<AgentRole, { icon: PixelGrid; label: string; color: string }> = {
-    ceo: { icon: CROWN_ICON, label: "指示中", color: "#8b5cf6" },
-    manager: { icon: WAND_ICON, label: "采配中", color: "#3b82f6" },
-    worker: { icon: HAMMER_ICON, label: "作業中", color: "#f97316" },
-    reviewer: { icon: CHECK_ICON, label: "確認中", color: "#22c55e" },
-    researcher: { icon: SEARCH_ICON, label: "調査中", color: "#06b6d4" },
-    designer: { icon: DESIGN_ICON, label: "設計中", color: "#ec4899" },
-    editor: { icon: EDIT_ICON, label: "編集中", color: "#84cc16" },
-    system: { icon: SYSTEM_ICON, label: "処理中", color: "#64748b" },
-  };
-  const meta = byRole[agent.role] ?? byRole.system;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 4, scale: 0.9 }}
-      animate={{ opacity: [0.7, 1, 0.7], y: [0, -4, 0], scale: [0.96, 1.04, 0.96] }}
-      transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-      style={{
-        position: "absolute",
-        top: -8,
-        right: -8,
-        display: "flex",
-        alignItems: "center",
-        gap: 4,
-        padding: "4px 6px",
-        borderRadius: 999,
-        border: "2px solid #27324a",
-        background: "#fffaf3",
-        boxShadow: "0 3px 0 rgba(39,50,74,0.16)",
-        fontSize: 8,
-        fontWeight: 900,
-        color: meta.color,
-        letterSpacing: "0.04em",
-        whiteSpace: "nowrap",
-        pointerEvents: "none",
-      }}
-    >
-      <PixelBadgeIcon pixels={meta.icon} />
-      <span>{meta.label}</span>
-    </motion.div>
-  );
-}
-
-function WorkEffect({ agent }: { agent: AgentInfo }) {
-  const active = agent.status === "thinking" || agent.status === "reviewing";
-  if (!active) return null;
-
-  const effectByRole: Record<AgentRole, { items: string[]; color: string }> = {
-    ceo: { items: ["!", "!", "!"], color: "#8b5cf6" },
-    manager: { items: [">", ">", ">"], color: "#3b82f6" },
-    worker: { items: ["*", "*", "*"], color: "#f97316" },
-    reviewer: { items: ["?", "?", "?"], color: "#22c55e" },
-    researcher: { items: ["~", "~", "~"], color: "#06b6d4" },
-    designer: { items: ["+", "+", "+"], color: "#ec4899" },
-    editor: { items: ["/", "/", "/"], color: "#84cc16" },
-    system: { items: [".", ".", "."], color: "#64748b" },
-  };
-  const meta = effectByRole[agent.role] ?? effectByRole.system;
-
-  return (
-    <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-      {meta.items.map((item, index) => {
-        const left = index === 0 ? -10 : index === 1 ? 50 : 104;
-        return (
-          <motion.div
-            key={`${agent.id}-${item}-${index}`}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+          <span
             style={{
-              position: "absolute",
-              top: index === 1 ? -6 : 4,
-              left: `${left}%`,
               fontSize: 10,
               fontWeight: 900,
-              color: meta.color,
-              textShadow: "0 1px 0 rgba(255,255,255,0.65)",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: roleMeta.strong,
             }}
-            animate={{ y: [0, -7, -11], opacity: [0, 1, 0], scale: [0.8, 1, 1.06] }}
-            transition={{ duration: 1.3, repeat: Infinity, delay: index * 0.18, ease: "easeOut" }}
           >
-            {item}
-          </motion.div>
-        );
-      })}
-    </div>
-  );
-}
+            {roleMeta.badge}
+          </span>
+          <span
+            style={{
+              borderRadius: 999,
+              padding: "4px 8px",
+              fontSize: 10,
+              fontWeight: 900,
+              color: statusMeta.color,
+              background: statusMeta.bg,
+            }}
+          >
+            {statusMeta.label}
+          </span>
+        </div>
 
-function getTravelBias(agent: AgentInfo) {
-  if (agent.role === "manager") return { x: 12, y: -8, rotate: -2 };
-  if (agent.role === "researcher") {
-    const bias: Record<string, number> = {
-      "researcher-1": 16,
-      "researcher-2": 0,
-      "researcher-3": -16,
-    };
-    const x = bias[agent.id] ?? 0;
-    return { x, y: -10, rotate: x > 0 ? -2 : x < 0 ? 2 : 0 };
-  }
-  if (agent.role === "worker") {
-    const bias: Record<string, number> = {
-      "worker-1": 20,
-      "worker-2": 4,
-      "worker-3": -14,
-    };
-    const x = bias[agent.id] ?? 0;
-    return { x, y: -12, rotate: x > 0 ? -3 : 2 };
-  }
-  if (agent.role === "editor") return { x: -8, y: -10, rotate: 2 };
-  if (agent.role === "designer") return { x: 8, y: -10, rotate: -2 };
-  if (agent.role === "reviewer") return { x: -8, y: -10, rotate: 2 };
-  return { x: 0, y: -8, rotate: 0 };
-}
+        <div
+          style={{
+            fontSize: 13,
+            lineHeight: 1.55,
+            color: "#243042",
+            fontWeight: 700,
+            display: "-webkit-box",
+            WebkitLineClamp: 4,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            minHeight: 42,
+          }}
+        >
+          {normalizeBubbleMessage(agent)}
+        </div>
 
-function getTravelMotion(agent: AgentInfo) {
-  if (agent.status !== "thinking" && agent.status !== "reviewing") {
-    return {
-      x: [0, 0, 0, 0],
-      y: [0, -2, -1, 0],
-      scale: [1, 1.01, 1.015, 1],
-      rotate: [0, 0, 0, 0],
-    };
-  }
-
-  if (agent.role === "ceo") {
-    return {
-      x: [0, 2, 0, -2, 0],
-      y: [0, -6, -9, -4, 0],
-      scale: [1, 1.03, 1.06, 1.02, 1],
-      rotate: [0, -1, 0, 1, 0],
-    };
-  }
-
-  const bias = getTravelBias(agent);
-  return {
-    x: [0, bias.x * 0.45, bias.x, bias.x * 0.42, 0],
-    y: [0, bias.y * 0.45, bias.y, bias.y * 0.55, 0],
-    scale: [1, 1.03, 1.08, 1.04, 1],
-    rotate: [0, bias.rotate * 0.4, bias.rotate, bias.rotate * 0.4, 0],
-  };
-}
-
-function CharacterUnit({ agent }: { agent: AgentInfo }) {
-  const cfg = ROLE_CONFIG[agent.role] ?? ROLE_CONFIG.system;
-  const active = agent.status === "thinking" || agent.status === "reviewing";
-  const size = agent.role === "ceo" ? 2.6 : 2.0;
-  const motionProfile = getTravelMotion(agent);
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, minWidth: 42, position: "relative" }}>
-      {/* 吹き出し — absolute でレイアウトに影響しない */}
-      <div style={{
-        position: "absolute",
-        bottom: "100%",
-        left: "50%",
-        transform: "translateX(-50%)",
-        marginBottom: 4,
-        zIndex: 8,
-        pointerEvents: "none",
-      }}>
-        <AnimatePresence mode="wait">
-          {active ? (
-            <TypingBubble key="typing" cfg={cfg} />
-          ) : agent.lastMessage ? (
-            <SpeechBubble key={agent.lastMessage.slice(0, 18)} message={agent.lastMessage} cfg={cfg} />
-          ) : null}
-        </AnimatePresence>
-      </div>
-
-      <div style={{ position: "relative", paddingBottom: 4 }}>
-        <ActivityBadge agent={agent} />
-        <WorkEffect agent={agent} />
         <div
           style={{
             position: "absolute",
             left: "50%",
-            bottom: 0,
-            transform: "translateX(-50%)",
-            width: 38,
-            height: 7,
-            borderRadius: 999,
-            background: "rgba(55,65,81,0.18)",
-            filter: "blur(2px)",
+            bottom: -11,
+            width: 20,
+            height: 20,
+            background: "#fffdfa",
+            borderLeft: `2px solid ${roleMeta.color}55`,
+            borderBottom: `2px solid ${roleMeta.color}55`,
+            transform: "translateX(-50%) rotate(-45deg)",
+            borderBottomLeftRadius: 6,
           }}
         />
-        <motion.div
-          animate={motionProfile}
-          transition={{
-            duration: active ? 2.35 : 3.6,
-            repeat: Infinity,
-            ease: [0.22, 1, 0.36, 1],
-            times: [0, 0.28, 0.54, 0.8, 1],
-          }}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function AgentUnit({ agent }: { agent: AgentInfo }) {
+  const roleMeta = ROLE_META[agent.role] ?? ROLE_META.system;
+  const statusMeta = STATUS_META[agent.status] ?? STATUS_META.idle;
+  const isActive = agent.status === "thinking" || agent.status === "reviewing";
+  const size = agent.role === "ceo" ? 3.35 : 2.75;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, minWidth: 132 }}>
+      <AgentBubble agent={agent} />
+
+      <motion.div
+        animate={isActive ? { y: [0, -6, 0], scale: [1, 1.03, 1] } : { y: [0, -2, 0] }}
+        transition={{ duration: isActive ? 1.7 : 2.8, repeat: Infinity, ease: "easeInOut" }}
+        style={{ position: "relative" }}
+      >
+        <div
           style={{
-            padding: "3px 4px",
-            borderRadius: 7,
-            background: "rgba(255,255,255,0.56)",
-            boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.72)",
-            zIndex: active ? 3 : 1,
+            position: "absolute",
+            left: "50%",
+            bottom: -8,
+            transform: "translateX(-50%)",
+            width: 66,
+            height: 14,
+            borderRadius: 999,
+            background: "rgba(15,23,42,0.14)",
+            filter: "blur(3px)",
+          }}
+        />
+        <div
+          style={{
+            padding: "10px 12px",
+            borderRadius: 22,
+            background: "#ffffffcc",
+            border: `2px solid ${roleMeta.color}33`,
+            boxShadow: isActive ? `0 12px 24px ${statusMeta.glow}` : "0 8px 20px rgba(15,23,42,0.08)",
           }}
         >
           <PixelCharacter role={agent.role} status={agent.status} agentId={agent.id} size={size} />
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
 
       <div
         style={{
-          padding: "2px 6px",
-          borderRadius: 999,
-          border: "1.5px solid #27324a",
-          background: cfg.plate,
-          boxShadow: "0 2px 0 rgba(39,50,74,0.2)",
-          textAlign: "center",
-          minWidth: 42,
+          width: "100%",
+          maxWidth: 160,
+          borderRadius: 18,
+          border: `2px solid ${roleMeta.color}33`,
+          background: "#fffdfa",
+          padding: "10px 12px",
+          boxShadow: "0 10px 18px rgba(15,23,42,0.06)",
         }}
       >
-        <div style={{ fontSize: 6.5, fontWeight: 900, color: cfg.color, letterSpacing: "0.06em" }}>{cfg.jaLabel}</div>
-        <div style={{ fontSize: 6, color: "#4b5563", fontWeight: 700 }}>{agent.name}</div>
-      </div>
-    </div>
-  );
-}
-
-function lineupOrFallback(
-  rows: string[][],
-  getAgent: (id: string) => AgentInfo | undefined,
-  fallback: AgentInfo[]
-): AgentInfo[][] {
-  const mapped = rows.map((row) => row.map((id) => getAgent(id)).filter(Boolean) as AgentInfo[]);
-  if (mapped.some((row) => row.length > 0)) return mapped;
-  return [
-    fallback.filter((agent) => agent.id === "ceo"),
-    fallback.filter((agent) => ["manager", "researcher-1", "researcher-2", "researcher-3", "reviewer"].includes(agent.id)),
-    fallback.filter((agent) => ["worker-1", "worker-2", "worker-3", "editor", "designer"].includes(agent.id)),
-  ];
-}
-
-function CompactLogStrip({ logs }: { logs: LogEntry[] }) {
-  const recent = logs.slice(-2);
-
-  return (
-    <div
-      style={{
-        borderRadius: 18,
-        background: "#f8fbff",
-        border: "2px solid rgba(49,64,95,0.16)",
-        boxShadow: "0 8px 18px rgba(49,64,95,0.08)",
-        padding: "6px 10px",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 5 }}>
-        <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: "0.08em", color: "#31405f" }}>LIVE LOG</span>
-        <span style={{ fontSize: 10, fontWeight: 800, color: "#64748b" }}>{logs.length}件</span>
-      </div>
-      {recent.length === 0 ? (
-        <div style={{ fontSize: 11, color: "#64748b", fontWeight: 700 }}>ここに最新の会話が3行まで表示されます</div>
-      ) : (
-        <div style={{ display: "grid", gap: 6 }}>
-          {recent.map((log, index) => {
-            const cfg = ROLE_CONFIG[log.role] ?? ROLE_CONFIG.system;
-            return (
-              <div
-                key={`${log.time}-${index}`}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "48px 62px 1fr",
-                  gap: 8,
-                  alignItems: "start",
-                  fontSize: 10.5,
-                  lineHeight: 1.45,
-                }}
-              >
-                <span style={{ color: "#64748b", fontWeight: 800 }}>{log.time}</span>
-                <span style={{ color: cfg.color, fontWeight: 900 }}>{cfg.jaLabel}</span>
-                <span
-                  style={{
-                    color: "#334155",
-                    fontWeight: 700,
-                    display: "-webkit-box",
-                    WebkitLineClamp: 1,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {log.message}
-                </span>
-              </div>
-            );
-          })}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <span style={{ fontSize: 12, fontWeight: 900, color: roleMeta.strong }}>{roleMeta.label}</span>
+          <span
+            style={{
+              borderRadius: 999,
+              width: 11,
+              height: 11,
+              background: statusMeta.color,
+              boxShadow: `0 0 0 4px ${statusMeta.glow}`,
+              flexShrink: 0,
+            }}
+          />
         </div>
-      )}
+        <div style={{ fontSize: 13, fontWeight: 800, color: "#0f172a", marginTop: 4, lineHeight: 1.35 }}>{agent.name}</div>
+        <div style={{ fontSize: 11, color: "#64748b", marginTop: 6, fontWeight: 700 }}>
+          {agent.model ?? "Team Model"}
+        </div>
+      </div>
     </div>
   );
 }
 
-function ZoneCard({
+function ZonePanel({
   title,
+  subtitle,
   accent,
   children,
 }: {
@@ -652,20 +275,30 @@ function ZoneCard({
     <div
       style={{
         position: "relative",
-        border: `2px solid ${accent}55`,
-        borderRadius: 20,
-        padding: "6px 8px 8px",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(247,250,255,0.9) 100%)",
-        boxShadow: "0 8px 16px rgba(49,64,95,0.08)",
-        overflow: "visible",   /* 吹き出しを外にはみ出させる */
+        borderRadius: 28,
+        border: `2px solid ${accent}33`,
+        background: "#ffffffd8",
+        boxShadow: "0 18px 32px rgba(15,23,42,0.08)",
+        padding: "18px 18px 20px",
+        minHeight: 220,
+        overflow: "hidden",
       }}
     >
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontSize: 8, fontWeight: 900, letterSpacing: "0.08em", color: accent }}>{title}</div>
-          <div style={{ fontSize: 9, color: accent, fontWeight: 900, lineHeight: 1 }}>→</div>
+      <div
+        style={{
+          position: "absolute",
+          inset: 10,
+          borderRadius: 20,
+          border: `1px dashed ${accent}44`,
+          pointerEvents: "none",
+        }}
+      />
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.1em", color: accent, textTransform: "uppercase" }}>{title}</div>
+          <div style={{ fontSize: 13, lineHeight: 1.5, color: "#51617c", marginTop: 4, fontWeight: 700 }}>{subtitle}</div>
         </div>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 6, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 18, flexWrap: "wrap" }}>
           {children}
         </div>
       </div>
@@ -673,406 +306,189 @@ function ZoneCard({
   );
 }
 
-function StagePanel({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        position: "relative",
-        width: "100%",
-        height: "100%",
-        minHeight: 360,
-        borderRadius: 26,
-        border: "1.5px solid rgba(49,64,95,0.14)",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 100%)",
-        boxShadow: "inset 0 -8px 14px rgba(255,255,255,0.22)",
-        overflow: "hidden",
-        padding: "10px 10px 8px",
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-function FlowLines() {
+function FlowBackdrop() {
   return (
     <svg
-      viewBox="0 0 1000 430"
+      viewBox="0 0 1200 760"
       preserveAspectRatio="none"
-      style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        pointerEvents: "none",
-        opacity: 0.75,
-      }}
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", opacity: 0.8 }}
     >
-      <path d="M500 88 C418 116, 334 144, 244 196" stroke="#9f7aea" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
-      <path d="M500 88 C518 128, 530 152, 500 196" stroke="#60a5fa" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
-      <path d="M500 88 C588 124, 688 144, 772 196" stroke="#4ade80" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
-      <path d="M500 196 C444 240, 352 266, 286 308" stroke="#fb923c" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
-      <path d="M500 196 C560 236, 648 266, 716 308" stroke="#f472b6" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
-      <path d="M500 88 C494 170, 494 238, 500 306" stroke="rgba(49,64,95,0.22)" strokeWidth="2" strokeDasharray="6 14" fill="none" strokeLinecap="round" />
+      <path d="M600 126 C600 178, 600 198, 600 250" stroke="#8b5cf6" strokeWidth="4" strokeDasharray="10 14" fill="none" strokeLinecap="round" />
+      <path d="M600 294 C468 332, 376 362, 266 416" stroke="#0891b2" strokeWidth="4" strokeDasharray="10 14" fill="none" strokeLinecap="round" />
+      <path d="M600 294 C596 336, 594 370, 592 430" stroke="#2563eb" strokeWidth="4" strokeDasharray="10 14" fill="none" strokeLinecap="round" />
+      <path d="M600 294 C730 338, 848 366, 952 414" stroke="#16a34a" strokeWidth="4" strokeDasharray="10 14" fill="none" strokeLinecap="round" />
+      <path d="M290 510 C370 566, 428 592, 520 638" stroke="#f97316" strokeWidth="4" strokeDasharray="10 14" fill="none" strokeLinecap="round" />
+      <path d="M938 506 C846 564, 766 594, 670 638" stroke="#ec4899" strokeWidth="4" strokeDasharray="10 14" fill="none" strokeLinecap="round" />
     </svg>
   );
 }
 
-export default function MeetingRoom({ logs, agents, isRunning }: Props) {
-  const BASE_W = 1120;
-  const BASE_H = 560;
-  const stageViewportRef = useRef<HTMLDivElement | null>(null);
-  const [stageScale, setStageScale] = useState(1);
+export default function MeetingRoom({ logs, agents, isRunning, output }: Props) {
+  const agentMap = useMemo(() => {
+    const list = agents.length > 0 ? agents : DEFAULT_AGENTS;
+    return new Map(list.map((agent) => [agent.id, agent]));
+  }, [agents]);
 
-  useEffect(() => {
-    const node = stageViewportRef.current;
-    if (!node) return;
+  const allAgents = useMemo(
+    () => DEFAULT_AGENTS.map((fallback) => agentMap.get(fallback.id) ?? fallback),
+    [agentMap]
+  );
 
-    const updateScale = () => {
-      const { width, height } = node.getBoundingClientRect();
-      if (!width || !height) return;
-
-      const nextScale = Math.min(width / BASE_W, height / BASE_H, 1);
-      setStageScale((prev) => (Math.abs(prev - nextScale) < 0.01 ? prev : nextScale));
-    };
-
-    updateScale();
-
-    const observer = new ResizeObserver(() => updateScale());
-    observer.observe(node);
-
-    return () => observer.disconnect();
-  }, []);
-
-  const scaledWidth = Math.round(BASE_W * stageScale);
-  const scaledHeight = Math.round(BASE_H * stageScale);
-  const getAgent = (id: string) => agents.find((a) => a.id === id);
-  const all: AgentInfo[] = agents.length > 0
-    ? agents
-    : [
-        { id: "ceo", role: "ceo", name: "CEO", status: "idle" as AgentStatus },
-        { id: "manager", role: "manager", name: "Manager", status: "idle" as AgentStatus },
-        { id: "worker-1", role: "worker", name: "Worker Lead", status: "idle" as AgentStatus },
-        { id: "worker-2", role: "worker", name: "Worker Core", status: "idle" as AgentStatus },
-        { id: "worker-3", role: "worker", name: "Worker Quality", status: "idle" as AgentStatus },
-        { id: "reviewer", role: "reviewer", name: "Reviewer", status: "idle" as AgentStatus },
-        { id: "researcher-1", role: "researcher", name: "Researcher News", status: "idle" as AgentStatus },
-        { id: "researcher-2", role: "researcher", name: "Researcher Compare", status: "idle" as AgentStatus },
-        { id: "researcher-3", role: "researcher", name: "Researcher Source", status: "idle" as AgentStatus },
-        { id: "editor", role: "editor", name: "Editor", status: "idle" as AgentStatus },
-        { id: "designer", role: "designer", name: "Designer", status: "idle" as AgentStatus },
-      ];
-
-  const lineup = lineupOrFallback([
-    ["ceo"],
-    ["manager", "researcher-1", "researcher-2", "researcher-3", "reviewer"],
-    ["worker-1", "worker-2", "worker-3", "editor", "designer"],
-  ], getAgent, all);
-  const [topRow] = lineup;
-  const zoneAgents = {
-    research: all.filter((agent) => ["researcher-1", "researcher-2", "researcher-3"].includes(agent.id)),
-    manager: all.filter((agent) => agent.id === "manager"),
-    review: all.filter((agent) => agent.id === "reviewer"),
-    build: all.filter((agent) => ["worker-1", "worker-2", "worker-3"].includes(agent.id)),
-    creative: all.filter((agent) => ["editor", "designer"].includes(agent.id)),
+  const zones = {
+    hq: allAgents.filter((agent) => agent.id === "ceo"),
+    research: allAgents.filter((agent) => agent.role === "researcher"),
+    control: allAgents.filter((agent) => agent.id === "manager"),
+    review: allAgents.filter((agent) => agent.id === "reviewer"),
+    build: allAgents.filter((agent) => agent.role === "worker"),
+    creative: allAgents.filter((agent) => agent.role === "editor" || agent.role === "designer"),
   };
+
+  const activeCount = allAgents.filter((agent) => agent.status === "thinking" || agent.status === "reviewing").length;
+  const stageLabel = getStageLabel(logs, isRunning, output);
+  const heroCopy = getHeroCopy(logs, isRunning, output);
+  const latestSystemLog = [...logs].reverse().find((log) => log.role === "system");
 
   return (
     <div
       style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
+        height: "100%",
+        borderRadius: 28,
         overflow: "hidden",
-        background: "linear-gradient(180deg, #77d6ff 0%, #8fe2ff 42%, #d8f5ff 43%, #d8f5ff 100%)",
+        border: "3px solid #31405f",
+        background:
+          "linear-gradient(180deg, #7fd7ff 0%, #9be5ff 28%, #d6f4ff 29%, #e7fbff 72%, #dff3bf 72%, #dff3bf 100%)",
+        boxShadow: "0 14px 34px rgba(15,23,42,0.10)",
         position: "relative",
       }}
     >
-      <div
-        style={{
-          position: "absolute",
-          inset: 6,
-          border: "4px solid #7f57f1",
-          borderRadius: 18,
-          boxShadow: "inset 0 0 0 4px #ffe85d",
-          pointerEvents: "none",
-        }}
-      />
+      <div style={{ position: "absolute", inset: 12, borderRadius: 22, border: "4px solid #7f57f1", boxShadow: "inset 0 0 0 4px #ffe85d", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", left: 34, top: 32, width: 120, height: 26, borderRadius: 999, background: "#ffffff", boxShadow: "28px 6px 0 0 #ffffff, 62px 1px 0 0 #ffffff", opacity: 0.92 }} />
+      <div style={{ position: "absolute", right: 120, top: 42, width: 82, height: 18, borderRadius: 999, background: "#ffffff", boxShadow: "20px -5px 0 0 #ffffff, 42px 2px 0 0 #ffffff", opacity: 0.88 }} />
+      <div style={{ position: "absolute", left: 0, right: 0, bottom: 80, height: 32, background: "linear-gradient(180deg, #52b74f 0%, #37983b 100%)", borderTop: "4px solid #92e271" }} />
+      <div style={{ position: "absolute", left: 0, right: 0, bottom: 28, height: 52, background: "linear-gradient(180deg, #d99150 0%, #b66b37 100%)", borderTop: "4px solid #f5b36c", borderBottom: "4px solid #87481f" }} />
+      <div style={{ position: "absolute", left: 0, right: 0, bottom: 28, height: 52, opacity: 0.24, backgroundImage: "linear-gradient(90deg, transparent 0, transparent 12px, #7b4627 12px, #7b4627 14px, transparent 14px, transparent 40px, #7b4627 40px, #7b4627 42px, transparent 42px)", backgroundSize: "54px 24px" }} />
+      <div style={{ position: "absolute", left: 0, bottom: 104, width: 330, height: 140, background: "#b5a2d8", clipPath: "polygon(0 100%, 0 38%, 18% 14%, 34% 26%, 56% 10%, 74% 22%, 100% 8%, 100% 100%)", opacity: 0.72 }} />
+      <div style={{ position: "absolute", right: 0, bottom: 108, width: 360, height: 150, background: "#c9b7e6", clipPath: "polygon(0 100%, 0 34%, 16% 18%, 36% 10%, 54% 26%, 78% 18%, 100% 34%, 100% 100%)", opacity: 0.7 }} />
 
-      <div
-        ref={stageViewportRef}
-        style={{
-          position: "relative",
-          flex: 1,
-          minHeight: 0,
-          padding: 8,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "hidden",
-        }}
-      >
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", height: "100%", padding: "24px 24px 22px" }}>
         <div
           style={{
-            position: "relative",
-            width: scaledWidth,
-            height: scaledHeight,
-            maxWidth: "100%",
-            maxHeight: "100%",
-            flexShrink: 0,
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) auto auto",
+            gap: 12,
+            alignItems: "center",
+            marginBottom: 18,
           }}
         >
           <div
             style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: BASE_W,
-              height: BASE_H,
-              transform: `scale(${stageScale})`,
-              transformOrigin: "top left",
+              borderRadius: 20,
+              background: "#fff8f1",
+              border: "3px solid #31405f",
+              boxShadow: "0 8px 0 rgba(49,64,95,0.12)",
+              padding: "14px 18px",
             }}
           >
-            <StagePanel>
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 12,
-                  pointerEvents: "none",
-                  backgroundImage:
-                    "linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px)",
-                  backgroundSize: "20px 20px",
-                  opacity: 0.18,
-                }}
-              />
-              <div style={{ position: "absolute", top: 20, left: 26, width: 96, height: 20, borderRadius: 999, background: "#ffffff", boxShadow: "22px 5px 0 0 #ffffff, 46px 0 0 0 #ffffff" }} />
-              <div style={{ position: "absolute", top: 52, right: 120, width: 72, height: 16, borderRadius: 999, background: "#ffffff", boxShadow: "18px -4px 0 0 #ffffff, 38px 2px 0 0 #ffffff" }} />
-              <div style={{ position: "absolute", top: 68, right: 62, width: 52, height: 12, borderRadius: 999, background: "#ffffff", boxShadow: "14px 0 0 0 #ffffff" }} />
+            <div style={{ fontSize: 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+              AI Company Control Stage
+            </div>
+            <div style={{ marginTop: 6, fontSize: 22, lineHeight: 1.25, fontWeight: 900, color: "#0f172a" }}>{stageLabel}</div>
+            <div style={{ marginTop: 6, fontSize: 13, color: "#475569", lineHeight: 1.55, fontWeight: 700 }}>
+              {heroCopy}
+            </div>
+          </div>
 
-              <div
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  right: 0,
-                  bottom: 72,
-                  height: 28,
-                  background: "linear-gradient(180deg, #49b34d 0%, #49b34d 48%, #37983b 48%, #37983b 100%)",
-                  borderTop: "4px solid #83de6b",
-                }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  right: 0,
-                  bottom: 26,
-                  height: 46,
-                  background: "linear-gradient(180deg, #d38a4a 0%, #d38a4a 50%, #b86a35 50%, #b86a35 100%)",
-                  borderTop: "4px solid #f5b36c",
-                  borderBottom: "4px solid #8a4d28",
-                }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  right: 0,
-                  bottom: 26,
-                  height: 46,
-                  opacity: 0.22,
-                  backgroundImage:
-                    "linear-gradient(90deg, transparent 0, transparent 10px, #6b3418 10px, #6b3418 12px, transparent 12px, transparent 36px, #6b3418 36px, #6b3418 38px, transparent 38px), linear-gradient(transparent 0, transparent 10px, #6b3418 10px, #6b3418 12px, transparent 12px)",
-                  backgroundSize: "48px 24px",
-                }}
-              />
+          <div
+            style={{
+              borderRadius: 20,
+              background: "#fffdfa",
+              border: "2px solid rgba(49,64,95,0.14)",
+              padding: "12px 14px",
+              minWidth: 144,
+              boxShadow: "0 10px 20px rgba(15,23,42,0.06)",
+            }}
+          >
+            <div style={{ fontSize: 10, fontWeight: 900, color: "#64748b", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+              Active Agents
+            </div>
+            <div style={{ marginTop: 6, fontSize: 26, fontWeight: 900, color: "#0f172a" }}>{activeCount}</div>
+            <div style={{ marginTop: 2, fontSize: 11, fontWeight: 800, color: "#51617c" }}>
+              {isRunning ? "現在稼働中" : "実行待機中"}
+            </div>
+          </div>
 
-            <div
-              style={{
-                position: "absolute",
-                left: 50,
-                bottom: 92,
-                width: 220,
-                height: 96,
-                background: "#8ed36e",
-                borderRadius: "50% 50% 0 0",
-                boxShadow: "inset 0 -10px 0 #79c25a",
-                opacity: 0.82,
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                right: 44,
-                bottom: 88,
-                width: 248,
-                height: 110,
-                background: "#9ce07f",
-                borderRadius: "55% 55% 0 0",
-                boxShadow: "inset 0 -10px 0 #84cb66",
-                opacity: 0.84,
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                bottom: 112,
-                width: 340,
-                height: 116,
-                background: "#b6a0d5",
-                clipPath: "polygon(0 100%, 0 42%, 16% 20%, 36% 34%, 56% 12%, 78% 28%, 100% 18%, 100% 100%)",
-                opacity: 0.72,
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                right: 0,
-                bottom: 110,
-                width: 360,
-                height: 124,
-                background: "#c7b3e4",
-                clipPath: "polygon(0 100%, 0 32%, 22% 16%, 40% 6%, 58% 24%, 82% 18%, 100% 34%, 100% 100%)",
-                opacity: 0.72,
-              }}
-            />
+          <div
+            style={{
+              borderRadius: 20,
+              background: "#fffdfa",
+              border: "2px solid rgba(49,64,95,0.14)",
+              padding: "12px 14px",
+              minWidth: 216,
+              boxShadow: "0 10px 20px rgba(15,23,42,0.06)",
+            }}
+          >
+            <div style={{ fontSize: 10, fontWeight: 900, color: "#64748b", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+              System Feed
+            </div>
+            <div style={{ marginTop: 6, fontSize: 12, fontWeight: 800, color: "#1f2937", lineHeight: 1.55 }}>
+              {latestSystemLog?.message ?? "待機中です。実行するとフェーズ進行がここに流れます。"}
+            </div>
+          </div>
+        </div>
 
-            <motion.div style={{ position: "absolute", top: 20, left: 250, zIndex: 1, pointerEvents: "none" }} animate={{ y: [0, -4, 0] }} transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}>
-              <PixelDecor pixels={COIN_SPRITE} cellSize={4} />
-            </motion.div>
-            <motion.div style={{ position: "absolute", top: 40, left: 318, zIndex: 1, pointerEvents: "none" }} animate={{ y: [0, -5, 0] }} transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}>
-              <PixelDecor pixels={COIN_SPRITE} cellSize={3.6} />
-            </motion.div>
-            <motion.div style={{ position: "absolute", top: 32, right: 146, zIndex: 1, pointerEvents: "none" }} animate={{ x: [0, 6, 0], y: [0, -2, 0] }} transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}>
-              <PixelDecor pixels={LAKITU_SPRITE} cellSize={4} />
-            </motion.div>
-            <motion.div style={{ position: "absolute", top: 382, left: 118, zIndex: 1, pointerEvents: "none" }} animate={{ x: [0, 6, 0] }} transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}>
-              <PixelDecor pixels={GOOMBA_SPRITE} cellSize={3.8} />
-            </motion.div>
-            <motion.div style={{ position: "absolute", top: 382, right: 126, zIndex: 1, pointerEvents: "none" }} animate={{ x: [0, -5, 0] }} transition={{ duration: 3.1, repeat: Infinity, ease: "easeInOut" }}>
-              <PixelDecor pixels={GOOMBA_SPRITE} cellSize={3.5} />
-            </motion.div>
-            <motion.div style={{ position: "absolute", bottom: 48, right: 84, zIndex: 1, pointerEvents: "none" }} animate={{ y: [0, -5, 0] }} transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut" }}>
-              <PixelDecor pixels={PIRANHA_SPRITE} cellSize={4} />
-            </motion.div>
-
-            <div
-              style={{
-                position: "absolute",
-                top: 14,
-                left: 18,
-                padding: "7px 10px",
-                borderRadius: 999,
-                background: "rgba(255,248,241,0.94)",
-                border: "3px solid #31405f",
-                boxShadow: "0 4px 0 rgba(49,64,95,0.2)",
-                fontSize: 10,
-                fontWeight: 900,
-                color: "#31405f",
-                letterSpacing: "0.08em",
-                zIndex: 2,
-              }}
-            >
-              PIXEL STAGE {isRunning ? "1-1 RUNNING" : "1-1 READY"}
+        <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
+          <FlowBackdrop />
+          <div
+            style={{
+              position: "relative",
+              zIndex: 1,
+              height: "100%",
+              display: "grid",
+              gridTemplateColumns: "1.25fr 1fr 1fr",
+              gridTemplateRows: "auto 1fr 1fr",
+              gap: 18,
+              gridTemplateAreas: `
+                "hq hq hq"
+                "research control review"
+                "build build creative"
+              `,
+            }}
+          >
+            <div style={{ gridArea: "hq", display: "flex", justifyContent: "center" }}>
+              <ZonePanel title="Headquarters" subtitle="最終意思決定と全体品質を管理する司令塔" accent="#8b5cf6">
+                {zones.hq.map((agent) => <AgentUnit key={agent.id} agent={agent} />)}
+              </ZonePanel>
             </div>
 
-            <div
-              style={{
-                position: "absolute",
-                top: 58,
-                left: 24,
-                right: 24,
-                display: "grid",
-                gridTemplateColumns: "minmax(0, 1fr) 276px",
-                gap: 16,
-                alignItems: "start",
-                zIndex: 12,
-              }}
-            >
-              <CompactLogStrip logs={logs} />
-
-              <div
-                style={{
-                  borderRadius: 18,
-                  padding: "10px 12px 12px",
-                  background: "#fff8f1",
-                  border: "2px solid rgba(49,64,95,0.16)",
-                  boxShadow: "0 8px 18px rgba(49,64,95,0.08)",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: "0.08em", color: "#31405f" }}>ARCADE</span>
-                  <span style={{ fontSize: 9, fontWeight: 900, color: "#64748b", letterSpacing: "0.08em" }}>AGENT MAP</span>
-                </div>
-                <WaitingGame active={isRunning} size="small" variant="embedded" compact />
-              </div>
+            <div style={{ gridArea: "research" }}>
+              <ZonePanel title="Research Field" subtitle="最新情報を調べ、比較材料を持ち帰る調査班" accent="#0891b2">
+                {zones.research.map((agent) => <AgentUnit key={agent.id} agent={agent} />)}
+              </ZonePanel>
             </div>
 
-            {/* Flow lines – behind zones */}
-            <div style={{ position: "absolute", inset: "148px 46px 60px", zIndex: 1, pointerEvents: "none" }}>
-              <FlowLines />
+            <div style={{ gridArea: "control" }}>
+              <ZonePanel title="Control Tower" subtitle="CEO と現場をつなぐ進行管理" accent="#2563eb">
+                {zones.control.map((agent) => <AgentUnit key={agent.id} agent={agent} />)}
+              </ZonePanel>
             </div>
 
-            {/* Zone grid – flex column so rows can NEVER geometrically overlap.
-                paddingTop on each row = reserved space for speech bubbles (bottom:100%). */}
-            <div style={{ position: "absolute", left: 18, right: 18, top: 148, zIndex: 2 }}>
-
-              {/* Row 1: CEO */}
-              <div style={{ display: "flex", justifyContent: "center", paddingTop: 28 }}>
-                <div style={{ width: 280 }}>
-                  <ZoneCard title="CASTLE HQ" subtitle="CEO" accent="#8b5cf6">
-                    {topRow.map((agent) => (
-                      <CharacterUnit key={agent.id} agent={agent} />
-                    ))}
-                  </ZoneCard>
-                </div>
-              </div>
-
-              {/* Row 2: Research / Control / Review */}
-              <div style={{ display: "flex", gap: 10, paddingTop: 28, marginTop: 8 }}>
-                <div style={{ flex: "0 0 290px" }}>
-                  <ZoneCard title="RESEARCH FIELD" subtitle="調査" accent="#06b6d4">
-                    {zoneAgents.research.map((agent) => (
-                      <CharacterUnit key={agent.id} agent={agent} />
-                    ))}
-                  </ZoneCard>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <ZoneCard title="CONTROL TOWER" subtitle="管理" accent="#3b82f6">
-                    {zoneAgents.manager.map((agent) => (
-                      <CharacterUnit key={agent.id} agent={agent} />
-                    ))}
-                  </ZoneCard>
-                </div>
-                <div style={{ flex: "0 0 260px" }}>
-                  <ZoneCard title="REVIEW GATE" subtitle="確認" accent="#22c55e">
-                    {zoneAgents.review.map((agent) => (
-                      <CharacterUnit key={agent.id} agent={agent} />
-                    ))}
-                  </ZoneCard>
-                </div>
-              </div>
-
-              {/* Row 3: Build / Creative */}
-              <div style={{ display: "flex", gap: 10, paddingTop: 28, marginTop: 8 }}>
-                <div style={{ flex: 1 }}>
-                  <ZoneCard title="BUILD ZONE" subtitle="実装" accent="#f97316">
-                    {zoneAgents.build.map((agent) => (
-                      <CharacterUnit key={agent.id} agent={agent} />
-                    ))}
-                  </ZoneCard>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <ZoneCard title="CREATIVE HOUSE" subtitle="編集" accent="#ec4899">
-                    {zoneAgents.creative.map((agent) => (
-                      <CharacterUnit key={agent.id} agent={agent} />
-                    ))}
-                  </ZoneCard>
-                </div>
-              </div>
-
+            <div style={{ gridArea: "review" }}>
+              <ZonePanel title="Review Gate" subtitle="品質・根拠・仕上がりをチェックする検証ライン" accent="#16a34a">
+                {zones.review.map((agent) => <AgentUnit key={agent.id} agent={agent} />)}
+              </ZonePanel>
             </div>
-            </StagePanel>
+
+            <div style={{ gridArea: "build" }}>
+              <ZonePanel title="Build Zone" subtitle="調査結果をもとにドラフトを作り、成果物の芯をつくる制作班" accent="#f97316">
+                {zones.build.map((agent) => <AgentUnit key={agent.id} agent={agent} />)}
+              </ZonePanel>
+            </div>
+
+            <div style={{ gridArea: "creative" }}>
+              <ZonePanel title="Creative House" subtitle="文章とデザインを整えて納品品質へ引き上げる仕上げ班" accent="#ec4899">
+                {zones.creative.map((agent) => <AgentUnit key={agent.id} agent={agent} />)}
+              </ZonePanel>
+            </div>
           </div>
         </div>
       </div>

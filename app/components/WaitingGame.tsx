@@ -272,8 +272,8 @@ export default function WaitingGame({ active, size = "small", variant = "card", 
       style={{
         border: "3px solid rgba(49, 64, 95, 0.16)",
         borderRadius: large ? 24 : 18,
-        background: embedded ? "transparent" : "linear-gradient(180deg, #e4f8ff 0%, #fdf8ef 100%)",
-        boxShadow: embedded ? "none" : "0 6px 0 rgba(49,64,95,0.08)",
+        background: embedded ? "transparent" : "linear-gradient(180deg, #f0fbff 0%, #fff6ea 100%)",
+        boxShadow: embedded ? "none" : "0 10px 0 rgba(49,64,95,0.08)",
         padding: embedded ? 0 : compact ? 0 : large ? 18 : 12,
         width: "100%",
         maxWidth: large ? 760 : "none",
@@ -282,16 +282,26 @@ export default function WaitingGame({ active, size = "small", variant = "card", 
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: compact ? 6 : large ? 12 : 8, gap: 12, paddingInline: embedded ? 2 : 0 }}>
         <div>
-          <div style={{ fontSize: compact ? 9 : large ? 13 : 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+          <div style={{ fontSize: compact ? 9 : large ? 12 : 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.12em", textTransform: "uppercase" }}>
             Waiting Game
           </div>
-          <div style={{ fontSize: compact ? 10 : large ? 14 : 12, color: "#51617c", fontWeight: 700 }}>
-            `Space` でジャンプ
+          <div style={{ fontSize: compact ? 10 : large ? 15 : 12, color: "#23324f", fontWeight: 900, marginTop: large ? 2 : 0 }}>
+            {active ? "`Space` またはボタンでジャンプ" : "AI 実行中にオープン"}
           </div>
+          {!compact && (
+            <div style={{ fontSize: large ? 12 : 10, color: "#64748b", fontWeight: 700, marginTop: 2 }}>
+              {active ? "待ち時間の間だけ遊べる社内アーケード" : "処理が始まるとプレイできます"}
+            </div>
+          )}
         </div>
         <div style={{ textAlign: "right", fontSize: compact ? 10 : large ? 14 : 11, fontWeight: 900, color: "#23324f" }}>
-          <div>Score {score}</div>
+          <div style={{ fontSize: large ? 22 : undefined }}>Score {score}</div>
           <div style={{ color: "#f97316" }}>Best {bestScore}</div>
+          {large && (
+            <div style={{ fontSize: 10, color: "#64748b", marginTop: 4, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              Office Arcade
+            </div>
+          )}
         </div>
       </div>
 
@@ -301,20 +311,26 @@ export default function WaitingGame({ active, size = "small", variant = "card", 
           onClick={jump}
           style={{
             width: "100%",
-            marginBottom: 10,
+            marginBottom: 12,
             border: "3px solid #31405f",
-            borderRadius: large ? 14 : 12,
-            background: active ? "#fff8f1" : "#f6f2ea",
+            borderRadius: large ? 16 : 12,
+            background: active ? "linear-gradient(180deg, #fff8f1 0%, #fff0de 100%)" : "#f6f2ea",
             color: "#23324f",
-            padding: large ? "10px 12px" : "8px 10px",
-            fontSize: large ? 14 : 12,
+            padding: large ? "12px 14px" : "8px 10px",
+            fontSize: large ? 15 : 12,
             fontWeight: 900,
             cursor: active ? "pointer" : "not-allowed",
-            boxShadow: "0 4px 0 rgba(49,64,95,0.08)",
+            boxShadow: "0 6px 0 rgba(49,64,95,0.08)",
           }}
           disabled={!active}
         >
-          {gameState === "gameover" ? "もう一回遊ぶ" : "ジャンプする"}
+          {!active
+            ? "AI 実行開始でプレイ解禁"
+            : gameState === "gameover"
+              ? "もう一回遊ぶ"
+              : gameState === "ready"
+                ? "ゲームをスタート"
+                : "ジャンプする"}
         </button>
       )}
 
@@ -331,6 +347,27 @@ export default function WaitingGame({ active, size = "small", variant = "card", 
           boxShadow: compact ? "inset 0 -6px 0 rgba(69, 120, 42, 0.12)" : "inset 0 -8px 0 rgba(69, 120, 42, 0.12)",
         }}
       >
+        {large && (
+          <div
+            style={{
+              position: "absolute",
+              top: 10,
+              right: 12,
+              zIndex: 3,
+              borderRadius: 999,
+              padding: "5px 10px",
+              border: "2px solid rgba(49,64,95,0.16)",
+              background: "rgba(255,248,241,0.86)",
+              fontSize: 10,
+              fontWeight: 900,
+              letterSpacing: "0.08em",
+              color: active ? "#16a34a" : "#64748b",
+              textTransform: "uppercase",
+            }}
+          >
+            {active ? "Play Now" : "Locked"}
+          </div>
+        )}
         <div
           style={{
             position: "absolute",

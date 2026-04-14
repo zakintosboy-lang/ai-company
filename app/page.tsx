@@ -10,6 +10,7 @@ import type {
 } from "@/agents/types";
 import DeliverableTabs from "./components/DeliverableTabs";
 import MeetingRoom from "./components/MeetingRoom";
+import WaitingGame from "./components/WaitingGame";
 
 // ── Agent UI 用型 ──────────────────────────────────────────────
 type AgentRole     = "ceo" | "manager" | "worker" | "reviewer" | "researcher" | "editor" | "designer" | "system";
@@ -867,6 +868,16 @@ export default function Home() {
   const canExport = !!output && !isRunning;
   const progressMeta = getProgressMeta(logs, isRunning, !!output);
   const progressSteps = ["待機", "戦略", "分解", "調査", "生成", "レビュー", "編集", "完了"];
+  const agentCards = Object.values(agents).map((card) => ({
+    id: card.config.id,
+    role: card.config.role,
+    name: card.config.name,
+    status: card.status,
+    lastMessage: card.lastMessage,
+    model: card.config.model.displayName,
+  }));
+  const activeAgentCards = agentCards.filter((agent) => agent.status === "thinking" || agent.status === "reviewing");
+  const recentLogs = [...logs].slice(-8).reverse();
   const headerAgentSummary = Object.values(agents).length > 0
     ? `CEO / Manager / Worker ${AGENT_ORDER.filter((id) => id.startsWith("worker-")).length} / Reviewer / Researcher 3 / Editor / Designer`
     : "Claude・OpenAI・Geminiが分担して、調査レポートから提案・企画メモまで仕上げるAIチーム";
@@ -894,49 +905,35 @@ export default function Home() {
       </header>
 
       <main className="main">
-        {/* Left Panel */}
-        <aside className={`panel-left ${isMobileView ? "mobile-edit-panel" : ""}`}>
-          <div
-            style={{
-              padding: "10px 12px",
-              borderRadius: 14,
-              border: "2px solid rgba(49, 64, 95, 0.14)",
-              background: "linear-gradient(135deg, #fff9f1 0%, #f0f4ff 100%)",
-            }}
-          >
-            <div style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "#7f57f1", fontWeight: 900, marginBottom: 4 }}>
-              AI Company
-            </div>
-            <div style={{ fontSize: 11, color: "#51617c", fontWeight: 700, lineHeight: 1.6 }}>
-              調査 → 比較レポート → おすすめ案 → 企画メモまで納品
+        <aside className={`panel-left command-sidebar ${isMobileView ? "mobile-edit-panel" : ""}`}>
+          <div className="sidebar-hero">
+            <div className="sidebar-hero-badge">Mission Control</div>
+            <div className="sidebar-hero-title">AI COMPANY に依頼する内容</div>
+            <div className="sidebar-hero-copy">
+              調査、比較、提案、レビュー、デザインまでを AI エージェントチームが分担して仕上げます。
             </div>
           </div>
 
-          {/* Compact progress — running 中のみ表示 */}
-          {(isRunning || progressMeta.step > 0) && (
-            <div className="progress-compact">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: "#7f57f1" }}>{progressMeta.label}</div>
-                <div style={{ fontSize: 10, fontWeight: 800, color: "#64748b" }}>
-                  {isRunning ? formatSeconds(elapsedSeconds) : ""}&nbsp;
-                  <span style={{ color: "#f97316" }}>avg {formatSeconds(Math.max(avgDurationSeconds, 35))}</span>
-                </div>
-              </div>
-              <div className="progress-steps-mini">
-                {progressSteps.map((step, index) => (
-                  <div
-                    key={step}
-                    className={`progress-step-pill${index < progressMeta.step ? " done" : index === progressMeta.step ? " active" : ""}`}
-                  >
-                    {step}
-                  </div>
-                ))}
+          <div className="progress-compact">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: 900, color: "#7f57f1" }}>{progressMeta.label}</div>
+              <div style={{ fontSize: 10, fontWeight: 800, color: "#64748b" }}>
+                {isRunning ? formatSeconds(elapsedSeconds) : "0秒"} / <span style={{ color: "#f97316" }}>avg {formatSeconds(Math.max(avgDurationSeconds, 35))}</span>
               </div>
             </div>
-          )}
+            <div className="progress-steps-mini">
+              {progressSteps.map((step, index) => (
+                <div
+                  key={step}
+                  className={`progress-step-pill${index < progressMeta.step ? " done" : index === progressMeta.step ? " active" : ""}`}
+                >
+                  {step}
+                </div>
+              ))}
+            </div>
+          </div>
 
-          {/* ── 指示入力 ── */}
-          <div>
+          <div className="command-panel-card">
             <div className="instruction-label-row">
               <div className="panel-section-label">指示内容</div>
               {instruction && !isRunning && (
@@ -947,28 +944,27 @@ export default function Home() {
             </div>
             <textarea
               className="instruction-textarea"
-              placeholder="例: AI議事録ツール市場を調査し、主要サービスの比較レポートを作成したうえで、おすすめ案を1つ選び、社内提案メモまでまとめてください"
+              placeholder="例: AI議事録ツール市場を調査し、主要サービスを比較したうえで、おすすめ案を1つ選び、社内提案メモまでまとめてください"
               value={instruction}
               onChange={(e) => setInstruction(e.target.value)}
               disabled={isRunning || !hydrated}
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleRun(); }}
             />
+            <div className="command-button-row">
+              <button
+                className="run-button"
+                onClick={isRunning ? handleCancelRun : handleRun}
+                disabled={!isRunning && !instruction.trim()}
+              >
+                {isRunning
+                  ? <>停止</>
+                  : <><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 2L12 7L3 12V2Z" fill="currentColor"/></svg>{isMobileView ? "実行" : "実行 (⌘ Enter)"}</>
+                }
+              </button>
+            </div>
           </div>
 
-          {/* ── 実行ボタン ── textarea の直後に配置 */}
-          <button
-            className="run-button"
-            onClick={isRunning ? handleCancelRun : handleRun}
-            disabled={!isRunning && !instruction.trim()}
-          >
-            {isRunning
-              ? <>停止</>
-              : <><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 2L12 7L3 12V2Z" fill="currentColor"/></svg>{isMobileView ? "実行" : "実行 (⌘ Enter)"}</>
-            }
-          </button>
-
-          {/* ── Info & Export ── */}
-          <div className="info-cards">
+          <div className="info-cards info-cards-grid">
             <div className="info-card">
               <div className="info-card-title">実行回数</div>
               <div className="info-card-value accent">{runCount}</div>
@@ -978,13 +974,13 @@ export default function Home() {
               <div className="info-card-value">{isRunning ? `${activeWorkers} / 3` : "—"}</div>
             </div>
             <div className="info-card">
-              <div className="info-card-title">ログ件数</div>
+              <div className="info-card-title">ライブログ</div>
               <div className="info-card-value">{logs.length}</div>
             </div>
           </div>
 
           <div className={`export-section ${canExport ? "visible" : ""}`}>
-            <div className="panel-section-label">エクスポート</div>
+            <div className="panel-section-label">成果物の持ち出し</div>
             <div className="export-buttons">
               <button className="export-btn btn-save"     onClick={handleSave}          disabled={!canExport}><span className="export-icon">💾</span>保存</button>
               <button className="export-btn btn-txt"      onClick={handleDownloadTxt}   disabled={!canExport}><span className="export-icon">📄</span>TXT</button>
@@ -995,32 +991,20 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ── サンプル指示 — 一番下にスクロールして見る ── */}
           {!isRunning && (
-            <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                  サンプル指示
-                </div>
+            <div className="sample-panel">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
+                <div className="panel-section-label" style={{ marginBottom: 0 }}>サンプル指示</div>
                 <button
                   type="button"
                   onClick={() => setVisibleSamples(pickSamples(sampleGenre))}
-                  style={{
-                    border: "2px solid rgba(49, 64, 95, 0.12)",
-                    background: "#fff8f1",
-                    borderRadius: 999,
-                    padding: "3px 9px",
-                    fontSize: 10,
-                    fontWeight: 900,
-                    cursor: "pointer",
-                    color: "var(--text-secondary)",
-                    boxShadow: "0 3px 0 rgba(49,64,95,0.06)",
-                  }}
+                  className="sample-refresh"
                 >
                   シャッフル
                 </button>
               </div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+
+              <div className="sample-genre-row">
                 {(Object.keys(SAMPLE_GENRE_META) as SampleGenre[]).map((genre) => {
                   const active = sampleGenre === genre;
                   const meta = SAMPLE_GENRE_META[genre];
@@ -1029,27 +1013,21 @@ export default function Home() {
                       key={genre}
                       type="button"
                       onClick={() => setSampleGenre(genre)}
+                      className={`sample-genre-chip${active ? " active" : ""}`}
                       style={{
-                        border: active ? `2px solid ${meta.border}` : "2px solid rgba(49, 64, 95, 0.12)",
+                        borderColor: active ? meta.border : "rgba(49, 64, 95, 0.12)",
                         background: active ? meta.bg : "#fff8f1",
-                        borderRadius: 999,
-                        padding: "4px 9px",
-                        fontSize: 10,
-                        fontWeight: 900,
-                        cursor: "pointer",
                         color: active ? meta.color : "inherit",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 4,
                       }}
                     >
-                      <span style={{ fontSize: 10, lineHeight: 1 }}>{meta.icon}</span>
+                      <span>{meta.icon}</span>
                       {meta.label}
                     </button>
                   );
                 })}
               </div>
-              <div style={{ display: "grid", gap: 6 }}>
+
+              <div className="sample-list">
                 {visibleSamples.map((sample) => {
                   const selected = instruction === sample.body;
                   const meta = SAMPLE_GENRE_META[sample.genre];
@@ -1058,26 +1036,17 @@ export default function Home() {
                       key={sample.title}
                       type="button"
                       onClick={() => setInstruction(sample.body)}
+                      className={`sample-card${selected ? " selected" : ""}`}
                       style={{
-                        textAlign: "left",
-                        padding: "10px 12px",
-                        borderRadius: 14,
-                        border: selected ? `2px solid ${meta.border}` : "2px solid rgba(49, 64, 95, 0.12)",
+                        borderColor: selected ? meta.border : "rgba(49, 64, 95, 0.12)",
                         background: selected ? meta.bg : "#fff8f1",
-                        color: "inherit",
-                        cursor: "pointer",
-                        transition: "all 160ms ease",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
-                        <span style={{
-                          display: "inline-flex", alignItems: "center", justifyContent: "center",
-                          minWidth: 18, height: 18, borderRadius: 999,
-                          background: meta.bg, color: meta.color, fontSize: 10, fontWeight: 800,
-                        }}>{meta.icon}</span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: meta.color }}>{sample.title}</span>
+                      <div className="sample-card-title-row">
+                        <span className="sample-card-icon" style={{ background: meta.bg, color: meta.color }}>{meta.icon}</span>
+                        <span className="sample-card-title" style={{ color: meta.color }}>{sample.title}</span>
                       </div>
-                      <div style={{ fontSize: 11, lineHeight: 1.55, opacity: 0.85 }}>{sample.body}</div>
+                      <div className="sample-card-body">{sample.body}</div>
                     </button>
                   );
                 })}
@@ -1086,43 +1055,126 @@ export default function Home() {
           )}
         </aside>
 
-        {/* Right Panel */}
-        <div className="panel-right">
-          {/* Meeting Room — スクロールしても上部に残る */}
-          <div className="meeting-in-right" style={{ height: isMobileView ? 280 : 500 }}>
-            <MeetingRoom
-              logs={logs}
-              agents={Object.values(agents).map(c => ({
-                id: c.config.id,
-                role: c.config.role,
-                name: c.config.name,
-                status: c.status,
-                lastMessage: c.lastMessage,
-                model: c.config.model.displayName,
-              }))}
-              isRunning={isRunning}
-              output={!!output}
-            />
-          </div>
-          {/* Scrollable output */}
-          <div className="panel-right-scroll">
-            <section className="panel-stack-section">
-              <div className="panel-stack-header">
-                <div>
-                  <div className="panel-stack-eyebrow">Deliverables</div>
-                  <div className="panel-stack-title">成果物</div>
+        <section className="workspace-main">
+          <section className="workspace-stage-shell">
+            <div className="workspace-panel-header">
+              <div>
+                <div className="panel-stack-eyebrow">Agent Stage</div>
+                <div className="workspace-panel-title">AI エージェントが働くメインステージ</div>
+              </div>
+              <div className="panel-stack-meta">{activeAgentCards.length} active</div>
+            </div>
+            <div className="workspace-stage-body">
+              <MeetingRoom
+                logs={logs}
+                agents={agentCards}
+                isRunning={isRunning}
+                output={!!output}
+              />
+            </div>
+          </section>
+
+          <section className="workspace-deliverable-shell">
+            <div className="workspace-panel-header">
+              <div>
+                <div className="panel-stack-eyebrow">Deliverables</div>
+                <div className="workspace-panel-title">AI チームの成果物</div>
+              </div>
+              <div className="deliverable-state-badge">
+                {output ? "完成" : isRunning ? "生成中" : "待機中"}
+              </div>
+            </div>
+            <div className="deliverable-highlight">
+              <div>
+                <div className="deliverable-highlight-label">Status</div>
+                <div className="deliverable-highlight-title">
+                  {output
+                    ? "プレビューとエクスポートの準備ができています"
+                    : isRunning
+                      ? "調査結果をまとめて成果物に変換しています"
+                      : "ここに完成したレポートと提案メモが表示されます"}
                 </div>
-                <div className="panel-stack-meta">{output ? "Ready" : "Waiting"}</div>
               </div>
-              <div className="panel-output-body">
-                {!output
-                  ? <div className="output-empty">会議ステージで進行を確認しながら、完成後はここに調査レポートと提案内容が表示されます</div>
-                  : <DeliverableTabs data={output} />
-                }
+              <div className="deliverable-highlight-copy">
+                {output
+                  ? "下のビュー切替で、標準表示・経営向け要約・提案書・スライドを確認できます。"
+                  : "AI エージェントの進行は中央ステージと右のライブレールで追跡できます。"}
               </div>
-            </section>
-          </div>
-        </div>
+            </div>
+            <div className="workspace-deliverable-body">
+              {!output
+                ? <div className="output-empty">生成が始まるとここに成果物プレビューが育っていき、完成後は強い存在感で確認できます。</div>
+                : <DeliverableTabs data={output} />
+              }
+            </div>
+          </section>
+        </section>
+
+        <aside className="panel-right side-rail">
+          <section className="side-panel status-panel">
+            <div className="workspace-panel-header rail-header">
+              <div>
+                <div className="panel-stack-eyebrow">Live Rail</div>
+                <div className="workspace-panel-title">進行中の AI</div>
+              </div>
+            </div>
+            <div className="status-agent-list">
+              {activeAgentCards.length > 0 ? activeAgentCards.map((agent) => (
+                <div key={agent.id} className="status-agent-card">
+                  <div className="status-agent-top">
+                    <span className="status-agent-role">{ROLE_LABEL[agent.role]}</span>
+                    <span className="status-agent-state">{agent.status === "reviewing" ? "レビュー中" : "進行中"}</span>
+                  </div>
+                  <div className="status-agent-name">{agent.name}</div>
+                  <div className="status-agent-message">{agent.lastMessage || "担当タスクを進めています"}</div>
+                </div>
+              )) : (
+                <div className="status-empty-card">実行すると、ここに今動いているエージェントの状況が並びます。</div>
+              )}
+            </div>
+          </section>
+
+          <section className="side-panel feed-panel">
+            <div className="workspace-panel-header rail-header">
+              <div>
+                <div className="panel-stack-eyebrow">Live Feed</div>
+                <div className="workspace-panel-title">セリフとログ</div>
+              </div>
+              <div className="panel-stack-meta">{logs.length}</div>
+            </div>
+            <div className="feed-list">
+              {recentLogs.length > 0 ? recentLogs.map((log, index) => (
+                <div key={`${log.time}-${index}`} className="feed-item">
+                  <div className="feed-item-top">
+                    <span className={`feed-role feed-role-${log.role}`}>{ROLE_LABEL[log.role]}</span>
+                    <span className="feed-time">{log.time}</span>
+                  </div>
+                  <div className="feed-message">{log.message}</div>
+                </div>
+              )) : (
+                <div className="status-empty-card">まだログはありません。実行すると会話とフェーズ進行がここに流れます。</div>
+              )}
+            </div>
+          </section>
+
+          <section className="side-panel arcade-panel">
+            <div className="workspace-panel-header rail-header">
+              <div>
+                <div className="panel-stack-eyebrow">Arcade</div>
+                <div className="workspace-panel-title">待ち時間ミニゲーム</div>
+              </div>
+              <div className="panel-stack-meta">{isRunning ? "PLAY" : "LOCKED"}</div>
+            </div>
+            <div className="arcade-copy">
+              {isRunning
+                ? "成果物が仕上がるまで、`Space` でジャンプしてスコア更新。待ち時間をそのまま遊びに変えます。"
+                : "AI が動き始めると遊べます。処理中だけ開く、社内休憩室のミニゲームです。"}
+            </div>
+            <div className="arcade-game-wrap">
+              <WaitingGame active={isRunning} size="large" variant="card" />
+            </div>
+          </section>
+        </aside>
       </main>
 
       {toast && <div className="toast">{toast}</div>}
