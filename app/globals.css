@@ -62,11 +62,11 @@ html, body {
 }
 
 .app {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   width: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
   background:
     radial-gradient(circle at 12% 8%, rgba(255,255,255,0.66) 0 60px, transparent 61px),
     radial-gradient(circle at 84% 14%, rgba(255,255,255,0.55) 0 44px, transparent 45px),
@@ -140,14 +140,44 @@ html, body {
 
 /* ── Layout ── */
 .main {
-  flex: 1;
   min-height: 0;
   display: grid;
   grid-template-columns: 300px 1fr;
-  grid-template-rows: 1fr;
   min-width: 0;
   gap: 12px;
+  padding: 12px 14px 18px;
+  align-items: start;
+}
+
+.meeting-hero-shell {
+  margin: 14px 14px 0;
+  background: rgba(255, 247, 239, 0.92);
+  border: 4px solid #31405f;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 10px 0 rgba(49, 64, 95, 0.12);
+}
+
+.meeting-hero-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 4px solid rgba(49, 64, 95, 0.12);
+  background: linear-gradient(180deg, #fffaf3 0%, #fff4e8 100%);
+}
+
+.meeting-hero-title {
+  margin-top: 2px;
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.meeting-hero-stage {
   padding: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.05) 100%);
 }
 
 /* ── Left Panel ── */
@@ -283,7 +313,7 @@ html, body {
 .panel-right-scroll {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -496,10 +526,22 @@ html, body {
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
-  .main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; min-height: 0; padding: 10px; gap: 10px; }
+  .main { grid-template-columns: 1fr; grid-template-rows: auto auto; height: auto; min-height: 0; padding: 10px; gap: 10px; }
   .header {
     padding: 0 14px;
     gap: 10px;
+  }
+  .meeting-hero-shell {
+    margin: 10px 10px 0;
+  }
+  .meeting-hero-header {
+    padding: 12px 14px;
+  }
+  .meeting-hero-title {
+    font-size: 15px;
+  }
+  .meeting-hero-stage {
+    padding: 10px;
   }
   .header-logo {
     width: 30px;

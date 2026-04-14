@@ -952,6 +952,34 @@ export default function Home() {
         </div>
       </div>
 
+      <section className="meeting-hero-shell">
+        <div className="meeting-hero-header">
+          <div>
+            <div className="panel-stack-eyebrow">Meeting Room</div>
+            <div className="meeting-hero-title">キャラクターが動く会議ステージ</div>
+          </div>
+          <div className="panel-stack-meta">{logs.length} logs</div>
+        </div>
+        <div
+          className="meeting-hero-stage"
+          style={{ height: isMobileView ? 500 : 620 }}
+        >
+          <MeetingRoom
+            logs={logs}
+            agents={Object.values(agents).map(c => ({
+              id: c.config.id,
+              role: c.config.role,
+              name: c.config.name,
+              status: c.status,
+              lastMessage: c.lastMessage,
+              model: c.config.model.displayName,
+            }))}
+            isRunning={isRunning}
+            output={!!output}
+          />
+        </div>
+      </section>
+
       <main className="main">
         {/* Left Panel */}
         <aside className={`panel-left ${isMobileView ? "mobile-edit-panel" : ""}`}>
@@ -1149,36 +1177,6 @@ export default function Home() {
         {/* Right Panel */}
         <div className="panel-right">
           <div className="panel-right-scroll">
-            <section className="panel-stack-section">
-              <div className="panel-stack-header">
-                <div>
-                  <div className="panel-stack-eyebrow">Meeting Room</div>
-                  <div className="panel-stack-title">キャラクターが動く会議ステージ</div>
-                </div>
-                <div className="panel-stack-meta">{logs.length} logs</div>
-              </div>
-              <div
-                className="panel-stage-body"
-                style={{ height: isMobileView ? 520 : 640 }}
-              >
-                <div style={{ height: "100%", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                  <MeetingRoom
-                    logs={logs}
-                    agents={Object.values(agents).map(c => ({
-                      id: c.config.id,
-                      role: c.config.role,
-                      name: c.config.name,
-                      status: c.status,
-                      lastMessage: c.lastMessage,
-                      model: c.config.model.displayName,
-                    }))}
-                    isRunning={isRunning}
-                    output={!!output}
-                  />
-                </div>
-              </div>
-            </section>
-
             <section className="panel-stack-section">
               <div className="panel-stack-header">
                 <div>
