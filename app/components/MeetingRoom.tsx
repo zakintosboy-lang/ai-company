@@ -117,17 +117,17 @@ function AgentBubble({ agent }: { agent: AgentInfo }) {
         exit={{ opacity: 0, y: 8, scale: 0.96 }}
         transition={{ duration: 0.2 }}
         style={{
-          maxWidth: isExpanded ? 220 : 170,
-          minHeight: isExpanded ? 84 : 48,
-          padding: isExpanded ? "12px 14px" : "8px 12px",
+          maxWidth: isExpanded ? 196 : 150,
+          minHeight: isExpanded ? 72 : 42,
+          padding: isExpanded ? "10px 12px" : "7px 10px",
           borderRadius: isExpanded ? 18 : 999,
           border: `2px solid ${roleMeta.color}55`,
-          background: "#fffdfa",
-          boxShadow: isActive ? `0 14px 28px ${statusMeta.glow}` : "0 10px 22px rgba(15,23,42,0.08)",
+          background: "#fffef8",
+          boxShadow: isActive ? `0 10px 22px ${statusMeta.glow}` : "0 8px 18px rgba(15,23,42,0.07)",
           position: "relative",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: isExpanded ? 8 : 0 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: isExpanded ? 6 : 0 }}>
           <span
             style={{
               fontSize: 10,
@@ -156,15 +156,15 @@ function AgentBubble({ agent }: { agent: AgentInfo }) {
         {isExpanded && (
           <div
             style={{
-              fontSize: 13,
-              lineHeight: 1.55,
+              fontSize: 12,
+              lineHeight: 1.5,
               color: "#243042",
               fontWeight: 700,
               display: "-webkit-box",
               WebkitLineClamp: 4,
               WebkitBoxOrient: "vertical",
               overflow: "hidden",
-              minHeight: 42,
+              minHeight: 36,
             }}
           >
             {normalizeBubbleMessage(agent)}
@@ -175,14 +175,14 @@ function AgentBubble({ agent }: { agent: AgentInfo }) {
           style={{
             position: "absolute",
             left: "50%",
-            bottom: isExpanded ? -11 : -8,
-            width: isExpanded ? 20 : 14,
-            height: isExpanded ? 20 : 14,
-            background: "#fffdfa",
+            bottom: isExpanded ? -9 : -7,
+            width: isExpanded ? 16 : 12,
+            height: isExpanded ? 16 : 12,
+            background: "#fffef8",
             borderLeft: `2px solid ${roleMeta.color}55`,
             borderBottom: `2px solid ${roleMeta.color}55`,
             transform: "translateX(-50%) rotate(-45deg)",
-            borderBottomLeftRadius: isExpanded ? 6 : 4,
+            borderBottomLeftRadius: isExpanded ? 5 : 4,
           }}
         />
       </motion.div>
@@ -194,10 +194,10 @@ function AgentUnit({ agent }: { agent: AgentInfo }) {
   const roleMeta = ROLE_META[agent.role] ?? ROLE_META.system;
   const statusMeta = STATUS_META[agent.status] ?? STATUS_META.idle;
   const isActive = agent.status === "thinking" || agent.status === "reviewing";
-  const size = agent.role === "ceo" ? 3.35 : 2.75;
+  const size = agent.role === "ceo" ? 4 : 3;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, minWidth: 132 }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, minWidth: 116 }}>
       <AgentBubble agent={agent} />
 
       <motion.div
@@ -209,22 +209,21 @@ function AgentUnit({ agent }: { agent: AgentInfo }) {
           style={{
             position: "absolute",
             left: "50%",
-            bottom: -8,
+            bottom: -6,
             transform: "translateX(-50%)",
-            width: 66,
-            height: 14,
+            width: 58,
+            height: 10,
             borderRadius: 999,
-            background: "rgba(15,23,42,0.14)",
-            filter: "blur(3px)",
+            background: "rgba(15,23,42,0.12)",
           }}
         />
         <div
           style={{
-            padding: "10px 12px",
-            borderRadius: 22,
-            background: "#ffffffcc",
-            border: `2px solid ${roleMeta.color}33`,
-            boxShadow: isActive ? `0 12px 24px ${statusMeta.glow}` : "0 8px 20px rgba(15,23,42,0.08)",
+            padding: "6px 8px",
+            borderRadius: 16,
+            background: "#fffef7",
+            border: `2px solid ${roleMeta.color}44`,
+            boxShadow: isActive ? `0 10px 20px ${statusMeta.glow}` : "0 6px 14px rgba(15,23,42,0.07)",
           }}
         >
           <PixelCharacter role={agent.role} status={agent.status} agentId={agent.id} size={size} />
@@ -234,12 +233,12 @@ function AgentUnit({ agent }: { agent: AgentInfo }) {
       <div
         style={{
           width: "100%",
-          maxWidth: 160,
-          borderRadius: 18,
+          maxWidth: 148,
+          borderRadius: 16,
           border: `2px solid ${roleMeta.color}33`,
-          background: "#fffdfa",
-          padding: "10px 12px",
-          boxShadow: "0 10px 18px rgba(15,23,42,0.06)",
+          background: "#fffef8",
+          padding: "8px 10px",
+          boxShadow: "0 8px 14px rgba(15,23,42,0.05)",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
@@ -255,8 +254,8 @@ function AgentUnit({ agent }: { agent: AgentInfo }) {
             }}
           />
         </div>
-        <div style={{ fontSize: 13, fontWeight: 800, color: "#0f172a", marginTop: 4, lineHeight: 1.35 }}>{agent.name}</div>
-        <div style={{ fontSize: 11, color: "#64748b", marginTop: 6, fontWeight: 700 }}>
+        <div style={{ fontSize: 12, fontWeight: 800, color: "#0f172a", marginTop: 4, lineHeight: 1.35 }}>{agent.name}</div>
+        <div style={{ fontSize: 10, color: "#64748b", marginTop: 5, fontWeight: 700 }}>
           {agent.model ?? "Team Model"}
         </div>
       </div>
@@ -281,10 +280,10 @@ function ZonePanel({
         position: "relative",
         borderRadius: 28,
         border: `2px solid ${accent}33`,
-        background: "#ffffffd8",
-        boxShadow: "0 14px 24px rgba(15,23,42,0.06)",
-        padding: "18px 18px 20px",
-        minHeight: 206,
+        background: "#fffef5",
+        boxShadow: "0 10px 20px rgba(15,23,42,0.05)",
+        padding: "14px 14px 16px",
+        minHeight: 184,
         overflow: "hidden",
       }}
     >
@@ -298,11 +297,11 @@ function ZonePanel({
         }}
       />
       <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ marginBottom: 14 }}>
+        <div style={{ marginBottom: 10 }}>
           <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.1em", color: accent, textTransform: "uppercase" }}>{title}</div>
-          <div style={{ fontSize: 13, lineHeight: 1.5, color: "#51617c", marginTop: 4, fontWeight: 700 }}>{subtitle}</div>
+          <div style={{ fontSize: 12, lineHeight: 1.45, color: "#51617c", marginTop: 3, fontWeight: 700 }}>{subtitle}</div>
         </div>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 14, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 10, flexWrap: "wrap" }}>
           {children}
         </div>
       </div>
@@ -315,7 +314,7 @@ function FlowBackdrop() {
     <svg
       viewBox="0 0 1200 760"
       preserveAspectRatio="none"
-      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", opacity: 0.46 }}
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", opacity: 0.32 }}
     >
       <path d="M600 126 C600 178, 600 198, 600 250" stroke="#8b5cf6" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
       <path d="M600 294 C468 332, 376 362, 266 416" stroke="#0891b2" strokeWidth="3" strokeDasharray="8 12" fill="none" strokeLinecap="round" />
@@ -374,14 +373,14 @@ export default function MeetingRoom({ logs, agents, isRunning, output }: Props) 
       <div style={{ position: "absolute", left: 0, bottom: 104, width: 330, height: 140, background: "#b5a2d8", clipPath: "polygon(0 100%, 0 38%, 18% 14%, 34% 26%, 56% 10%, 74% 22%, 100% 8%, 100% 100%)", opacity: 0.72 }} />
       <div style={{ position: "absolute", right: 0, bottom: 108, width: 360, height: 150, background: "#c9b7e6", clipPath: "polygon(0 100%, 0 34%, 16% 18%, 36% 10%, 54% 26%, 78% 18%, 100% 34%, 100% 100%)", opacity: 0.7 }} />
 
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", height: "100%", padding: "18px 18px 18px" }}>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", height: "100%", padding: "14px" }}>
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "minmax(0, 1fr) auto",
-            gap: 12,
+            gap: 10,
             alignItems: "center",
-            marginBottom: 14,
+            marginBottom: 10,
           }}
         >
           <div
@@ -390,14 +389,14 @@ export default function MeetingRoom({ logs, agents, isRunning, output }: Props) 
               background: "#fff8f1",
               border: "3px solid #31405f",
               boxShadow: "0 8px 0 rgba(49,64,95,0.12)",
-              padding: "12px 16px",
+              padding: "10px 14px",
             }}
           >
             <div style={{ fontSize: 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.12em", textTransform: "uppercase" }}>
               AI Company Control Stage
             </div>
-            <div style={{ marginTop: 6, fontSize: 20, lineHeight: 1.25, fontWeight: 900, color: "#0f172a" }}>{stageLabel}</div>
-            <div style={{ marginTop: 5, fontSize: 12, color: "#475569", lineHeight: 1.55, fontWeight: 700 }}>
+            <div style={{ marginTop: 4, fontSize: 18, lineHeight: 1.2, fontWeight: 900, color: "#0f172a" }}>{stageLabel}</div>
+            <div style={{ marginTop: 4, fontSize: 11, color: "#475569", lineHeight: 1.5, fontWeight: 700 }}>
               {heroCopy}
             </div>
           </div>
@@ -407,15 +406,15 @@ export default function MeetingRoom({ logs, agents, isRunning, output }: Props) 
               borderRadius: 20,
               background: "#fffdfa",
               border: "2px solid rgba(49,64,95,0.14)",
-              padding: "12px 14px",
-              minWidth: 172,
-              boxShadow: "0 10px 20px rgba(15,23,42,0.06)",
+              padding: "10px 12px",
+              minWidth: 156,
+              boxShadow: "0 8px 16px rgba(15,23,42,0.05)",
             }}
           >
             <div style={{ fontSize: 10, fontWeight: 900, color: "#64748b", letterSpacing: "0.1em", textTransform: "uppercase" }}>
               Active Agents
             </div>
-            <div style={{ marginTop: 4, fontSize: 28, fontWeight: 900, color: "#0f172a" }}>{activeCount}</div>
+            <div style={{ marginTop: 2, fontSize: 24, fontWeight: 900, color: "#0f172a" }}>{activeCount}</div>
             <div style={{ marginTop: 2, fontSize: 11, fontWeight: 800, color: "#51617c" }}>
               {isRunning ? "現在稼働中" : "実行待機中"}
             </div>
@@ -425,9 +424,9 @@ export default function MeetingRoom({ logs, agents, isRunning, output }: Props) 
         <div
           style={{
             display: "flex",
-            gap: 8,
+            gap: 6,
             flexWrap: "wrap",
-            marginBottom: 14,
+            marginBottom: 10,
           }}
         >
           {[
@@ -441,16 +440,16 @@ export default function MeetingRoom({ logs, agents, isRunning, output }: Props) 
               key={item.label}
               style={{
                 borderRadius: 999,
-                padding: "8px 12px",
+                padding: "6px 10px",
                 border: `2px solid ${item.color}33`,
                 background: "#ffffffc8",
                 color: "#243042",
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: 800,
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
-                boxShadow: "0 6px 14px rgba(15,23,42,0.05)",
+                gap: 6,
+                boxShadow: "0 4px 10px rgba(15,23,42,0.04)",
               }}
             >
               <span style={{ color: item.color, fontWeight: 900, letterSpacing: "0.08em", textTransform: "uppercase" }}>{item.label}</span>
@@ -469,7 +468,7 @@ export default function MeetingRoom({ logs, agents, isRunning, output }: Props) 
               display: "grid",
               gridTemplateColumns: "1.25fr 1fr 1fr",
               gridTemplateRows: "auto 1fr 1fr",
-              gap: 14,
+              gap: 12,
               gridTemplateAreas: `
                 "hq hq hq"
                 "research control review"
@@ -518,17 +517,17 @@ export default function MeetingRoom({ logs, agents, isRunning, output }: Props) 
         <div
           style={{
             marginTop: 14,
-            borderRadius: 18,
+            borderRadius: 16,
             border: "2px solid rgba(49,64,95,0.12)",
             background: "#fffdfa",
-            padding: "12px 14px",
-            boxShadow: "0 8px 18px rgba(15,23,42,0.05)",
+            padding: "10px 12px",
+            boxShadow: "0 6px 14px rgba(15,23,42,0.05)",
           }}
         >
           <div style={{ fontSize: 10, fontWeight: 900, color: "#64748b", letterSpacing: "0.1em", textTransform: "uppercase" }}>
             Stage Feed
           </div>
-          <div style={{ marginTop: 6, fontSize: 13, fontWeight: 800, color: "#243042", lineHeight: 1.6 }}>
+          <div style={{ marginTop: 5, fontSize: 12, fontWeight: 800, color: "#243042", lineHeight: 1.5 }}>
             {latestSystemLog?.message ?? "待機中です。実行するとフェーズ進行がここに流れます。"}
           </div>
         </div>

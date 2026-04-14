@@ -222,16 +222,26 @@ const BLOCK = spriteFromRows([
 
 function PixelGridView({ pixels, cellSize }: { pixels: PixelGrid; cellSize: number }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", imageRendering: "pixelated" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        lineHeight: 0,
+        flexShrink: 0,
+        imageRendering: "pixelated",
+        transform: "translateZ(0)",
+      }}
+    >
       {pixels.map((row, y) => (
-        <div key={y} style={{ display: "flex" }}>
+        <div key={y} style={{ display: "flex", height: cellSize }}>
           {row.map((color, x) => (
             <div
               key={x}
               style={{
                 width: cellSize,
                 height: cellSize,
-                background: color ?? "transparent",
+                flex: `0 0 ${cellSize}px`,
+                backgroundColor: color ?? "transparent",
               }}
             />
           ))}
@@ -283,6 +293,7 @@ function pickSprite(role: AgentRole, agentId?: string): PixelGrid {
 
 export default function PixelCharacter({ role, status, agentId, size = 4 }: Props) {
   const pixels = pickSprite(role, agentId);
+  const cellSize = Math.max(2, Math.round(size));
   const animMap: Record<AgentStatus, TargetAndTransition> = {
     idle: IDLE_ANIM,
     thinking: THINKING_ANIM,
@@ -310,11 +321,13 @@ export default function PixelCharacter({ role, status, agentId, size = 4 }: Prop
         <motion.div
           style={{
             position: "absolute",
-            inset: -10,
-            borderRadius: 12,
-            background: `radial-gradient(circle, ${glowColor[role] ?? "rgba(127,87,241,0.28)"} 0%, transparent 70%)`,
+            inset: -6,
+            borderRadius: 10,
+            background: glowColor[role] ?? "rgba(127,87,241,0.18)",
+            border: "2px solid rgba(255,255,255,0.45)",
+            boxShadow: "0 0 0 2px rgba(15,23,42,0.08)",
           }}
-          animate={{ opacity: [0.4, 1, 0.4], scale: [0.92, 1.08, 0.92] }}
+          animate={{ opacity: [0.45, 0.82, 0.45], scale: [0.98, 1.04, 0.98] }}
           transition={{ duration: 1, repeat: Infinity }}
         />
       )}
@@ -330,8 +343,18 @@ export default function PixelCharacter({ role, status, agentId, size = 4 }: Prop
         </motion.div>
       )}
 
-      <motion.div animate={animMap[status] ?? IDLE_ANIM} style={{ imageRendering: "pixelated" }}>
-        <PixelGridView pixels={pixels} cellSize={size} />
+      <motion.div
+        animate={animMap[status] ?? IDLE_ANIM}
+        style={{
+          display: "inline-flex",
+          imageRendering: "pixelated",
+          transform: "translateZ(0)",
+          backfaceVisibility: "hidden",
+          willChange: "transform",
+          filter: "none",
+        }}
+      >
+        <PixelGridView pixels={pixels} cellSize={cellSize} />
       </motion.div>
     </div>
   );
