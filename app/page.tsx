@@ -962,7 +962,7 @@ export default function Home() {
         </div>
         <div
           className="meeting-hero-stage"
-          style={{ height: isMobileView ? 500 : 620 }}
+          style={{ height: isMobileView ? 460 : 560 }}
         >
           <MeetingRoom
             logs={logs}

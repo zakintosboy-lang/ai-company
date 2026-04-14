@@ -529,8 +529,8 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
           style={{
             padding: "4px 5px",
             borderRadius: 8,
-            background: "rgba(255,255,255,0.16)",
-            boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.28)",
+            background: "rgba(255,255,255,0.56)",
+            boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.72)",
             zIndex: active ? 3 : 1,
           }}
         >
@@ -577,10 +577,9 @@ function CompactLogStrip({ logs }: { logs: LogEntry[] }) {
     <div
       style={{
         borderRadius: 18,
-        background: "rgba(255,248,241,0.8)",
-        border: "1.5px solid rgba(49,64,95,0.16)",
+        background: "#f8fbff",
+        border: "2px solid rgba(49,64,95,0.16)",
         boxShadow: "0 8px 18px rgba(49,64,95,0.08)",
-        backdropFilter: "blur(8px)",
         padding: "10px 12px",
       }}
     >
@@ -645,14 +644,13 @@ function ZoneCard({
     <div
       style={{
         position: "relative",
-        border: `1.5px solid ${accent}44`,
+        border: `2px solid ${accent}55`,
         borderRadius: 28,
-        padding: "8px 8px 10px",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(248,252,255,0.58) 100%)",
-        boxShadow: "0 10px 20px rgba(49,64,95,0.06)",
+        padding: "10px 10px 12px",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(247,250,255,0.9) 100%)",
+        boxShadow: "0 12px 24px rgba(49,64,95,0.08)",
         minHeight: 92,
         overflow: "hidden",
-        backdropFilter: "blur(6px)",
       }}
     >
       <div
@@ -660,8 +658,8 @@ function ZoneCard({
           position: "absolute",
           inset: 8,
           borderRadius: 22,
-          border: `1px dashed ${accent}55`,
-          opacity: 0.45,
+          border: `1px dashed ${accent}44`,
+          opacity: 0.32,
           pointerEvents: "none",
         }}
       />
@@ -708,8 +706,8 @@ function StagePanel({ children }: { children: React.ReactNode }) {
         minHeight: 360,
         borderRadius: 26,
         border: "1.5px solid rgba(49,64,95,0.14)",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)",
-        boxShadow: "inset 0 -8px 14px rgba(255,255,255,0.16)",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 100%)",
+        boxShadow: "inset 0 -8px 14px rgba(255,255,255,0.22)",
         overflow: "hidden",
         padding: "10px 10px 8px",
       }}
@@ -1020,10 +1018,9 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
                 style={{
                   borderRadius: 18,
                   padding: "10px 12px 12px",
-                  background: "rgba(255,248,241,0.84)",
-                  border: "1.5px solid rgba(49,64,95,0.16)",
+                  background: "#fff8f1",
+                  border: "2px solid rgba(49,64,95,0.16)",
                   boxShadow: "0 8px 18px rgba(49,64,95,0.08)",
-                  backdropFilter: "blur(8px)",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
