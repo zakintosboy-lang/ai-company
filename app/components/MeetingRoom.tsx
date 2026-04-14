@@ -487,7 +487,7 @@ function getTravelMotion(agent: AgentInfo) {
 function CharacterUnit({ agent }: { agent: AgentInfo }) {
   const cfg = ROLE_CONFIG[agent.role] ?? ROLE_CONFIG.system;
   const active = agent.status === "thinking" || agent.status === "reviewing";
-  const size = agent.role === "ceo" ? 2.6 : 2.0;
+  const size = agent.role === "ceo" ? 2.9 : 2.2;
   const motionProfile = getTravelMotion(agent);
 
   return (

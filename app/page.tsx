@@ -1111,8 +1111,8 @@ export default function Home() {
 
         {/* Right Panel */}
         <div className="panel-right">
-          {/* Meeting Room — 上部固定、スクロールしても残る */}
-          <div className="meeting-in-right" style={{ height: isMobileView ? 300 : 360 }}>
+          {/* Meeting Room — スクロールしても上部に残る */}
+          <div className="meeting-in-right" style={{ height: isMobileView ? 300 : 460 }}>
             <MeetingRoom
               logs={logs}
               agents={Object.values(agents).map(c => ({

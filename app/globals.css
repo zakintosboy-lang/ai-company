@@ -269,13 +269,11 @@ html, body {
 
 /* ── Right Panel ── */
 .panel-right {
-  position: sticky;
-  top: 68px;
-  height: calc(100vh - 80px);
+  position: relative;
   display: flex;
   flex-direction: column;
-  background: transparent;
-  overflow: hidden;
+  /* overflow: clip でスクロールコンテナを作らず、border-radius でクリップ */
+  overflow: clip;
   min-width: 0;
   border: 4px solid #31405f;
   border-radius: 20px;
@@ -283,23 +281,22 @@ html, body {
 }
 
 .meeting-in-right {
+  /* ページスクロール時もステージが上部に残る */
+  position: sticky;
+  top: 68px;
+  z-index: 10;
   flex-shrink: 0;
   overflow: hidden;
   border-bottom: 3px solid rgba(49, 64, 95, 0.18);
 }
 
 .panel-right-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 14px;
   background:
     linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%);
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
 }
 
 .panel-stack-section {
@@ -562,10 +559,10 @@ html, body {
     gap: 12px;
   }
   .panel-right {
-    position: static;
-    height: auto;
+    overflow: clip;
   }
   .meeting-in-right {
+    position: static;
     height: 300px;
   }
   .panel-right-scroll {
