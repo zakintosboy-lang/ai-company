@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePersistedInstruction } from "./hooks/usePersistedInstruction";
+import { AGENT_CONFIGS } from "@/agents/config";
 import type {
   StructuredOutput,
   OutputSection,
@@ -194,6 +195,14 @@ function getProgressMeta(logs: LogEntry[], isRunning: boolean, hasOutput: boolea
   if (joined.includes("【Phase 2】")) return { label: "タスク分解中", step: 2, total: 7 };
   if (joined.includes("【Phase 1】")) return { label: "戦略立案中", step: 1, total: 7 };
   return { label: "準備中", step: 0, total: 7 };
+}
+
+function createInitialAgents(): Record<string, AgentCard> {
+  const initial: Record<string, AgentCard> = {};
+  for (const config of AGENT_CONFIGS) {
+    initial[config.id] = { config, status: "idle" };
+  }
+  return initial;
 }
 
 // ── 構造化出力 → プレーンテキスト変換 ─────────────────────────
@@ -605,7 +614,7 @@ body{
 // ── Page Component ────────────────────────────────────────────
 export default function Home() {
   const { instruction, setInstruction, clearInstruction, hydrated } = usePersistedInstruction();
-  const [agents, setAgents]   = useState<Record<string, AgentCard>>({});
+  const [agents, setAgents]   = useState<Record<string, AgentCard>>(() => createInitialAgents());
   const [logs, setLogs]       = useState<LogEntry[]>([]);
   const [output, setOutput]   = useState<StructuredOutput | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -766,7 +775,7 @@ export default function Home() {
     setRunStartedAt(startedAt);
     setElapsedSeconds(0);
     setIsRunning(true);
-    setLogs([]); setOutput(null); setAgents({}); setActiveTab("logs");
+    setLogs([]); setOutput(null); setAgents(createInitialAgents()); setActiveTab("logs");
     addLog("system", "実行開始...");
 
     try {
