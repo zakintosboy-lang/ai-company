@@ -431,29 +431,29 @@ function WorkEffect({ agent }: { agent: AgentInfo }) {
 }
 
 function getTravelBias(agent: AgentInfo) {
-  if (agent.role === "manager") return { x: 18, y: -12, rotate: -3 };
+  if (agent.role === "manager") return { x: 12, y: -8, rotate: -2 };
   if (agent.role === "researcher") {
     const bias: Record<string, number> = {
-      "researcher-1": 24,
+      "researcher-1": 16,
       "researcher-2": 0,
-      "researcher-3": -24,
+      "researcher-3": -16,
     };
     const x = bias[agent.id] ?? 0;
-    return { x, y: -16, rotate: x > 0 ? -3 : x < 0 ? 3 : 0 };
+    return { x, y: -10, rotate: x > 0 ? -2 : x < 0 ? 2 : 0 };
   }
   if (agent.role === "worker") {
     const bias: Record<string, number> = {
-      "worker-1": 30,
-      "worker-2": 8,
-      "worker-3": -18,
+      "worker-1": 20,
+      "worker-2": 4,
+      "worker-3": -14,
     };
     const x = bias[agent.id] ?? 0;
-    return { x, y: -22, rotate: x > 0 ? -4 : 3 };
+    return { x, y: -12, rotate: x > 0 ? -3 : 2 };
   }
-  if (agent.role === "editor") return { x: -10, y: -16, rotate: 2 };
-  if (agent.role === "designer") return { x: 10, y: -18, rotate: -2 };
-  if (agent.role === "reviewer") return { x: -12, y: -14, rotate: 2 };
-  return { x: 0, y: -10, rotate: 0 };
+  if (agent.role === "editor") return { x: -8, y: -10, rotate: 2 };
+  if (agent.role === "designer") return { x: 8, y: -10, rotate: -2 };
+  if (agent.role === "reviewer") return { x: -8, y: -10, rotate: 2 };
+  return { x: 0, y: -8, rotate: 0 };
 }
 
 function getTravelMotion(agent: AgentInfo) {
@@ -468,10 +468,10 @@ function getTravelMotion(agent: AgentInfo) {
 
   if (agent.role === "ceo") {
     return {
-      x: [0, 3, 0, -3, 0],
-      y: [0, -12, -16, -8, 0],
-      scale: [1, 1.04, 1.08, 1.03, 1],
-      rotate: [0, -2, 0, 2, 0],
+      x: [0, 2, 0, -2, 0],
+      y: [0, -6, -9, -4, 0],
+      scale: [1, 1.03, 1.06, 1.02, 1],
+      rotate: [0, -1, 0, 1, 0],
     };
   }
 
@@ -743,7 +743,7 @@ function FlowLines() {
 
 export default function MeetingRoom({ logs, agents, isRunning }: Props) {
   const BASE_W = 1120;
-  const BASE_H = 540;
+  const BASE_H = 560;
   const stageViewportRef = useRef<HTMLDivElement | null>(null);
   const [stageScale, setStageScale] = useState(1);
 
@@ -1031,7 +1031,8 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
               </div>
             </div>
 
-            <div style={{ position: "absolute", left: 430, top: 146, width: 260, zIndex: 2 }}>
+            {/* Row 1: CEO — top:148, 高さ~120px → 下端~268 */}
+            <div style={{ position: "absolute", left: 430, top: 148, width: 260, zIndex: 2 }}>
               <ZoneCard title="CASTLE HQ" subtitle="社長エリア / 最終判断ポイント" accent="#8b5cf6">
                 {topRow.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
@@ -1039,21 +1040,22 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
               </ZoneCard>
             </div>
 
-            <div style={{ position: "absolute", left: 42, top: 258, width: 330, zIndex: 2 }}>
+            {/* Row 2: Research / Control / Review — top:288, gap 20px from row1 */}
+            <div style={{ position: "absolute", left: 42, top: 288, width: 330, zIndex: 2 }}>
               <ZoneCard title="RESEARCH FIELD" subtitle="情報を集めて司令塔へ持ち帰る" accent="#06b6d4">
                 {zoneAgents.research.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
                 ))}
               </ZoneCard>
             </div>
-            <div style={{ position: "absolute", left: 430, top: 274, width: 250, zIndex: 2 }}>
+            <div style={{ position: "absolute", left: 430, top: 288, width: 250, zIndex: 2 }}>
               <ZoneCard title="CONTROL TOWER" subtitle="進行管理してCEOへ報告" accent="#3b82f6">
                 {zoneAgents.manager.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
                 ))}
               </ZoneCard>
             </div>
-            <div style={{ position: "absolute", right: 42, top: 258, width: 280, zIndex: 2 }}>
+            <div style={{ position: "absolute", right: 42, top: 288, width: 280, zIndex: 2 }}>
               <ZoneCard title="REVIEW GATE" subtitle="品質チェックして通す" accent="#22c55e">
                 {zoneAgents.review.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
@@ -1061,14 +1063,15 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
               </ZoneCard>
             </div>
 
-            <div style={{ position: "absolute", left: 124, top: 352, width: 290, zIndex: 2 }}>
+            {/* Row 3: Build / Creative — top:412, gap ~12px from row2 */}
+            <div style={{ position: "absolute", left: 90, top: 412, width: 310, zIndex: 2 }}>
               <ZoneCard title="BUILD ZONE" subtitle="実装して素材を持って戻る" accent="#f97316">
                 {zoneAgents.build.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
                 ))}
               </ZoneCard>
             </div>
-            <div style={{ position: "absolute", right: 124, top: 352, width: 290, zIndex: 2 }}>
+            <div style={{ position: "absolute", right: 90, top: 412, width: 310, zIndex: 2 }}>
               <ZoneCard title="CREATIVE HOUSE" subtitle="編集とデザインで整える" accent="#ec4899">
                 {zoneAgents.creative.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
@@ -1076,7 +1079,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
               </ZoneCard>
             </div>
 
-            <div style={{ position: "absolute", inset: "120px 46px 78px", zIndex: 1 }}>
+            <div style={{ position: "absolute", inset: "128px 46px 60px", zIndex: 1 }}>
               <FlowLines />
             </div>
             </StagePanel>
