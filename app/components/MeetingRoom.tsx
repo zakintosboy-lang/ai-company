@@ -491,8 +491,17 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
   const motionProfile = getTravelMotion(agent);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, minWidth: 44 }}>
-      <div style={{ minHeight: 26, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, minWidth: 42, position: "relative" }}>
+      {/* 吹き出し — absolute でレイアウトに影響しない */}
+      <div style={{
+        position: "absolute",
+        bottom: "100%",
+        left: "50%",
+        transform: "translateX(-50%)",
+        marginBottom: 4,
+        zIndex: 8,
+        pointerEvents: "none",
+      }}>
         <AnimatePresence mode="wait">
           {active ? (
             <TypingBubble key="typing" cfg={cfg} />
@@ -502,7 +511,7 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
         </AnimatePresence>
       </div>
 
-      <div style={{ position: "relative", paddingBottom: 6 }}>
+      <div style={{ position: "relative", paddingBottom: 4 }}>
         <ActivityBadge agent={agent} />
         <WorkEffect agent={agent} />
         <div
@@ -511,8 +520,8 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
             left: "50%",
             bottom: 0,
             transform: "translateX(-50%)",
-            width: 46,
-            height: 9,
+            width: 38,
+            height: 7,
             borderRadius: 999,
             background: "rgba(55,65,81,0.18)",
             filter: "blur(2px)",
@@ -527,8 +536,8 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
             times: [0, 0.28, 0.54, 0.8, 1],
           }}
           style={{
-            padding: "4px 5px",
-            borderRadius: 8,
+            padding: "3px 4px",
+            borderRadius: 7,
             background: "rgba(255,255,255,0.56)",
             boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.72)",
             zIndex: active ? 3 : 1,
@@ -540,17 +549,17 @@ function CharacterUnit({ agent }: { agent: AgentInfo }) {
 
       <div
         style={{
-          padding: "3px 7px 3px",
+          padding: "2px 6px",
           borderRadius: 999,
           border: "1.5px solid #27324a",
           background: cfg.plate,
           boxShadow: "0 2px 0 rgba(39,50,74,0.2)",
           textAlign: "center",
-          minWidth: 54,
+          minWidth: 42,
         }}
       >
-        <div style={{ fontSize: 7, fontWeight: 900, color: cfg.color, letterSpacing: "0.08em" }}>{cfg.jaLabel}</div>
-        <div style={{ fontSize: 6.5, color: "#4b5563", marginTop: 1, fontWeight: 700 }}>{agent.name}</div>
+        <div style={{ fontSize: 6.5, fontWeight: 900, color: cfg.color, letterSpacing: "0.06em" }}>{cfg.jaLabel}</div>
+        <div style={{ fontSize: 6, color: "#4b5563", fontWeight: 700 }}>{agent.name}</div>
       </div>
     </div>
   );
@@ -631,7 +640,6 @@ function CompactLogStrip({ logs }: { logs: LogEntry[] }) {
 
 function ZoneCard({
   title,
-  subtitle,
   accent,
   children,
 }: {
@@ -645,50 +653,19 @@ function ZoneCard({
       style={{
         position: "relative",
         border: `2px solid ${accent}55`,
-        borderRadius: 28,
-        padding: "10px 10px 12px",
+        borderRadius: 20,
+        padding: "6px 8px 8px",
         background: "linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(247,250,255,0.9) 100%)",
-        boxShadow: "0 12px 24px rgba(49,64,95,0.08)",
-        minHeight: 92,
-        overflow: "hidden",
+        boxShadow: "0 8px 16px rgba(49,64,95,0.08)",
+        overflow: "visible",   /* 吹き出しを外にはみ出させる */
       }}
     >
-      <div
-        style={{
-          position: "absolute",
-          inset: 8,
-          borderRadius: 22,
-          border: `1px dashed ${accent}44`,
-          opacity: 0.32,
-          pointerEvents: "none",
-        }}
-      />
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: 8, height: "100%" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div>
-            <div style={{ fontSize: 9, fontWeight: 900, letterSpacing: "0.08em", color: accent }}>{title}</div>
-            <div style={{ fontSize: 7.5, fontWeight: 700, color: "#51617c", marginTop: 1 }}>{subtitle}</div>
-          </div>
-          <div
-            style={{
-              minWidth: 22,
-              height: 22,
-              borderRadius: 999,
-              background: "rgba(255,248,241,0.88)",
-              border: `1.5px solid ${accent}55`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: accent,
-              fontSize: 10,
-              fontWeight: 900,
-              boxShadow: "0 4px 10px rgba(49,64,95,0.06)",
-            }}
-          >
-            →
-          </div>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ fontSize: 8, fontWeight: 900, letterSpacing: "0.08em", color: accent }}>{title}</div>
+          <div style={{ fontSize: 9, color: accent, fontWeight: 900, lineHeight: 1 }}>→</div>
         </div>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 6, flexWrap: "wrap", flex: 1 }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 6, flexWrap: "wrap" }}>
           {children}
         </div>
       </div>
@@ -1009,7 +986,7 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
                 gridTemplateColumns: "minmax(0, 1fr) 276px",
                 gap: 16,
                 alignItems: "start",
-                zIndex: 2,
+                zIndex: 12,
               }}
             >
               <CompactLogStrip logs={logs} />
