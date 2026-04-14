@@ -1,119 +1,321 @@
-import Anthropic from "@anthropic-ai/sdk";
-import type { StructuredOutput, CanvaSlide, LogCallback } from "./types";
-
-const client = new Anthropic();
-
-const SYSTEM = `あなたは回答内容を「資料品質」に構造化するフォーマッターです。
-与えられた指示と回答を分析し、資料として読める構造化データを JSON で返します。
-
-【質問タイプの定義】
-- 企画: アプリ・サービス・事業・プロジェクトの企画・立案
-- 情報整理: 情報の調査・説明・要約・まとめ
-- 比較: 複数の選択肢・製品・技術・手法の比較
-- 提案: 改善案・戦略・施策・計画の提案
-- ガイド: 手順・方法・チュートリアル・使い方の説明
-
-【セクションタイプの定義】
-- "text"      : 段落テキスト (content フィールドに文章。改行は \\n で表現)
-- "list"      : 箇条書き (items 配列に各項目。各項目は完結した 1〜2 文)
-- "steps"     : 番号付き手順 (items 配列に各ステップ)
-- "table"     : 比較表 (tableData: { headers: string[], rows: string[][] })
-- "highlight" : 重要ボックス (content + highlight: "info"|"warning"|"success"|"important")
-
-【セクションアイコンの選択肢】
-"📌" 重要情報  "⚠" 注意・リスク  "💡" アイデア・ヒント  "✅" 完了・承認
-"📊" データ・比較  "🔍" 分析・詳細  "🚀" 実行・推進  "🎯" 目的・目標
-"📋" 手順・概要  "⚙️" 設定・技術
-
-【質問タイプ別の推奨セクション構成】
-企画    → [概要(highlight:info,📌), 課題・背景(text,🔍), 主要機能(list,💡), 収益・実現方法(text,📊), 開発手順(steps,🚀), リスク(highlight:warning,⚠)]
-情報整理 → [要点まとめ(highlight:info,📌), 概要(text,📋), 詳細(list,🔍), 補足(text,💡)]
-比較    → [比較の目的(text,🎯), 比較表(table,📊), 各特徴(list,🔍), 結論(highlight:important,📌)]
-提案    → [提案サマリー(highlight:info,🎯), 背景・課題(text,🔍), 提案内容(list,💡), 実施ステップ(steps,🚀), 注意事項(highlight:warning,⚠)]
-ガイド  → [要点(highlight:important,📌), 前提・準備(list,⚙️), 手順(steps,📋), よくある問題(list,⚠), まとめ(highlight:success,✅)]
-
-【JSON スキーマ】
-{
-  "questionType": "企画"|"情報整理"|"比較"|"提案"|"ガイド",
-  "title": "資料タイトル（25字以内・具体的）",
-  "summary": "回答全体の要点を 2〜3 文でまとめた文章",
-  "keyPoints": ["重要ポイント1（30字以内）", "重要ポイント2（30字以内）", "重要ポイント3（30字以内）"],
-  "sections": [
-    {
-      "title": "セクション名",
-      "type": "text"|"list"|"steps"|"table"|"highlight",
-      "icon": "上記アイコンから1つ",
-      "content": "textまたはhighlightの場合のみ",
-      "items": ["list/stepsの場合のみ"],
-      "tableData": { "headers": [], "rows": [] },
-      "highlight": "info"|"warning"|"success"|"important"
-    }
-  ]
-}
-
-【重要ルール】
-- keyPoints は必ず 3 つ。体言止めまたは短文で記述
-- content・items にマークダウン記法（**など）を使わない
-- table の rows は headers と列数を必ず一致させる
-- JSON のみを返す（コードブロック・説明文は不要）`;
+import type { StructuredOutput, CanvaSlide, LogCallback, OutputSection, QuestionType, TableData, HighlightVariant } from "./types";
 
 /**
- * Formatter: 平文の回答を資料品質の構造化 JSON に変換する。
+ * Formatter: 平文の回答を高速に構造化 JSON に変換する。
+ * LLM を挟まずローカル整形することで、成果物表示までの待ち時間を短縮する。
  */
 export async function formatOutput(
   instruction: string,
   rawOutput: string,
   onLog?: LogCallback
 ): Promise<StructuredOutput> {
-  onLog?.({ role: "system", message: "成果物を資料フォーマットに変換中..." });
+  onLog?.({ role: "system", message: "成果物を高速フォーマット中..." });
 
-  try {
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4096,
-      system: SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `指示:\n${instruction}\n\n---\n\n回答:\n${rawOutput}\n\n---\n\n上記を資料品質の JSON に変換してください。`,
-        },
-      ],
-    });
+  const normalized = normalizeText(rawOutput);
+  const questionType = detectQuestionType(instruction, normalized);
+  const sections = buildSections(normalized);
+  const title = buildTitle(instruction, sections, questionType);
+  const summary = buildSummary(normalized, sections);
+  const keyPoints = buildKeyPoints(normalized, sections, summary);
 
-    const firstBlock = response.content[0];
-    const text = firstBlock?.type === "text" ? firstBlock.text : "";
-    const cleaned = text.replace(/^```(?:json)?\s*/m, "").replace(/\s*```$/m, "").trim();
-    const match = cleaned.match(/\{[\s\S]*\}/);
-
-    if (match) {
-      const parsed = JSON.parse(match[0]) as StructuredOutput;
-
-      // keyPoints のガード（必ず 3 つ）
-      if (!Array.isArray(parsed.keyPoints) || parsed.keyPoints.length === 0) {
-        parsed.keyPoints = extractFallbackKeyPoints(parsed);
-      }
-      parsed.keyPoints = parsed.keyPoints.slice(0, 3);
-
-      // Canva 用スライドデータを生成
-      parsed.canvaData = buildCanvaData(parsed);
-      parsed.rawText = rawOutput;
-
-      onLog?.({ role: "system", message: `フォーマット完了 [${parsed.questionType}]: ${parsed.title}` });
-      return parsed;
-    }
-  } catch {
-    onLog?.({ role: "system", message: "フォーマットに失敗しました。フォールバック表示を使用します" });
-  }
-
-  // フォールバック
-  return {
-    questionType: "情報整理",
-    title: instruction.slice(0, 60),
-    summary: rawOutput.slice(0, 200) + (rawOutput.length > 200 ? "…" : ""),
-    keyPoints: ["回答を確認してください", "詳細は本文をご覧ください", "不明点はお問い合わせください"],
-    sections: [{ title: "回答", type: "text", icon: "📋", content: rawOutput }],
+  const structured: StructuredOutput = {
+    questionType,
+    title,
+    summary,
+    keyPoints,
+    sections: sections.length > 0 ? sections : [{ title: "回答", type: "text", icon: "📋", content: normalized }],
     rawText: rawOutput,
   };
+
+  structured.canvaData = buildCanvaData(structured);
+
+  onLog?.({ role: "system", message: `フォーマット完了 [${structured.questionType}]: ${structured.title}` });
+  return structured;
+}
+
+function normalizeText(text: string) {
+  return text
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function detectQuestionType(instruction: string, rawOutput: string): QuestionType {
+  const haystack = `${instruction}\n${rawOutput}`.toLowerCase();
+
+  if (includesAny(haystack, ["比較", "違い", "vs", "比較表"])) return "比較";
+  if (includesAny(haystack, ["手順", "やり方", "方法", "進め方", "使い方", "導入方法"])) return "ガイド";
+  if (includesAny(haystack, ["提案", "おすすめ", "施策", "改善案", "実行計画"])) return "提案";
+  if (includesAny(haystack, ["企画", "事業案", "新規案", "コンセプト", "機能案"])) return "企画";
+  return "情報整理";
+}
+
+function buildTitle(instruction: string, sections: OutputSection[], questionType: QuestionType) {
+  const firstHeading = sections.find((section) => section.title && section.title !== "回答");
+  if (firstHeading) return clamp(firstHeading.title, 32);
+
+  const cleanedInstruction = instruction
+    .replace(/\s+/g, " ")
+    .replace(/[。.!?].*$/, "")
+    .trim();
+
+  if (cleanedInstruction) return clamp(cleanedInstruction, 32);
+  return `${questionType}レポート`;
+}
+
+function buildSummary(rawOutput: string, sections: OutputSection[]) {
+  const preferred = sections.find((section) =>
+    ["要約", "概要", "サマリー", "結論", "おすすめ", "提案サマリー"].some((word) => section.title.includes(word))
+  );
+
+  const source = preferred?.content
+    ?? preferred?.items?.join(" ")
+    ?? rawOutput;
+
+  const sentences = splitSentences(source).slice(0, 3);
+  const summary = sentences.join(" ");
+  return clamp(summary || rawOutput, 220);
+}
+
+function buildKeyPoints(rawOutput: string, sections: OutputSection[], summary: string) {
+  const points: string[] = [];
+
+  for (const section of sections) {
+    if (points.length >= 3) break;
+
+    if (section.type === "highlight" && section.content) {
+      points.push(toPoint(section.content));
+    }
+
+    for (const item of section.items ?? []) {
+      if (points.length >= 3) break;
+      points.push(toPoint(item));
+    }
+
+    if (points.length >= 3) break;
+
+    if (section.content) {
+      points.push(toPoint(firstMeaningfulSentence(section.content)));
+    }
+  }
+
+  if (points.length < 3) {
+    splitSentences(rawOutput).forEach((sentence) => {
+      if (points.length < 3) points.push(toPoint(sentence));
+    });
+  }
+
+  if (points.length < 3) {
+    points.push(toPoint(summary));
+  }
+
+  return unique(points).slice(0, 3);
+}
+
+function buildSections(rawOutput: string): OutputSection[] {
+  const headingSections = splitByHeadings(rawOutput);
+  if (headingSections.length > 0) {
+    return headingSections.map(({ title, body }) => parseSection(title, body)).filter(Boolean) as OutputSection[];
+  }
+
+  const blocks = rawOutput.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
+  if (blocks.length === 0) return [];
+
+  return blocks.map((block, index) => {
+    const title = index === 0 ? "概要" : `セクション ${index}`;
+    return parseSection(title, block);
+  }).filter(Boolean) as OutputSection[];
+}
+
+function splitByHeadings(text: string) {
+  const lines = text.split("\n");
+  const sections: Array<{ title: string; body: string }> = [];
+  let currentTitle = "";
+  let currentBody: string[] = [];
+
+  const flush = () => {
+    if (!currentTitle || currentBody.join("\n").trim() === "") return;
+    sections.push({ title: currentTitle, body: currentBody.join("\n").trim() });
+  };
+
+  for (const line of lines) {
+    const headingMatch = line.match(/^\s{0,3}(#{1,4})\s+(.+?)\s*$/);
+    if (headingMatch) {
+      flush();
+      currentTitle = cleanHeading(headingMatch[2]);
+      currentBody = [];
+      continue;
+    }
+
+    const plainHeading = line.match(/^\s*[【\[]?([^\]】\n]{2,28})[】\]]?\s*[:：]\s*$/);
+    if (plainHeading) {
+      flush();
+      currentTitle = cleanHeading(plainHeading[1]);
+      currentBody = [];
+      continue;
+    }
+
+    if (!currentTitle && line.trim()) {
+      currentTitle = "概要";
+    }
+    currentBody.push(line);
+  }
+
+  flush();
+  return sections;
+}
+
+function parseSection(title: string, body: string): OutputSection | null {
+  const cleanedBody = normalizeText(body);
+  if (!cleanedBody) return null;
+
+  const table = parseMarkdownTable(cleanedBody);
+  if (table) {
+    return { title, type: "table", icon: "📊", tableData: table };
+  }
+
+  const stepItems = parseOrderedList(cleanedBody);
+  if (stepItems.length >= 2) {
+    return { title, type: "steps", icon: "🚀", items: stepItems };
+  }
+
+  const listItems = parseBulletList(cleanedBody);
+  if (listItems.length >= 2) {
+    return { title, type: "list", icon: pickIcon(title, "list"), items: listItems };
+  }
+
+  if (shouldHighlight(title, cleanedBody)) {
+    return {
+      title,
+      type: "highlight",
+      icon: pickIcon(title, "highlight"),
+      highlight: pickHighlightVariant(title, cleanedBody),
+      content: clamp(cleanedBody, 320),
+    };
+  }
+
+  return { title, type: "text", icon: pickIcon(title, "text"), content: cleanedBody };
+}
+
+function parseBulletList(text: string) {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => /^[-*・]\s+/.test(line))
+    .map((line) => line.replace(/^[-*・]\s+/, "").trim())
+    .filter(Boolean);
+}
+
+function parseOrderedList(text: string) {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => /^(\d+[\.\)]|Step\s*\d+|STEP\s*\d+)\s*/i.test(line))
+    .map((line) => line.replace(/^(\d+[\.\)]|Step\s*\d+|STEP\s*\d+)\s*/i, "").trim())
+    .filter(Boolean);
+}
+
+function parseMarkdownTable(text: string): TableData | null {
+  const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
+  const tableLines = lines.filter((line) => line.includes("|"));
+  if (tableLines.length < 2) return null;
+
+  const rows = tableLines.map((line) =>
+    line
+      .replace(/^\|/, "")
+      .replace(/\|$/, "")
+      .split("|")
+      .map((cell) => cell.trim())
+  );
+
+  if (rows.length < 2) return null;
+  const [headers, maybeDivider, ...dataRows] = rows;
+  const dividerLike = maybeDivider?.every((cell) => /^:?-{2,}:?$/.test(cell));
+  const actualRows = dividerLike ? dataRows : [maybeDivider, ...dataRows].filter(Boolean) as string[][];
+  if (!headers?.length || actualRows.length === 0) return null;
+
+  const width = headers.length;
+  return {
+    headers: headers.slice(0, width),
+    rows: actualRows.map((row) => normalizeRow(row, width)).slice(0, 8),
+  };
+}
+
+function normalizeRow(row: string[], width: number) {
+  const normalized = row.slice(0, width);
+  while (normalized.length < width) normalized.push("");
+  return normalized;
+}
+
+function shouldHighlight(title: string, body: string) {
+  const haystack = `${title} ${body}`.toLowerCase();
+  return (
+    includesAny(haystack, ["要約", "まとめ", "結論", "おすすめ", "注意", "リスク", "重要", "ポイント"]) &&
+    body.length <= 320
+  );
+}
+
+function pickHighlightVariant(title: string, body: string): HighlightVariant {
+  const haystack = `${title} ${body}`.toLowerCase();
+  if (includesAny(haystack, ["注意", "リスク", "懸念", "課題"])) return "warning";
+  if (includesAny(haystack, ["結論", "おすすめ", "最適", "推奨"])) return "important";
+  if (includesAny(haystack, ["完了", "承認", "実行可能", "確認済み"])) return "success";
+  return "info";
+}
+
+function pickIcon(title: string, type: OutputSection["type"]) {
+  const haystack = title.toLowerCase();
+  if (includesAny(haystack, ["比較", "一覧", "料金", "表"])) return "📊";
+  if (includesAny(haystack, ["結論", "おすすめ", "提案", "方針"])) return "🎯";
+  if (includesAny(haystack, ["手順", "実行", "計画", "ステップ"])) return "🚀";
+  if (includesAny(haystack, ["注意", "リスク", "懸念"])) return "⚠";
+  if (includesAny(haystack, ["分析", "背景", "概要", "調査"])) return "🔍";
+  if (type === "highlight") return "📌";
+  if (type === "steps") return "🚀";
+  if (type === "table") return "📊";
+  return "📋";
+}
+
+function cleanHeading(title: string) {
+  return title
+    .replace(/^[-*・#\s]+/, "")
+    .replace(/[：:]$/, "")
+    .trim();
+}
+
+function splitSentences(text: string) {
+  return text
+    .replace(/\n+/g, " ")
+    .split(/(?<=[。.!?！？])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+}
+
+function firstMeaningfulSentence(text: string) {
+  return splitSentences(text)[0] ?? text.trim();
+}
+
+function toPoint(text: string) {
+  return clamp(
+    text
+      .replace(/^[-*・\d.\s]+/, "")
+      .replace(/\s+/g, " ")
+      .trim(),
+    30
+  );
+}
+
+function includesAny(text: string, keywords: string[]) {
+  return keywords.some((keyword) => text.includes(keyword.toLowerCase()));
+}
+
+function clamp(text: string, max: number) {
+  const trimmed = text.trim();
+  return trimmed.length > max ? `${trimmed.slice(0, max - 1)}…` : trimmed;
+}
+
+function unique(items: string[]) {
+  return items.filter((item, index) => item && items.indexOf(item) === index);
 }
 
 // ── Canva スライドデータ生成 ─────────────────────────────────
@@ -124,7 +326,6 @@ function buildCanvaData(data: StructuredOutput) {
   const accentColor = TYPE_COLOR[data.questionType] ?? "#4f46e5";
 
   const slides: CanvaSlide[] = [
-    // スライド 1: カバー
     {
       slideIndex: 0,
       layout: "cover",
@@ -132,7 +333,6 @@ function buildCanvaData(data: StructuredOutput) {
       body: data.summary,
       accentColor,
     },
-    // スライド 2: サマリー（キーポイント）
     {
       slideIndex: 1,
       layout: "summary",
@@ -140,12 +340,11 @@ function buildCanvaData(data: StructuredOutput) {
       body: data.keyPoints,
       accentColor,
     },
-    // スライド 3〜: 各セクション
     ...data.sections.map((s, i): CanvaSlide => ({
       slideIndex: i + 2,
       layout: s.type === "table" ? "table"
              : s.type === "steps" ? "steps"
-             : s.type === "list"  ? "list"
+             : s.type === "list" ? "list"
              : s.type === "highlight" ? "highlight"
              : "list",
       heading: s.title,
@@ -155,19 +354,4 @@ function buildCanvaData(data: StructuredOutput) {
   ];
 
   return { documentTitle: data.title, documentType: data.questionType, slides };
-}
-
-// ── フォールバック用 keyPoints 抽出 ──────────────────────────
-function extractFallbackKeyPoints(data: StructuredOutput): string[] {
-  const points: string[] = [];
-  for (const s of data.sections) {
-    if (points.length >= 3) break;
-    if (s.type === "highlight" && s.content) {
-      points.push(s.content.slice(0, 30));
-    } else if (s.items?.[0]) {
-      points.push(s.items[0].slice(0, 30));
-    }
-  }
-  while (points.length < 3) points.push(data.summary.slice(0, 30));
-  return points;
 }
