@@ -258,31 +258,31 @@ const SYSTEM_ICON = spriteFromRows([
 function SpeechBubble({ message, cfg }: { message: string; cfg: (typeof ROLE_CONFIG)[AgentRole] }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8, scale: 0.92 }}
+      initial={{ opacity: 0, y: 6, scale: 0.92 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 4, scale: 0.92 }}
+      exit={{ opacity: 0, y: 3, scale: 0.92 }}
       transition={{ duration: 0.22 }}
       style={{
         position: "relative",
-        maxWidth: 160,
-        minHeight: 50,
-        padding: "8px 10px",
-        border: `3px solid ${cfg.bubbleBorder}`,
-        borderRadius: 8,
+        maxWidth: 120,
+        minHeight: 34,
+        padding: "5px 8px",
+        border: `2px solid ${cfg.bubbleBorder}`,
+        borderRadius: 7,
         background: cfg.bubbleBg,
-        boxShadow: "0 5px 0 rgba(31,41,55,0.16)",
+        boxShadow: "0 3px 0 rgba(31,41,55,0.14)",
         imageRendering: "pixelated",
       }}
     >
       <div
         style={{
-          fontSize: 10,
-          lineHeight: 1.45,
+          fontSize: 9,
+          lineHeight: 1.4,
           color: "#243042",
           fontWeight: 700,
           letterSpacing: "0.02em",
           display: "-webkit-box",
-          WebkitLineClamp: 3,
+          WebkitLineClamp: 2,
           WebkitBoxOrient: "vertical",
           overflow: "hidden",
           wordBreak: "break-word",
@@ -294,15 +294,15 @@ function SpeechBubble({ message, cfg }: { message: string; cfg: (typeof ROLE_CON
         style={{
           position: "absolute",
           left: "50%",
-          bottom: -11,
+          bottom: -9,
           transform: "translateX(-50%)",
-          width: 18,
-          height: 12,
+          width: 14,
+          height: 9,
           background: cfg.bubbleBg,
           clipPath: "polygon(50% 100%, 0 0, 100% 0)",
-          borderLeft: `3px solid ${cfg.bubbleBorder}`,
-          borderRight: `3px solid ${cfg.bubbleBorder}`,
-          borderBottom: `3px solid ${cfg.bubbleBorder}`,
+          borderLeft: `2px solid ${cfg.bubbleBorder}`,
+          borderRight: `2px solid ${cfg.bubbleBorder}`,
+          borderBottom: `2px solid ${cfg.bubbleBorder}`,
         }}
       />
     </motion.div>
@@ -316,16 +316,16 @@ function TypingBubble({ cfg }: { cfg: (typeof ROLE_CONFIG)[AgentRole] }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 6 }}
       style={{
-        minWidth: 72,
-        minHeight: 42,
-        padding: "10px 12px",
-        border: `3px solid ${cfg.bubbleBorder}`,
-        borderRadius: 8,
+        minWidth: 52,
+        minHeight: 30,
+        padding: "7px 10px",
+        border: `2px solid ${cfg.bubbleBorder}`,
+        borderRadius: 7,
         background: cfg.bubbleBg,
         display: "flex",
         justifyContent: "center",
-        gap: 5,
-        boxShadow: "0 5px 0 rgba(31,41,55,0.16)",
+        gap: 4,
+        boxShadow: "0 3px 0 rgba(31,41,55,0.14)",
       }}
     >
       {[0, 1, 2].map((i) => (
@@ -487,12 +487,12 @@ function getTravelMotion(agent: AgentInfo) {
 function CharacterUnit({ agent }: { agent: AgentInfo }) {
   const cfg = ROLE_CONFIG[agent.role] ?? ROLE_CONFIG.system;
   const active = agent.status === "thinking" || agent.status === "reviewing";
-  const size = agent.role === "ceo" ? 3 : 2.35;
+  const size = agent.role === "ceo" ? 2.6 : 2.0;
   const motionProfile = getTravelMotion(agent);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, minWidth: 54 }}>
-      <div style={{ minHeight: 34, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, minWidth: 44 }}>
+      <div style={{ minHeight: 26, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
         <AnimatePresence mode="wait">
           {active ? (
             <TypingBubble key="typing" cfg={cfg} />

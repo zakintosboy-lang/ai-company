@@ -893,93 +893,6 @@ export default function Home() {
         </div>
       </header>
 
-      <div
-        style={{
-          margin: "14px 14px 0",
-          border: "3px solid #31405f",
-          borderRadius: 20,
-          background: "linear-gradient(90deg, #fff8f1 0%, #eef9ff 100%)",
-          boxShadow: "0 8px 0 rgba(49,64,95,0.10)",
-          padding: isMobileView ? "10px 12px" : "10px 14px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          flexWrap: "wrap",
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-            Live Progress
-          </div>
-          <div style={{ fontSize: isMobileView ? 14 : 16, fontWeight: 900, color: "#23324f", marginTop: 2 }}>
-            {progressMeta.label}
-          </div>
-        </div>
-
-        <div style={{ flex: 1, minWidth: isMobileView ? "100%" : 320, display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {progressSteps.map((step, index) => {
-            const active = index === progressMeta.step;
-            const done = index < progressMeta.step;
-            return (
-              <div
-                key={step}
-                style={{
-                  padding: "6px 9px",
-                  borderRadius: 999,
-                  border: active ? "2px solid #7f57f1" : "2px solid rgba(49,64,95,0.12)",
-                  background: done ? "rgba(127,87,241,0.12)" : active ? "#f4ecff" : "#fff8f1",
-                  color: done || active ? "#7f57f1" : "#64748b",
-                  fontSize: 10,
-                  fontWeight: 900,
-                  letterSpacing: "0.06em",
-                  boxShadow: active ? "0 4px 10px rgba(127,87,241,0.10)" : "none",
-                }}
-              >
-                {step}
-              </div>
-            );
-          })}
-        </div>
-
-        <div style={{ textAlign: isMobileView ? "left" : "right", minWidth: 150 }}>
-          <div style={{ fontSize: 12, fontWeight: 900, color: "#51617c" }}>
-            経過 {isRunning ? formatSeconds(elapsedSeconds) : "0秒"}
-          </div>
-          <div style={{ fontSize: 11, fontWeight: 800, color: "#f97316", marginTop: 2 }}>
-            平均 {formatSeconds(Math.max(avgDurationSeconds, 35))}
-          </div>
-        </div>
-      </div>
-
-      <section className="meeting-hero-shell">
-        <div className="meeting-hero-header">
-          <div>
-            <div className="panel-stack-eyebrow">Meeting Room</div>
-            <div className="meeting-hero-title">キャラクターが動く会議ステージ</div>
-          </div>
-          <div className="panel-stack-meta">{logs.length} logs</div>
-        </div>
-        <div
-          className="meeting-hero-stage"
-          style={{ height: isMobileView ? 460 : 560 }}
-        >
-          <MeetingRoom
-            logs={logs}
-            agents={Object.values(agents).map(c => ({
-              id: c.config.id,
-              role: c.config.role,
-              name: c.config.name,
-              status: c.status,
-              lastMessage: c.lastMessage,
-              model: c.config.model.displayName,
-            }))}
-            isRunning={isRunning}
-            output={!!output}
-          />
-        </div>
-      </section>
-
       <main className="main">
         {/* Left Panel */}
         <aside className={`panel-left ${isMobileView ? "mobile-edit-panel" : ""}`}>
@@ -990,7 +903,6 @@ export default function Home() {
               border: "3px solid rgba(49, 64, 95, 0.16)",
               background: "linear-gradient(180deg, #fff9f1 0%, #fff2f7 100%)",
               boxShadow: "0 6px 0 rgba(49,64,95,0.08)",
-              marginBottom: 14,
             }}
           >
             <div style={{ fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", color: "#7f57f1", fontWeight: 900, marginBottom: 8 }}>
@@ -1007,6 +919,29 @@ export default function Home() {
               3. 提案・企画メモまで仕上げる
             </div>
           </div>
+
+          {/* Compact progress — running 中のみ表示 */}
+          {(isRunning || progressMeta.step > 0) && (
+            <div className="progress-compact">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#7f57f1" }}>{progressMeta.label}</div>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "#64748b" }}>
+                  {isRunning ? formatSeconds(elapsedSeconds) : ""}&nbsp;
+                  <span style={{ color: "#f97316" }}>avg {formatSeconds(Math.max(avgDurationSeconds, 35))}</span>
+                </div>
+              </div>
+              <div className="progress-steps-mini">
+                {progressSteps.map((step, index) => (
+                  <div
+                    key={step}
+                    className={`progress-step-pill${index < progressMeta.step ? " done" : index === progressMeta.step ? " active" : ""}`}
+                  >
+                    {step}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div>
             <div className="instruction-label-row">
@@ -1176,6 +1111,23 @@ export default function Home() {
 
         {/* Right Panel */}
         <div className="panel-right">
+          {/* Meeting Room — 上部固定、スクロールしても残る */}
+          <div className="meeting-in-right" style={{ height: isMobileView ? 300 : 360 }}>
+            <MeetingRoom
+              logs={logs}
+              agents={Object.values(agents).map(c => ({
+                id: c.config.id,
+                role: c.config.role,
+                name: c.config.name,
+                status: c.status,
+                lastMessage: c.lastMessage,
+                model: c.config.model.displayName,
+              }))}
+              isRunning={isRunning}
+              output={!!output}
+            />
+          </div>
+          {/* Scrollable output */}
           <div className="panel-right-scroll">
             <section className="panel-stack-section">
               <div className="panel-stack-header">
@@ -1187,7 +1139,7 @@ export default function Home() {
               </div>
               <div className="panel-output-body">
                 {!output
-                  ? <div className="output-empty">{isMobileView ? "上のステージで進行を見ながら、そのまま下にスクロールすると成果物を確認できます" : "上の会議ステージで進行を見ながら、完成後はこの下に調査レポートと提案内容が表示されます"}</div>
+                  ? <div className="output-empty">会議ステージで進行を確認しながら、完成後はここに調査レポートと提案内容が表示されます</div>
                   : <DeliverableTabs data={output} />
                 }
               </div>

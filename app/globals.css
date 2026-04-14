@@ -140,7 +140,6 @@ html, body {
 
 /* ── Layout ── */
 .main {
-  min-height: 0;
   display: grid;
   grid-template-columns: 300px 1fr;
   min-width: 0;
@@ -149,39 +148,11 @@ html, body {
   align-items: start;
 }
 
-.meeting-hero-shell {
-  margin: 14px 14px 0;
-  background: rgba(255, 247, 239, 0.92);
-  border: 4px solid #31405f;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 10px 0 rgba(49, 64, 95, 0.12);
-}
-
-.meeting-hero-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 18px;
-  border-bottom: 4px solid rgba(49, 64, 95, 0.12);
-  background: linear-gradient(180deg, #fffaf3 0%, #fff4e8 100%);
-}
-
-.meeting-hero-title {
-  margin-top: 2px;
-  font-size: 16px;
-  font-weight: 900;
-  color: var(--text-primary);
-}
-
-.meeting-hero-stage {
-  padding: 12px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.05) 100%);
-}
-
 /* ── Left Panel ── */
 .panel-left {
+  position: sticky;
+  top: 68px;
+  max-height: calc(100vh - 80px);
   background: rgba(255, 247, 239, 0.92);
   border: 4px solid #31405f;
   border-radius: 20px;
@@ -190,7 +161,6 @@ html, body {
   gap: 12px;
   overflow-y: auto;
   min-width: 0;
-  min-height: 0;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
   box-shadow: 0 10px 0 rgba(49, 64, 95, 0.12);
@@ -299,21 +269,29 @@ html, body {
 
 /* ── Right Panel ── */
 .panel-right {
-  display: flex; flex-direction: column;
+  position: sticky;
+  top: 68px;
+  height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
   background: transparent;
   overflow: hidden;
-  position: relative;
   min-width: 0;
-  min-height: 0;
   border: 4px solid #31405f;
   border-radius: 20px;
   box-shadow: 0 10px 0 rgba(49, 64, 95, 0.12);
 }
 
+.meeting-in-right {
+  flex-shrink: 0;
+  overflow: hidden;
+  border-bottom: 3px solid rgba(49, 64, 95, 0.18);
+}
+
 .panel-right-scroll {
   flex: 1;
   min-height: 0;
-  overflow: visible;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -381,13 +359,7 @@ html, body {
 }
 
 /* 幾何学デコレーション（右パネル背景） */
-.panel-right::before {
-  content: '';
-  position: absolute; bottom: 60px; right: 40px;
-  width: 80px; height: 80px; border-radius: 50%;
-  background: var(--pink); opacity: 0.18;
-  pointer-events: none;
-}
+.panel-right::before { display: none; }
 
 /* ── Agent Grid ── */
 .agent-grid {
@@ -524,24 +496,46 @@ html, body {
 .or-table tr:last-child td { border-bottom: none; }
 .or-td-first { font-weight: 600; color: var(--text-secondary); }
 
+/* ── Compact Progress ── */
+.progress-compact {
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 2px solid rgba(127, 87, 241, 0.22);
+  background: rgba(127, 87, 241, 0.06);
+}
+.progress-steps-mini {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.progress-step-pill {
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  border: 1.5px solid rgba(49, 64, 95, 0.12);
+  background: transparent;
+  color: #64748b;
+}
+.progress-step-pill.done {
+  background: rgba(127, 87, 241, 0.12);
+  color: #7f57f1;
+  border-color: rgba(127, 87, 241, 0.18);
+}
+.progress-step-pill.active {
+  background: #f4ecff;
+  color: #7f57f1;
+  border-color: #7f57f1;
+}
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
-  .main { grid-template-columns: 1fr; grid-template-rows: auto auto; height: auto; min-height: 0; padding: 10px; gap: 10px; }
+  .main { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
   .header {
     padding: 0 14px;
     gap: 10px;
-  }
-  .meeting-hero-shell {
-    margin: 10px 10px 0;
-  }
-  .meeting-hero-header {
-    padding: 12px 14px;
-  }
-  .meeting-hero-title {
-    font-size: 15px;
-  }
-  .meeting-hero-stage {
-    padding: 10px;
   }
   .header-logo {
     width: 30px;
@@ -561,14 +555,18 @@ html, body {
     flex-shrink: 0;
   }
   .panel-left {
+    position: static;
+    max-height: none;
     border-bottom-width: 4px;
     padding: 14px;
-  }
-  .panel-left.mobile-edit-panel {
     gap: 12px;
   }
   .panel-right {
-    min-height: calc(100vh - 260px);
+    position: static;
+    height: auto;
+  }
+  .meeting-in-right {
+    height: 300px;
   }
   .panel-right-scroll {
     padding: 10px;
