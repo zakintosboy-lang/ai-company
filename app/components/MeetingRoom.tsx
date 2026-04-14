@@ -1001,31 +1001,40 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
               PIXEL STAGE {isRunning ? "1-1 RUNNING" : "1-1 READY"}
             </div>
 
-            <div style={{ position: "absolute", top: 62, left: 24, width: 940, zIndex: 2 }}>
-              <CompactLogStrip logs={logs} />
-            </div>
             <div
               style={{
                 position: "absolute",
-                top: 76,
-                right: 26,
-                padding: "5px 8px",
-                borderRadius: 999,
-                background: "rgba(255,248,241,0.78)",
-                border: "1.5px solid rgba(49,64,95,0.16)",
-                boxShadow: "0 8px 16px rgba(49,64,95,0.06)",
-                fontSize: 9,
-                fontWeight: 900,
-                color: "#31405f",
-                letterSpacing: "0.08em",
-                whiteSpace: "nowrap",
+                top: 58,
+                left: 24,
+                right: 24,
+                display: "grid",
+                gridTemplateColumns: "minmax(0, 1fr) 276px",
+                gap: 16,
+                alignItems: "start",
                 zIndex: 2,
               }}
             >
-              AGENT MAP
+              <CompactLogStrip logs={logs} />
+
+              <div
+                style={{
+                  borderRadius: 18,
+                  padding: "10px 12px 12px",
+                  background: "rgba(255,248,241,0.84)",
+                  border: "1.5px solid rgba(49,64,95,0.16)",
+                  boxShadow: "0 8px 18px rgba(49,64,95,0.08)",
+                  backdropFilter: "blur(8px)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
+                  <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: "0.08em", color: "#31405f" }}>ARCADE</span>
+                  <span style={{ fontSize: 9, fontWeight: 900, color: "#64748b", letterSpacing: "0.08em" }}>AGENT MAP</span>
+                </div>
+                <WaitingGame active={isRunning} size="small" variant="embedded" compact />
+              </div>
             </div>
 
-            <div style={{ position: "absolute", left: 430, top: 168, width: 260, zIndex: 2 }}>
+            <div style={{ position: "absolute", left: 430, top: 146, width: 260, zIndex: 2 }}>
               <ZoneCard title="CASTLE HQ" subtitle="社長エリア / 最終判断ポイント" accent="#8b5cf6">
                 {topRow.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
@@ -1033,21 +1042,21 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
               </ZoneCard>
             </div>
 
-            <div style={{ position: "absolute", left: 42, top: 298, width: 330, zIndex: 2 }}>
+            <div style={{ position: "absolute", left: 42, top: 258, width: 330, zIndex: 2 }}>
               <ZoneCard title="RESEARCH FIELD" subtitle="情報を集めて司令塔へ持ち帰る" accent="#06b6d4">
                 {zoneAgents.research.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
                 ))}
               </ZoneCard>
             </div>
-            <div style={{ position: "absolute", left: 430, top: 314, width: 250, zIndex: 2 }}>
+            <div style={{ position: "absolute", left: 430, top: 274, width: 250, zIndex: 2 }}>
               <ZoneCard title="CONTROL TOWER" subtitle="進行管理してCEOへ報告" accent="#3b82f6">
                 {zoneAgents.manager.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
                 ))}
               </ZoneCard>
             </div>
-            <div style={{ position: "absolute", right: 42, top: 298, width: 280, zIndex: 2 }}>
+            <div style={{ position: "absolute", right: 42, top: 258, width: 280, zIndex: 2 }}>
               <ZoneCard title="REVIEW GATE" subtitle="品質チェックして通す" accent="#22c55e">
                 {zoneAgents.review.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
@@ -1055,14 +1064,14 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
               </ZoneCard>
             </div>
 
-            <div style={{ position: "absolute", left: 124, top: 394, width: 290, zIndex: 2 }}>
+            <div style={{ position: "absolute", left: 124, top: 352, width: 290, zIndex: 2 }}>
               <ZoneCard title="BUILD ZONE" subtitle="実装して素材を持って戻る" accent="#f97316">
                 {zoneAgents.build.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
                 ))}
               </ZoneCard>
             </div>
-            <div style={{ position: "absolute", right: 124, top: 394, width: 290, zIndex: 2 }}>
+            <div style={{ position: "absolute", right: 124, top: 352, width: 290, zIndex: 2 }}>
               <ZoneCard title="CREATIVE HOUSE" subtitle="編集とデザインで整える" accent="#ec4899">
                 {zoneAgents.creative.map((agent) => (
                   <CharacterUnit key={agent.id} agent={agent} />
@@ -1070,27 +1079,9 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
               </ZoneCard>
             </div>
 
-            <div style={{ position: "absolute", inset: "142px 46px 90px", zIndex: 1 }}>
+            <div style={{ position: "absolute", inset: "120px 46px 78px", zIndex: 1 }}>
               <FlowLines />
             </div>
-
-              <div
-                style={{
-                  position: "absolute",
-                  left: 116,
-                  right: 116,
-                  bottom: 16,
-                  zIndex: 2,
-                  borderRadius: 18,
-                  padding: "4px 6px 6px",
-                  background: "rgba(255,248,241,0.42)",
-                  border: "1px solid rgba(49,64,95,0.12)",
-                  boxShadow: "0 8px 16px rgba(49,64,95,0.06)",
-                  backdropFilter: "blur(6px)",
-                }}
-              >
-                <WaitingGame active={isRunning} size="small" variant="embedded" compact />
-              </div>
             </StagePanel>
           </div>
         </div>

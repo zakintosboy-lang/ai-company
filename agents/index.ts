@@ -12,7 +12,7 @@ import { formatOutput } from "./formatter";
 import type { ResearchResult } from "./researcher";
 
 const MAX_REVIEW_CYCLES = 2;
-const MAX_CEO_CYCLES = 2;
+const MAX_CEO_CYCLES = 1;
 const RESEARCH_ANGLES = [
   "最新ニュース・更新情報",
   "競合比較・選択肢比較",
@@ -144,16 +144,24 @@ ${researchResult.summary.slice(0, 2000)}
     const aggregated = await aggregateResults(manager, ceoCycleInstruction, results);
     manager.setDone("集約完了");
 
-    // ── Editor 編集 ───────────────────────────────────────────
-    onLog({ role: "system", message: "【Editor】文章・構成を編集します" });
-    const edited = await editContent(editor, aggregated, ceoCycleInstruction);
+    // まずは集約結果をそのまま最終判断へ回し、必要なときだけ編集を挟む
+    let candidateAnswer = aggregated;
+    let decision = await makeFinalDecision(ceo, ceoCycleInstruction, candidateAnswer);
 
-    // CEO 最終判断
-    const decision = await makeFinalDecision(ceo, ceoCycleInstruction, edited);
+    if (!decision.approved) {
+      onLog({ role: "system", message: "【Editor】CEOの指摘を反映して整えます" });
+      candidateAnswer = await editContent(
+        editor,
+        aggregated,
+        `${ceoCycleInstruction}\n\n[CEOの改善要求]: ${decision.feedback}`
+      );
+      decision = await makeFinalDecision(ceo, ceoCycleInstruction, candidateAnswer);
+    }
 
-    if (decision.approved && decision.finalAnswer) {
+    if (decision.approved) {
+      const finalText = decision.finalAnswer?.trim() ? decision.finalAnswer : candidateAnswer;
       // Formatter 構造化
-      const structured = await formatOutput(instruction, decision.finalAnswer, onLog);
+      const structured = await formatOutput(instruction, finalText, onLog);
       structured.sections.unshift({
         title: "最新情報ステータス",
         type: "highlight",
@@ -191,7 +199,7 @@ ${researchResult.summary.slice(0, 2000)}
       ceo.log(`差し戻しフィードバック: ${decision.feedback}`);
       ceoCycleInstruction = `${instruction}\n\n[CEOの改善要求]: ${decision.feedback}`;
     } else {
-      const structured = await formatOutput(instruction, edited, onLog);
+      const structured = await formatOutput(instruction, candidateAnswer, onLog);
       structured.sections.unshift({
         title: "最新情報ステータス",
         type: "highlight",

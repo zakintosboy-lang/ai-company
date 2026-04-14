@@ -146,8 +146,6 @@ const SAMPLE_PROMPTS: SamplePrompt[] = [
   },
 ];
 
-type Tab = "logs" | "output";
-
 type ProgressMeta = {
   label: string;
   step: number;
@@ -618,7 +616,6 @@ export default function Home() {
   const [logs, setLogs]       = useState<LogEntry[]>([]);
   const [output, setOutput]   = useState<StructuredOutput | null>(null);
   const [isRunning, setIsRunning] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("logs");
   const [runCount, setRunCount]   = useState<number>(0);
   const [toast, setToast]         = useState<string | null>(null);
   const [isMobileView, setIsMobileView] = useState(false);
@@ -646,7 +643,6 @@ export default function Home() {
       const saved: SavedResult[] = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
       if (saved.length > 0) {
         setOutput(saved[0].output);
-        setActiveTab("output");
       }
     } catch { /* ignore */ }
   }, []);
@@ -658,10 +654,6 @@ export default function Home() {
     media.addEventListener("change", sync);
     return () => media.removeEventListener("change", sync);
   }, []);
-
-  useEffect(() => {
-    if (isMobileView && output) setActiveTab("output");
-  }, [isMobileView, output]);
 
   useEffect(() => {
     setVisibleSamples(pickSamples(sampleGenre));
@@ -775,7 +767,7 @@ export default function Home() {
     setRunStartedAt(startedAt);
     setElapsedSeconds(0);
     setIsRunning(true);
-    setLogs([]); setOutput(null); setAgents(createInitialAgents()); setActiveTab("logs");
+    setLogs([]); setOutput(null); setAgents(createInitialAgents());
     addLog("system", "実行開始...");
 
     try {
@@ -835,7 +827,6 @@ export default function Home() {
               } catch { /* ignore */ }
               return next;
             });
-            setActiveTab("output");
             addLog("system", "処理完了");
           } else if (parsed.type === "error") {
             addLog("system", `エラー: ${parsed.data}`);
@@ -1157,44 +1148,53 @@ export default function Home() {
 
         {/* Right Panel */}
         <div className="panel-right">
-          {/* Tabs */}
-          <div className="panel-tabs">
-            <button className={`panel-tab ${activeTab==="logs"?"active":""}`} onClick={() => setActiveTab("logs")}>
-              {isMobileView ? "進行" : "会議室"} {logs.length > 0 && `(${logs.length})`}
-            </button>
-            <button className={`panel-tab ${activeTab==="output"?"active":""}`} onClick={() => setActiveTab("output")}>
-              成果物 {output && "✓"}
-            </button>
+          <div className="panel-right-scroll">
+            <section className="panel-stack-section">
+              <div className="panel-stack-header">
+                <div>
+                  <div className="panel-stack-eyebrow">Meeting Room</div>
+                  <div className="panel-stack-title">キャラクターが動く会議ステージ</div>
+                </div>
+                <div className="panel-stack-meta">{logs.length} logs</div>
+              </div>
+              <div
+                className="panel-stage-body"
+                style={{ height: isMobileView ? 520 : 640 }}
+              >
+                <div style={{ height: "100%", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                  <MeetingRoom
+                    logs={logs}
+                    agents={Object.values(agents).map(c => ({
+                      id: c.config.id,
+                      role: c.config.role,
+                      name: c.config.name,
+                      status: c.status,
+                      lastMessage: c.lastMessage,
+                      model: c.config.model.displayName,
+                    }))}
+                    isRunning={isRunning}
+                    output={!!output}
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="panel-stack-section">
+              <div className="panel-stack-header">
+                <div>
+                  <div className="panel-stack-eyebrow">Deliverables</div>
+                  <div className="panel-stack-title">成果物</div>
+                </div>
+                <div className="panel-stack-meta">{output ? "Ready" : "Waiting"}</div>
+              </div>
+              <div className="panel-output-body">
+                {!output
+                  ? <div className="output-empty">{isMobileView ? "上のステージで進行を見ながら、そのまま下にスクロールすると成果物を確認できます" : "上の会議ステージで進行を見ながら、完成後はこの下に調査レポートと提案内容が表示されます"}</div>
+                  : <DeliverableTabs data={output} />
+                }
+              </div>
+            </section>
           </div>
-
-          {/* Meeting Room */}
-          {activeTab === "logs" && (
-            <div style={{ flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-              <MeetingRoom
-                logs={logs}
-                agents={Object.values(agents).map(c => ({
-                  id: c.config.id,
-                  role: c.config.role,
-                  name: c.config.name,
-                  status: c.status,
-                  lastMessage: c.lastMessage,
-                  model: c.config.model.displayName,
-                }))}
-                isRunning={isRunning}
-                output={!!output}
-              />
-            </div>
-          )}
-
-          {/* Output */}
-          {activeTab === "output" && (
-            <div className="output-panel">
-              {!output
-                ? <div className="output-empty">{isMobileView ? "スマホでも実行できます。指示を入力して、調査レポートと提案内容を成果物タブで確認してください" : "調査レポート、おすすめ案、提案・企画メモがここに表示されます"}</div>
-                : <DeliverableTabs data={output} />
-              }
-            </div>
-          )}
         </div>
       </main>
 

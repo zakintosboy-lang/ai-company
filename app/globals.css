@@ -280,6 +280,76 @@ html, body {
   box-shadow: 0 10px 0 rgba(49, 64, 95, 0.12);
 }
 
+.panel-right-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.panel-stack-section {
+  background: rgba(255, 247, 239, 0.9);
+  border: 3px solid rgba(49, 64, 95, 0.16);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 8px 0 rgba(49, 64, 95, 0.1);
+}
+
+.panel-stack-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 3px solid rgba(49, 64, 95, 0.12);
+  background: linear-gradient(180deg, #fffaf3 0%, #fff4e8 100%);
+}
+
+.panel-stack-eyebrow {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #7f57f1;
+}
+
+.panel-stack-title {
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.panel-stack-meta {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 2px solid rgba(49, 64, 95, 0.14);
+  background: rgba(255,255,255,0.7);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.panel-stage-body {
+  padding: 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.03) 100%);
+}
+
+.panel-output-body {
+  padding: 18px 18px 24px;
+  background: rgba(255,255,255,0.72);
+}
+
 /* 幾何学デコレーション（右パネル背景） */
 .panel-right::before {
   content: '';
@@ -457,6 +527,16 @@ html, body {
   }
   .panel-right {
     min-height: calc(100vh - 260px);
+  }
+  .panel-right-scroll {
+    padding: 10px;
+    gap: 10px;
+  }
+  .panel-stack-header {
+    padding: 11px 12px;
+  }
+  .panel-output-body {
+    padding: 14px 14px 22px;
   }
   .output-panel {
     padding: 14px 14px 24px;
