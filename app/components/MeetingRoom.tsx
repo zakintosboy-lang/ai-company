@@ -487,7 +487,7 @@ function getTravelMotion(agent: AgentInfo) {
 function CharacterUnit({ agent }: { agent: AgentInfo }) {
   const cfg = ROLE_CONFIG[agent.role] ?? ROLE_CONFIG.system;
   const active = agent.status === "thinking" || agent.status === "reviewing";
-  const size = agent.role === "ceo" ? 2.9 : 2.2;
+  const size = agent.role === "ceo" ? 2.6 : 2.0;
   const motionProfile = getTravelMotion(agent);
 
   return (
@@ -580,7 +580,7 @@ function lineupOrFallback(
 }
 
 function CompactLogStrip({ logs }: { logs: LogEntry[] }) {
-  const recent = logs.slice(-3);
+  const recent = logs.slice(-2);
 
   return (
     <div
@@ -589,10 +589,10 @@ function CompactLogStrip({ logs }: { logs: LogEntry[] }) {
         background: "#f8fbff",
         border: "2px solid rgba(49,64,95,0.16)",
         boxShadow: "0 8px 18px rgba(49,64,95,0.08)",
-        padding: "10px 12px",
+        padding: "6px 10px",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 5 }}>
         <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: "0.08em", color: "#31405f" }}>LIVE LOG</span>
         <span style={{ fontSize: 10, fontWeight: 800, color: "#64748b" }}>{logs.length}件</span>
       </div>
@@ -1008,56 +1008,69 @@ export default function MeetingRoom({ logs, agents, isRunning }: Props) {
               </div>
             </div>
 
-            {/* Row 1: CEO — top:148, 高さ~120px → 下端~268 */}
-            <div style={{ position: "absolute", left: 430, top: 148, width: 260, zIndex: 2 }}>
-              <ZoneCard title="CASTLE HQ" subtitle="社長エリア / 最終判断ポイント" accent="#8b5cf6">
-                {topRow.map((agent) => (
-                  <CharacterUnit key={agent.id} agent={agent} />
-                ))}
-              </ZoneCard>
-            </div>
-
-            {/* Row 2: Research / Control / Review — top:288, gap 20px from row1 */}
-            <div style={{ position: "absolute", left: 42, top: 288, width: 330, zIndex: 2 }}>
-              <ZoneCard title="RESEARCH FIELD" subtitle="情報を集めて司令塔へ持ち帰る" accent="#06b6d4">
-                {zoneAgents.research.map((agent) => (
-                  <CharacterUnit key={agent.id} agent={agent} />
-                ))}
-              </ZoneCard>
-            </div>
-            <div style={{ position: "absolute", left: 430, top: 288, width: 250, zIndex: 2 }}>
-              <ZoneCard title="CONTROL TOWER" subtitle="進行管理してCEOへ報告" accent="#3b82f6">
-                {zoneAgents.manager.map((agent) => (
-                  <CharacterUnit key={agent.id} agent={agent} />
-                ))}
-              </ZoneCard>
-            </div>
-            <div style={{ position: "absolute", right: 42, top: 288, width: 280, zIndex: 2 }}>
-              <ZoneCard title="REVIEW GATE" subtitle="品質チェックして通す" accent="#22c55e">
-                {zoneAgents.review.map((agent) => (
-                  <CharacterUnit key={agent.id} agent={agent} />
-                ))}
-              </ZoneCard>
-            </div>
-
-            {/* Row 3: Build / Creative — top:412, gap ~12px from row2 */}
-            <div style={{ position: "absolute", left: 90, top: 412, width: 310, zIndex: 2 }}>
-              <ZoneCard title="BUILD ZONE" subtitle="実装して素材を持って戻る" accent="#f97316">
-                {zoneAgents.build.map((agent) => (
-                  <CharacterUnit key={agent.id} agent={agent} />
-                ))}
-              </ZoneCard>
-            </div>
-            <div style={{ position: "absolute", right: 90, top: 412, width: 310, zIndex: 2 }}>
-              <ZoneCard title="CREATIVE HOUSE" subtitle="編集とデザインで整える" accent="#ec4899">
-                {zoneAgents.creative.map((agent) => (
-                  <CharacterUnit key={agent.id} agent={agent} />
-                ))}
-              </ZoneCard>
-            </div>
-
-            <div style={{ position: "absolute", inset: "128px 46px 60px", zIndex: 1 }}>
+            {/* Flow lines – behind zones */}
+            <div style={{ position: "absolute", inset: "148px 46px 60px", zIndex: 1, pointerEvents: "none" }}>
               <FlowLines />
+            </div>
+
+            {/* Zone grid – flex column so rows can NEVER geometrically overlap.
+                paddingTop on each row = reserved space for speech bubbles (bottom:100%). */}
+            <div style={{ position: "absolute", left: 18, right: 18, top: 148, zIndex: 2 }}>
+
+              {/* Row 1: CEO */}
+              <div style={{ display: "flex", justifyContent: "center", paddingTop: 28 }}>
+                <div style={{ width: 280 }}>
+                  <ZoneCard title="CASTLE HQ" subtitle="CEO" accent="#8b5cf6">
+                    {topRow.map((agent) => (
+                      <CharacterUnit key={agent.id} agent={agent} />
+                    ))}
+                  </ZoneCard>
+                </div>
+              </div>
+
+              {/* Row 2: Research / Control / Review */}
+              <div style={{ display: "flex", gap: 10, paddingTop: 28, marginTop: 8 }}>
+                <div style={{ flex: "0 0 290px" }}>
+                  <ZoneCard title="RESEARCH FIELD" subtitle="調査" accent="#06b6d4">
+                    {zoneAgents.research.map((agent) => (
+                      <CharacterUnit key={agent.id} agent={agent} />
+                    ))}
+                  </ZoneCard>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <ZoneCard title="CONTROL TOWER" subtitle="管理" accent="#3b82f6">
+                    {zoneAgents.manager.map((agent) => (
+                      <CharacterUnit key={agent.id} agent={agent} />
+                    ))}
+                  </ZoneCard>
+                </div>
+                <div style={{ flex: "0 0 260px" }}>
+                  <ZoneCard title="REVIEW GATE" subtitle="確認" accent="#22c55e">
+                    {zoneAgents.review.map((agent) => (
+                      <CharacterUnit key={agent.id} agent={agent} />
+                    ))}
+                  </ZoneCard>
+                </div>
+              </div>
+
+              {/* Row 3: Build / Creative */}
+              <div style={{ display: "flex", gap: 10, paddingTop: 28, marginTop: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <ZoneCard title="BUILD ZONE" subtitle="実装" accent="#f97316">
+                    {zoneAgents.build.map((agent) => (
+                      <CharacterUnit key={agent.id} agent={agent} />
+                    ))}
+                  </ZoneCard>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <ZoneCard title="CREATIVE HOUSE" subtitle="編集" accent="#ec4899">
+                    {zoneAgents.creative.map((agent) => (
+                      <CharacterUnit key={agent.id} agent={agent} />
+                    ))}
+                  </ZoneCard>
+                </div>
+              </div>
+
             </div>
             </StagePanel>
           </div>
