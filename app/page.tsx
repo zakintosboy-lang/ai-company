@@ -898,25 +898,17 @@ export default function Home() {
         <aside className={`panel-left ${isMobileView ? "mobile-edit-panel" : ""}`}>
           <div
             style={{
-              padding: "14px 15px",
-              borderRadius: 18,
-              border: "3px solid rgba(49, 64, 95, 0.16)",
-              background: "linear-gradient(180deg, #fff9f1 0%, #fff2f7 100%)",
-              boxShadow: "0 6px 0 rgba(49,64,95,0.08)",
+              padding: "10px 12px",
+              borderRadius: 14,
+              border: "2px solid rgba(49, 64, 95, 0.14)",
+              background: "linear-gradient(135deg, #fff9f1 0%, #f0f4ff 100%)",
             }}
           >
-            <div style={{ fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", color: "#7f57f1", fontWeight: 900, marginBottom: 8 }}>
-              Research Flow
+            <div style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "#7f57f1", fontWeight: 900, marginBottom: 4 }}>
+              AI Company
             </div>
-            <div style={{ fontSize: 15, fontWeight: 900, lineHeight: 1.5, marginBottom: 10, color: "#23324f" }}>
-              市場調査レポートを作り、そこからおすすめ案と企画メモまでまとめます。
-            </div>
-            <div style={{ fontSize: 13, lineHeight: 1.8, color: "#51617c", fontWeight: 700 }}>
-              1. 調査して比較レポートに整理する
-              <br />
-              2. おすすめ案を出す
-              <br />
-              3. 提案・企画メモまで仕上げる
+            <div style={{ fontSize: 11, color: "#51617c", fontWeight: 700, lineHeight: 1.6 }}>
+              調査 → 比較レポート → おすすめ案 → 企画メモまで納品
             </div>
           </div>
 
@@ -943,6 +935,7 @@ export default function Home() {
             </div>
           )}
 
+          {/* ── 指示入力 ── */}
           <div>
             <div className="instruction-label-row">
               <div className="panel-section-label">指示内容</div>
@@ -960,116 +953,9 @@ export default function Home() {
               disabled={isRunning || !hydrated}
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleRun(); }}
             />
-                {!isRunning && (
-                  <div style={{ marginTop: 12 }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
-                      <div style={{ fontSize: 12, opacity: 0.58 }}>
-                        すぐ試せるサンプル指示
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setVisibleSamples(pickSamples(sampleGenre))}
-                        style={{
-                          border: "3px solid rgba(49, 64, 95, 0.12)",
-                          background: "#fff8f1",
-                          borderRadius: 999,
-                          padding: "5px 10px",
-                          fontSize: 11,
-                          fontWeight: 900,
-                          cursor: "pointer",
-                          color: "var(--text-secondary)",
-                          boxShadow: "0 4px 0 rgba(49,64,95,0.06)",
-                        }}
-                      >
-                        シャッフル
-                      </button>
-                    </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-                      {(Object.keys(SAMPLE_GENRE_META) as SampleGenre[]).map((genre) => {
-                        const active = sampleGenre === genre;
-                        const meta = SAMPLE_GENRE_META[genre];
-                        return (
-                          <button
-                            key={genre}
-                            type="button"
-                            onClick={() => setSampleGenre(genre)}
-                            style={{
-                              border: active ? `3px solid ${meta.border}` : "3px solid rgba(49, 64, 95, 0.12)",
-                              background: active ? meta.bg : "#fff8f1",
-                              borderRadius: 999,
-                              padding: "6px 11px",
-                              fontSize: 11,
-                              fontWeight: 900,
-                              cursor: "pointer",
-                              color: active ? meta.color : "inherit",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 6,
-                              boxShadow: "0 4px 0 rgba(49,64,95,0.06)",
-                            }}
-                          >
-                            <span style={{ fontSize: 11, lineHeight: 1 }}>{meta.icon}</span>
-                            {meta.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <div style={{ display: "grid", gap: 8 }}>
-                      {visibleSamples.map((sample) => {
-                        const selected = instruction === sample.body;
-                        const meta = SAMPLE_GENRE_META[sample.genre];
-                        return (
-                          <button
-                            key={sample.title}
-                            type="button"
-                            onClick={() => setInstruction(sample.body)}
-                            style={{
-                              textAlign: "left",
-                              padding: "12px 13px",
-                              borderRadius: 16,
-                              border: selected ? `3px solid ${meta.border}` : "3px solid rgba(49, 64, 95, 0.12)",
-                              background: selected ? meta.bg : "#fff8f1",
-                              color: "inherit",
-                              cursor: "pointer",
-                              transition: "all 160ms ease",
-                              boxShadow: "0 5px 0 rgba(49,64,95,0.06)",
-                            }}
-                          >
-                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                              <span
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  minWidth: 22,
-                                  height: 22,
-                                  borderRadius: 999,
-                                  background: meta.bg,
-                                  color: meta.color,
-                                  fontSize: 11,
-                                  fontWeight: 800,
-                                }}
-                              >
-                                {meta.icon}
-                              </span>
-                              <span style={{ fontSize: 12, fontWeight: 700, opacity: 0.82 }}>
-                                {meta.label}
-                              </span>
-                            </div>
-                            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.72, marginBottom: 4 }}>
-                              {sample.title}
-                            </div>
-                            <div style={{ fontSize: 13, lineHeight: 1.6, opacity: 0.9 }}>
-                              {sample.body}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
 
+          {/* ── 実行ボタン ── textarea の直後に配置 */}
           <button
             className="run-button"
             onClick={isRunning ? handleCancelRun : handleRun}
@@ -1081,6 +967,7 @@ export default function Home() {
             }
           </button>
 
+          {/* ── Info & Export ── */}
           <div className="info-cards">
             <div className="info-card">
               <div className="info-card-title">実行回数</div>
@@ -1107,6 +994,96 @@ export default function Home() {
               <button className="export-btn btn-genspark" onClick={handleOpenGenspark}  disabled={!canExport}><span className="export-icon">✨</span>Genspark</button>
             </div>
           </div>
+
+          {/* ── サンプル指示 — 一番下にスクロールして見る ── */}
+          {!isRunning && (
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#7f57f1", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                  サンプル指示
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setVisibleSamples(pickSamples(sampleGenre))}
+                  style={{
+                    border: "2px solid rgba(49, 64, 95, 0.12)",
+                    background: "#fff8f1",
+                    borderRadius: 999,
+                    padding: "3px 9px",
+                    fontSize: 10,
+                    fontWeight: 900,
+                    cursor: "pointer",
+                    color: "var(--text-secondary)",
+                    boxShadow: "0 3px 0 rgba(49,64,95,0.06)",
+                  }}
+                >
+                  シャッフル
+                </button>
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                {(Object.keys(SAMPLE_GENRE_META) as SampleGenre[]).map((genre) => {
+                  const active = sampleGenre === genre;
+                  const meta = SAMPLE_GENRE_META[genre];
+                  return (
+                    <button
+                      key={genre}
+                      type="button"
+                      onClick={() => setSampleGenre(genre)}
+                      style={{
+                        border: active ? `2px solid ${meta.border}` : "2px solid rgba(49, 64, 95, 0.12)",
+                        background: active ? meta.bg : "#fff8f1",
+                        borderRadius: 999,
+                        padding: "4px 9px",
+                        fontSize: 10,
+                        fontWeight: 900,
+                        cursor: "pointer",
+                        color: active ? meta.color : "inherit",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <span style={{ fontSize: 10, lineHeight: 1 }}>{meta.icon}</span>
+                      {meta.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ display: "grid", gap: 6 }}>
+                {visibleSamples.map((sample) => {
+                  const selected = instruction === sample.body;
+                  const meta = SAMPLE_GENRE_META[sample.genre];
+                  return (
+                    <button
+                      key={sample.title}
+                      type="button"
+                      onClick={() => setInstruction(sample.body)}
+                      style={{
+                        textAlign: "left",
+                        padding: "10px 12px",
+                        borderRadius: 14,
+                        border: selected ? `2px solid ${meta.border}` : "2px solid rgba(49, 64, 95, 0.12)",
+                        background: selected ? meta.bg : "#fff8f1",
+                        color: "inherit",
+                        cursor: "pointer",
+                        transition: "all 160ms ease",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                        <span style={{
+                          display: "inline-flex", alignItems: "center", justifyContent: "center",
+                          minWidth: 18, height: 18, borderRadius: 999,
+                          background: meta.bg, color: meta.color, fontSize: 10, fontWeight: 800,
+                        }}>{meta.icon}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: meta.color }}>{sample.title}</span>
+                      </div>
+                      <div style={{ fontSize: 11, lineHeight: 1.55, opacity: 0.85 }}>{sample.body}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </aside>
 
         {/* Right Panel */}
