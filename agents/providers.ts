@@ -15,6 +15,14 @@ export interface LLMProvider {
   ): Promise<string>;
 }
 
+function requireApiKey(envName: "OPENAI_API_KEY" | "GEMINI_API_KEY") {
+  const value = process.env[envName];
+  if (!value) {
+    throw new Error(`${envName} is not set`);
+  }
+  return value;
+}
+
 class ClaudeProvider implements LLMProvider {
   private client = new Anthropic();
   constructor(private modelId: string) {}
@@ -31,26 +39,28 @@ class ClaudeProvider implements LLMProvider {
 }
 
 class OpenAIProvider implements LLMProvider {
-  private client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  private client = new OpenAI({ apiKey: requireApiKey("OPENAI_API_KEY") });
   constructor(private modelId: string) {}
 
   async complete(system: string, messages: ConversationEntry[], maxTokens: number): Promise<string> {
-    const response = await this.client.chat.completions.create({
+    const response = await this.client.responses.create({
       model: this.modelId,
-      max_completion_tokens: maxTokens,
-      messages: [
-        { role: "system", content: system },
-        ...messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
-      ],
+      instructions: system,
+      max_output_tokens: maxTokens,
+      input: messages.map((message) => ({
+        type: "message" as const,
+        role: message.role,
+        content: message.content,
+      })),
     });
-    return response.choices[0]?.message?.content ?? "";
+    return response.output_text;
   }
 }
 
 const GEMINI_FALLBACK: Record<string, string> = {};
 
 class GeminiProvider implements LLMProvider {
-  private client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
+  private client = new GoogleGenerativeAI(requireApiKey("GEMINI_API_KEY"));
   constructor(private modelId: string) {}
 
   private async callModel(modelId: string, system: string, messages: ConversationEntry[], maxTokens: number): Promise<string> {

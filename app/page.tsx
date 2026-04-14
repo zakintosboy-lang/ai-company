@@ -846,7 +846,7 @@ export default function Home() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        buffer += decoder.decode(value, { stream: true });
+        buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
         let splitIndex = buffer.indexOf("\n\n");
         while (splitIndex !== -1) {
           const part = buffer.slice(0, splitIndex);
@@ -856,7 +856,7 @@ export default function Home() {
         }
       }
 
-      buffer += decoder.decode();
+      buffer += decoder.decode().replace(/\r\n/g, "\n");
       if (buffer.trim()) processSseEvent(buffer);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
